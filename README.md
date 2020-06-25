@@ -1,0 +1,238 @@
+# portfoliodb
+
+****
+> I'm following RDD (readme-driven development) for this project, so, until v0.1.0 is released, this document describes what the program will look like
+****
+
+A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+
+## Installation
+
+(I havent decided which programming language to use for this, but I'm leaning towards Go)
+
+## Usage
+
+```docopt
+Usage:
+  portfoliodb [options] build <from-directory> <to-filepath> [--assets]
+  portfoliodb [options] replicate <from-filepath> <to-directory>
+  portfoliodb [options] add <fullname> [<metadata-item>...]
+  portfoliodb [options] validate <database-directory>
+
+Examples:
+  portfoliodb build database database.json
+  portfoliodb add schoolsyst/presentation -#web -#site --color 268CCE 
+
+Commands:
+  build <from-directory> <to-filepath>
+    Scan in <from-directory> for folders with `description.md` files
+    (and potential media files)
+    and compile the whole database into a JSON file at <to-filepath>
+  
+  replicate <from-filepath> <to-directory>
+    The reverse operation of 'build'.
+    Note that <to-directory> must be an empty directory
+  
+  add <name> [<metadata-item>...]
+    Creates a new `description.md` in the appropriate folder.
+    <name> is the work's name.
+    You can provide additional metadata items in the form --ITEM_NAME=VALUE,
+    eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md, 
+    with the following contents:
+    ---
+    collection: null
+    ---
+    # phelng
+    program, cli
+  
+  validate <database-directory>
+    Make sure that everything is OK in the database:
+    - no broken links in description files
+    - no unused files in description files
+    - no validation errors for .portfoliodb.yml
+    - no validation errors for .portfoliodb-metakeys.schema.json
+      (this file allows validation of the YAML header of description.md
+      files to prevent typos and other accidents)
+```
+
+## How it works
+
+Your database is a folder, which has one folder per work in it. You will probably want to group _some_ works into _collections_. 
+In each folder, you'll have a markdown file describing your work, and some files, which can be videos, audio files or images.
+
+Here's an example tree:
+
+```directory-tree
+database/
+├── ideaseed
+│   ├── logo.png
+│   └── description.md
+├── phelng
+│   └── description.md
+├── portfolio
+│   └── description.md
+├── portfoliodb
+│   └── description.md
+└── schoolsyst
+    ├── description.md
+    ├── api
+    │   └── description.md
+    ├── presentation
+    │   └── description.md
+    └── webapp
+        └── description.md
+```
+
+### `description.md` files
+
+The most information is extracted from natural markdown, however, you can add some information via a YAML header.
+Here's an example `description.md`
+
+Information inside YAML headers is arbitrary, put any key and it will be added to the work's JSON object.
+
+Some YAML keys are interpreted in a certain way though:
+
+- `collection`: This _needs_ to refer to a valid collection id, and associates that work with the collection
+- `color`: nothing special about this, but note that it overrides `extract color from`. 
+  It can be an object (with keys `secondary` and `primary`) or a string 
+  (which is the same as setting `primary` and setting `secondary` to null.
+- `extract color from`: portfoliodb has an optional build step to extract the primary and secondary colors from a given image, 
+  this sets the filename. With the build step turned on and without this, _portfoliodb_ will look for image files in the work's folder,
+  and if it founds only one image, it will use it, else the build will fail.
+
+Other information is extracted from the contents themselves:
+
+- `name` is extracted from the document's title (`# phelng` here)
+- `tags` is extracted from the first paragraph following the title, and are split on commas and newlines (`[cli, automation, program]` here)
+- `links` is extracted from a list that only contains named links (`- [code source](https://github.com/ewen-lbh/phelng)` here)
+- `made_with` is extracted from an unordered list following an `<h2>` named "Made with" (`## Made with`), each list item become a string and is added to `using` (`[python]` here)
+
+A special syntax is added to easily embed video or audio files, either from files in the work's folder, or from YouTube (playlists and videos):
+
+```markdown
+>[fallback text](filename or youtube URL)
+```
+
+This syntax was chosen to ressemble the image's, and because the `>` symbolizes a "play" button.
+
+YouTube URLs always become video embeds and for local files, the MIME type and extension are checked to determine if it's an audio or video file.
+
+Each description "chunk" is separaed by an horizontal rule (`----`).
+
+The first chunk is added to `summary`, while others are added as an array of strings to `description_chunks`
+
+```markdown
+---
+created: 2020-05
+wip: yes
+best: yes
+color: FFFFFF
+---
+
+<!-- name -->
+
+# phelng
+
+<!-- tags -->
+
+cli,
+automation,
+program
+
+<!-- links -->
+
+- [code source](https://github.com/ewen-lbh/phelng)
+
+<!-- youtube -->
+
+>[video](https://www.youtube.com/watch?v=qj2fglI1sYw)
+
+Un script pour télécharger automatiquement des musiques, en utilisant YouTube comme source audio et Spotify comme source de métadonnées.
+Pour chaque morceau, la bonne vidéo YouTube est sélectionnée en coïncidant des informations telles que la durée du morceau et celle de la vidéo,
+puis est téléchargée, les métadonnées (incluant une image de la pochette) est appliquée, puis le volume sonore est normalisé.
+
+----
+
+La liste de morceaux à télécharger est stockée dans un fichier `.tsv`:
+
+Au début, j'ai eu l'idée d'utiliser le format de fichier le plus simple et le plus intuitif possible : un fichier texte, chaque piste d'une ligne, au format `{artiste} - {titre}`.
+
+Mais il y a quelques problèmes avec cette technique:
+
+- **Les noms d'artistes ne peuvent pas contenir " - "**
+
+  ...ce qui ne se produirait jamais de toute façon, mais avec [les titres des pistes que _Four Tet_ propose](https://open.spotify.com/album/6iFZ3Kcx8CDmcMNyKRqUwc?highlight=spotify:track:3bCs4oOGpM0KkVB78Laiqp), il ne faut jamais sous-estimer la créativité parfois affichée dans les titres).
+
+- **On ne peut pas ajouter d'informations supplémentaires sans restreindre les titres des pistes**
+
+  Certains artistes aiment ajouter des titres "Intro" et/ou "Outro" à leurs albums, par exemple
+  Imaginez qu'un artiste ait deux albums _A_ et _B_, chacun ayant une piste d'intro nommée exactement _Intro_.
+  Si vous voulez télécharger la _Intro_ de **_B_**, vous ne pouvez pas le spécifier.
+  Une nouvelle syntaxe pourrait être introduite, quelque chose comme "artiste - piste [album]" mais, encore une fois, que faire si le titre de la piste contient un crochet ouvrant "[" ?
+
+----
+
+La solution : utiliser un caractère _tab littéral_ comme séparateur d'informations.
+
+Et certains y ont déjà pensé, nous avons donc l'avantage d'utiliser un langage déjà existant :
+le format de fichier _tsv_, ou valeurs séparées par des tabulations.
+Cela signifie également que vous pouvez facilement modifier et consulter votre bibliothèque dans
+n'importe quel logiciel de tableur.
+
+La seule mise en garde pour ce cas d'utilisation avec les fichiers tsv est qu'il n'existe pas de
+norme pour les commentaires. Les commentaires peuvent être utiles dans votre fichier de bibliothèque
+pour "désactiver" temporairement les pistes et empêcher leur téléchargement, ou pour servir d'en-tête
+au début du fichier pour vous aider à vous souvenir du format.
+
+----
+
+Comme nous ne voulons pas limiter les caractères que les noms d'artistes peuvent contenir, nous ne pouvons pas utiliser quelque chose comme "un commentaire" ou "un autre". Comme les deux premiers champs sont _requis_, le simple fait d'avoir une ligne qui commence par un caractère de tabulation est ignoré par _phelng_, et signifierait autrement que la colonne "artiste" est indéfinie pour cette ligne.
+
+Ainsi, le format (jusqu'à présent*) est le suivant (avec `⭾` représentant un caractère de tabulation)
+
+    commentaire ⭾A (ignoré par phelng)
+    Artist⭾Track title⭾Album (facultatif)⭾Duration (en quelques secondes, facultatif)
+
+*Des champs supplémentaires pourraient être ajoutés à l'avenir, _sans rupture de la compatibilité ascendante_, puisque l'ordre des champs sera _toujours conservé_.
+
+<!-- using -->
+
+## Made with
+
+- python
+```
+
+## Configuration
+
+Put this in `.portfoliodb.yml` in the root of your database:
+
+```yaml
+build steps:
+  - step: extract colors
+    extract:
+      - primary
+      - secondary
+      - tertiary
+    default file name: logo.png
+
+  - step: make gifs
+    # <filetitle> refers to the filename without its extension.
+    file name template: <filetitle>.gif
+
+  - step: make thumbnails
+    widths: [20, 100, 500]
+    input file: logo.png # If the directory has one image file and no logo.png, it uses this file instead
+    file name template: thumbs/<width>.png
+
+
+features:
+  # Specified by an <ul> directly after a <h2>Made with</h2>
+  made with: on
+  # Extract media from the document and put it in an object:
+  # { media: [type]: [{ name, url }, {name, url}, ...] }
+  # with [type] one of audio, image and video
+  media hoisting: off
+```
+
+PRO TIP: You can use the provided `.portfoliodb.yml.schema.json` to validate your YAML file
+with this JSONSchema
