@@ -236,3 +236,39 @@ features:
 
 PRO TIP: You can use the provided `.portfoliodb.yml.schema.json` to validate your YAML file
 with this JSONSchema
+
+## Extra markdown features
+
+Except for the `>[text](video/audio URL/filepath)` feature, the markdown also supports a number of non-standard features:
+
+- all of what GFM supports (except autolinking of issues and commit hashes, ofc)
+- Abbreviations: `*[YAML]: Yet Another Markup Language`
+- Definition lists: `- key: value` or the more standard, [PHP-markdown-extra-style](https://michelf.ca/projects/php-markdown/extra/#def-list)
+- Admonitions: `!!! type "Optional title"`, see [this documentation](https://python-markdown.github.io/extensions/admonition/)
+- Footnotes: `footnote reference[^1]` and then `[^1]: footnote content`
+- Markdown in HTML: [See documentation here](https://python-markdown.github.io/extensions/md_in_html/)
+- (off by default) New-line-to-line-break: Transforms line breaks in markdown into `<br>`s, see [the documentation](https://python-markdown.github.io/extensions/nl2br/)
+- Smarty pants: typographic replacements (not replaced inside code):
+  - `--` to –
+  - `---` to —
+  - `->` to →
+  - `<-` to ←
+  - `...` to …
+  - `<<` to «
+  - `>>` to »
+
+### Configuring markdown
+
+The extra features discussed just above are all available or disable, using the module name:
+
+_.portfoliodb.yml_
+```yaml
+markdown:
+  Abbreviations: on
+  Definition lists: on
+  Admonitions: off
+  Footnotes: on
+  Markdown in HTML: on
+  New-line-to-line-break: on
+  Smarty pants: off
+```
