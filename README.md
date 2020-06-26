@@ -110,10 +110,11 @@ Other information is extracted from the contents themselves:
 A special syntax is added to easily embed video or audio files, either from files in the work's folder, or from YouTube (playlists and videos):
 
 ```markdown
->[fallback text](filename or youtube URL)
+>[fallback text "Optional title"](filename or youtube URL)
 ```
 
 This syntax was chosen to ressemble the image's, and because the `>` symbolizes a "play" button.
+It also renders not-too-bad on regular markdown, embedding a media can be sort of seen as a quotation
 
 YouTube URLs always become video embeds and for local files, the MIME type and extension are checked to determine if it's an audio or video file.
 
@@ -256,6 +257,7 @@ Except for the `>[text](video/audio URL/filepath)` feature, the markdown also su
   - `...` to …
   - `<<` to «
   - `>>` to »
+- (off by default) Anchored headings: Each headings is assigned an id to reference in the URL with `example.com#heading`
 
 ### Configuring markdown
 
@@ -271,4 +273,12 @@ markdown:
   Markdown in HTML: on
   New-line-to-line-break: on
   Smarty pants: off
+  Anchored headings:
+  # you can also use an object form to pass in config options
+    enabled: yes
+    format: <content> # default value
+  custom syntaxes:
+    # this is just an example, not an actual implementation of the video/audio embed feature
+    - from: '>\[(<fallback>[^\]]+)\]\((<source>.+)\)'
+      to: <video src="${source}">${fallback}</video>
 ```
