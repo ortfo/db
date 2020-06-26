@@ -47,17 +47,23 @@ Commands:
   
   validate <database-directory>
     Make sure that everything is OK in the database:
-    - no broken links in description files
-    - no unused files in description files
-    - no validation errors for .portfoliodb.yml
-    - no validation errors for .portfoliodb-metakeys.schema.json
-      (this file allows validation of the YAML header of description.md
-      files to prevent typos and other accidents)
+    Each one of these checks are configurable and deactivable in .portfoliodb.yml:validate.checks,
+    the step name is the one in [square brackets] at the beginning of these lines.
+    1. [schema compliance] validate compliance to schema for .portfoliodb.yml and .portfoliodb-metadata.yml
+    2. [work folder names] check work folder names for url-unsafe characters or case-insensitively non-unique folder names
+    3. for each work directory:
+        a. [yaml header] check YAML header for unknown keys using .portfoliodb-metadata.yml
+        b. [title presence] check presence of work title
+        c. [title uniqueness] check uniqueness (case-insensitive) of work title
+        d. [tags presence] check if at least one tag is present
+        e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
+        f. [working media files] check all local paths for links (audio/video files, image files, other files)
+        g. [working urls] check that no http url gives errors
 ```
 
 ## How it works
 
-Your database is a folder, which has one folder per work in it. You will probably want to group _some_ works into _collections_. 
+Your database is a folder, which has one folder per work in it.
 In each folder, you'll have a markdown file describing your work, and some files, which can be videos, audio files or images.
 
 Here's an example tree:
@@ -223,7 +229,8 @@ build steps:
   - step: make thumbnails
     widths: [20, 100, 500]
     input file: logo.png # If the directory has one image file and no logo.png, it uses this file instead
-    file name template: thumbs/<width>.png
+    # Paths are always relative to the work's database folder
+    file name template: ../../static/thumbs/<id>/<width>.png
 
 
 features:
@@ -233,6 +240,27 @@ features:
   # { media: [type]: [{ name, url }, {name, url}, ...] }
   # with [type] one of audio, image and video
   media hoisting: off
+
+validate:
+  checks:
+    # can be `off` (not checked for)
+    # can be `on` (uses the default level)
+    # can be a level:
+    # - `fatal`: also checked when building, triggers end of build if fails
+    # - `error`: prints an error message (red), makes validate command exit with 1
+    # - `warn` : prints a warning message (orange), does not make validate exit with 1
+    # - `info` : regular message, informative
+    # these are the default values
+    schema compliance: fatal
+    work folder uniqueness: fatal
+    work folder safeness: error
+    yaml header: error
+    title presence: error
+    title uniqueness: error
+    tags presence: warn
+    tags knowledge: error
+    working media: warn
+    working urls: off
 ```
 
 PRO TIP: You can use the provided `.portfoliodb.yml.schema.json` to validate your YAML file

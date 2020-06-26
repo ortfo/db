@@ -1,0 +1,57 @@
+build command
+============
+
+    1. parse config in .portfoliodb.yml                                                  -> configuration.go
+    2. walk in directory, registering all folders as work IDs                            -> walking.go
+    3. for each folder, go in:                                                           -> commands.go
+        b. build list of all media files                                                 -> walking.go
+        a. parse description.md to HTML                                                  -> description.go
+        c. parse HTML to work object                                                     -> description.go
+        e. execute other build steps (media file hoisting, thumbs generation, etc)       -> building.go
+        d. add object to global works object                                             -> commands.go
+
+
+replicate command
+=================
+
+    1. parse config in .portfoliodb.yml                                       -> configuration.go
+        a. warn about non-reversable build steps (eg. thumbnail generation)   -> configuration.go
+    2. parse JSON file                                                        -> replication.go
+    3. for each work object:                                                  -> commands.go
+        a. create folder in directory with work.id as name                    -> replication.go
+        b. create a description.md, fill it with info                         
+            i. reverse-parse description fragments into markdown              -> description.go
+            ii. add tags, work name (<h1>), made with, etc.                   -> description.go
+        c. execute other reversable build steps                               -> builder.go
+
+
+add command
+===========
+
+    1. parse config in .portfoliodb.yml                                         -> configuration.go     
+    2. check if no work folder <id> exists already                              -> validation.go
+    3. create the folder                                                        -> adding.go
+    4. create a pre-filled description.md                                       -> replication.go
+        a. create a default work object with null values, etc.                  -> adding.go
+        b. replace default values with those given in arguments (.eg --tag)     -> adding.go
+        c. use `replicate`'s renderer to reverse-parse into a description.md    -> description.go
+        d. write the file                                                       -> commands.go
+
+
+validate command
+================
+
+    Each one of these checks are configurable and deactivable in .portfoliodb.yml:validate.checks,
+    the step name is the one in [square brackets] at the beginning of these lines.
+
+    1. [schema compliance] validate compliance to schema for .portfoliodb.yml and .portfoliodb-metadata.yml       -> validation.go                                                  
+    2. [work folder safeness] check work folder names for url-unsafe characters                                   -> validation.go                      
+    4. [work folder uniqueness] case-insensitively non-unique folder names                                        -> validation.go                  
+    3. for each work directory:                                                                                   -> commands.go
+        a. [yaml header] check YAML header for unknown keys using .portfoliodb-metadata.yml                       -> validation.go                                  
+        b. [title presence] check presence of work title                                                          -> validation.go  
+        c. [title uniqueness] check uniqueness (case-insensitive) of work title                                   -> validation.go                      
+        d. [tags presence] check if at least one tag is present                                                   -> validation.go      
+        e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)                       -> validation.go                                  
+        f. [working media files] check all local paths for links (audio/video files, image files, other files)    -> validation.go                                                      
+        g. [working urls] check that no http url gives errors                                                     -> validation.go      
