@@ -10,4 +10,24 @@ func main() {
 	usage := ReadFile("./USAGE")
 	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
+	dispatchCommand(args)
+}
+
+func dispatchCommand(args docopt.Opts) {
+	if val, _ := args.Bool("build"); val {
+		RunCommandBuild(args)
+		return
+	}
+	if val, _ := args.Bool("replicate"); val {
+		RunCommandReplicate(args)
+		return
+	}
+	if val, _ := args.Bool("add"); val {
+		RunCommandAdd(args)
+		return
+	}
+	if val, _ := args.Bool("validate"); val {
+		RunCommandValidate(args)
+		return
+	}
 }
