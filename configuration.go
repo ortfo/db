@@ -1,7 +1,10 @@
 package main
 
 import (
+	"path"
+
 	"github.com/davecgh/go-spew/spew"
+	"github.com/docopt/docopt-go"
 	"github.com/imdatngo/mergo"
 	"gopkg.in/yaml.v2"
 )
@@ -104,4 +107,25 @@ func GetConfiguration(filepath string) (Configuration, error) {
 		return Configuration{}, err
 	}
 	return userConfig, nil
+}
+
+// ResolveConfigurationPath determines the path of the configuration file to use
+func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfigurationFilepath string) string {
+	if explicitlySpecifiedConfigurationFilepath == "" {
+		return path.Join(databaseDirectory, ".portfoliodb.yml")
+	}
+	return explicitlySpecifiedConfigurationFilepath
+}
+
+// GetConfigurationFromCLIArgs gets the configuration by using the CLI arguments
+func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, error) {
+	// Weird bug if args.String("<database>") is used...
+	databaseDirectory := args["<database>"].([]string)[0]
+	explicitConfigFilepath, _ := args.String("--config")
+	configFilepath := ResolveConfigurationPath(databaseDirectory, explicitConfigFilepath)
+	var config Configuration
+	if err := LoadConfiguration(configFilepath, &config); err != nil {
+		return Configuration{}, err
+	}
+	return config, nil
 }

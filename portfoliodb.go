@@ -7,24 +7,28 @@ import (
 func main() {
 	usage := ReadFile("./USAGE")
 	args, _ := docopt.ParseDoc(usage)
-	dispatchCommand(args)
+	
+	if err := dispatchCommand(args); err != nil {
+		panic(err)
+	}
 }
 
-func dispatchCommand(args docopt.Opts) {
+func dispatchCommand(args docopt.Opts) error {
 	if val, _ := args.Bool("build"); val {
-		RunCommandBuild(args)
-		return
+		err := RunCommandBuild(args)
+		return err
 	}
 	if val, _ := args.Bool("replicate"); val {
-		RunCommandReplicate(args)
-		return
+		err := RunCommandReplicate(args)
+		return err
 	}
 	if val, _ := args.Bool("add"); val {
-		RunCommandAdd(args)
-		return
+		err := RunCommandAdd(args)
+		return err
 	}
 	if val, _ := args.Bool("validate"); val {
-		RunCommandValidate(args)
-		return
+		err := RunCommandValidate(args)
+		return err
 	}
+	return nil
 }

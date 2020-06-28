@@ -41,3 +41,11 @@ func ValidateWithJSONSchema(documentFilepath string, schemaFilepath string) (boo
 	}
 	return false, errorMessages
 }
+
+// FileExists checks if the file at ``filepath`` exists, and returns ``true`` if it exists or ``false`` otherwise
+func FileExists(filepath string) bool {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}

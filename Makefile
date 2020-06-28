@@ -1,5 +1,4 @@
 build:
-	go fmt
 	go build
 
 install:

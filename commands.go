@@ -1,23 +1,35 @@
 package main
 
-import "github.com/docopt/docopt-go"
+import (
+	"github.com/davecgh/go-spew/spew"
+	"github.com/docopt/docopt-go"
+)
 
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt
-func RunCommandBuild(args docopt.Opts) {
-
+func RunCommandBuild(args docopt.Opts) error {
+	// Weird bug if args.String("<database>") is used...
+	databaseDirectory := args["<database>"].([]string)[0]
+	config, err := GetConfigurationFromCLIArgs(args)
+	projects, err := BuildProjectsTree(databaseDirectory)
+	if err != nil {
+		return err
+	}
+	spew.Dump(config)
+	spew.Dump(projects)
+	return nil
 }
 
 // RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt
-func RunCommandReplicate(args docopt.Opts) {
-
+func RunCommandReplicate(args docopt.Opts) error {
+	return nil
 }
 
 // RunCommandAdd runs the command 'add' given parsed CLI args from docopt
-func RunCommandAdd(args docopt.Opts) {
-
+func RunCommandAdd(args docopt.Opts) error {
+	return nil
 }
 
 // RunCommandValidate runs the command 'validate' given parsed CLI args from docopt
-func RunCommandValidate(args docopt.Opts) {
-
+func RunCommandValidate(args docopt.Opts) error {
+	return nil
 }

@@ -1,8 +1,11 @@
 Usage:
-  portfoliodb [options] <database-directory> build <to-filepath>
+  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH]
   portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  portfoliodb [options] <database-directory> add <fullname> [<metadata-item>...]
-  portfoliodb [options] <database-directory> validate <database-directory>
+  portfoliodb [options] <database> add <fullname> [<metadata-item>...]
+  portfoliodb [options] <database> validate <database>
+
+Options:
+  -C --config=<filepath>      Use the configuration path at FILE. [default: .portfoliodb.yml]
 
 Examples:
   portfoliodb database build database.json
@@ -31,7 +34,7 @@ Commands:
     # phelng
     program, cli
   
-  validate <database-directory>
+  validate <database>
     Make sure that everything is OK in the database:
     Each one of these checks are configurable and deactivable in .portfoliodb.yml:validate.checks,
     the step name is the one in [square brackets] at the beginning of these lines.
@@ -45,6 +48,3 @@ Commands:
         e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
-
-Options:
-  -C --config=FILEPATH  Use the configuration path at FILE. [default: .portfoliodb.yml]
