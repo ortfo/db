@@ -77,20 +77,19 @@ type Configuration struct {
 }
 
 // LoadConfiguration loads the .portfoliodb.yml file in ``databaseFolderPath`` and puts it contents into ``loadInto``.
-func LoadConfiguration(databaseFolderPath string, loadInto *Configuration) (error) {
-	filepath := path.Join(databaseFolderPath, ".portfoliodb.yml")
+func LoadConfiguration(filepath string, loadInto *Configuration) error {
 	raw := ReadFileBytes(filepath)
 	return yaml.Unmarshal(raw, loadInto)
 }
 
 // LoadDefaultConfiguration gets the default .portfoliodb.yml configuration (at ./.portfoliodb.yml) and puts it contents into ``loadInto``.
-func LoadDefaultConfiguration(loadInto *Configuration) (error) {
-	return LoadConfiguration(".", loadInto)
+func LoadDefaultConfiguration(loadInto *Configuration) error {
+	return LoadConfiguration("./.portfoliodb.yml", loadInto)
 }
 
 // GetConfiguration  reads from the .portfoliodb.yml file in ``databaseFolderPath``
 // and returns a ``Configuration`` struct
-func GetConfiguration(databaseFolderPath string) (Configuration, error) {
+func GetConfiguration(filepath string) (Configuration, error) {
 	var userConfig Configuration
 	var defaultConfig Configuration
 	// Load the default configuration
@@ -98,7 +97,7 @@ func GetConfiguration(databaseFolderPath string) (Configuration, error) {
 		return Configuration{}, err
 	}
 	// Load the user's configuration
-	if err := LoadConfiguration(databaseFolderPath, &userConfig); err != nil {
+	if err := LoadConfiguration(filepath, &userConfig); err != nil {
 		return Configuration{}, err
 	}
 	spew.Dump(userConfig, defaultConfig)
