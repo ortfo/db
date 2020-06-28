@@ -1,0 +1,60 @@
+build steps:
+  extract colors:
+    enabled: no
+    extract: []
+    default file name: ""
+
+  make gifs:
+    enabled: no
+    # <filetitle> refers to the filename without its extension.
+    file name template: ""
+
+  make thumbnails:
+    enabled: no
+    widths: []
+    input file: "" # If the directory has one image file and no logo.png, it uses this file instead
+    # Paths are always relative to the work's database folder
+    file name template: ""
+
+
+features:
+  # Specified by an <ul> directly after a <h2>Made with</h2>
+  made with: on
+  # Extract media from the document and put it in an object:
+  # { media: [type]: [{ name, url }, {name, url}, ...] }
+  # with [type] one of audio, image and video
+  media hoisting: off
+
+validate:
+  checks:
+    # can be `off` (not checked for)
+    # can be `on` (uses the default level)
+    # can be a level:
+    # - `fatal`: also checked when building, triggers end of build if fails
+    # - `error`: prints an error message (red), makes validate command exit with 1
+    # - `warn` : prints a warning message (orange), does not make validate exit with 1
+    # - `info` : regular message, informative
+    # these are the default values
+    schema compliance: fatal
+    work folder uniqueness: fatal
+    work folder safeness: error
+    yaml header: error
+    title presence: error
+    title uniqueness: error
+    tags presence: warn
+    tags knowledge: error
+    working media: warn
+    working urls: off
+
+markdown:
+  abbreviations: on
+  definition lists: on
+  admonitions: on
+  footnotes: on
+  markdown in HTML: on
+  new-line-to-line-break: off
+  smarty pants: on
+  anchored headings:
+    enabled: no
+    format: <content>
+  custom syntaxes: []

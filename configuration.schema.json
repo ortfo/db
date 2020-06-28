@@ -25,9 +25,6 @@
         "extract colors": {
           "type": "object",
           "properties": {
-            "step": {
-              "type": "string"
-            },
             "extract": {
               "enum": [
                 "primary",

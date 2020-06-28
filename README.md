@@ -247,14 +247,14 @@ The extra features discussed just above are all available or disable, using the 
 _.portfoliodb.yml_
 ```yaml
 markdown:
-  Abbreviations: on
-  Definition lists: on
-  Admonitions: off
-  Footnotes: on
-  Markdown in HTML: on
-  New-line-to-line-break: on
-  Smarty pants: off
-  Anchored headings:
+  abbreviations: on
+  definition lists: on
+  admonitions: off
+  footnotes: on
+  markdown in html: on
+  new-line-to-line-break: on
+  smarty pants: off
+  anchored headings:
   # you can also use an object form to pass in config options
     enabled: yes
     format: <content> # default value
