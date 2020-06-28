@@ -1,12 +1,13 @@
 Usage:
-  portfoliodb [options] build <from-directory> <to-filepath> [--assets]
-  portfoliodb [options] replicate <from-filepath> <to-directory>
-  portfoliodb [options] add <fullname> [<metadata-item>...]
-  portfoliodb [options] validate <database-directory>
+  portfoliodb [options] <database-directory> build <to-filepath>
+  portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
+  portfoliodb [options] <database-directory> add <fullname> [<metadata-item>...]
+  portfoliodb [options] <database-directory> validate <database-directory>
 
 Examples:
-  portfoliodb build database database.json
-  portfoliodb add schoolsyst/presentation -#web -#site --color 268CCE 
+  portfoliodb database build database.json
+  portfoliodb database add schoolsyst/presentation -#web -#site --color 268CCE 
+  portfoliodb replicate database.json replicated-database --config=.portfoliodb.yml
 
 Commands:
   build <from-directory> <to-filepath>
@@ -44,3 +45,6 @@ Commands:
         e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
+
+Options:
+  -C --config=FILEPATH  Use the configuration path at FILE. [default: .portfoliodb.yml]
