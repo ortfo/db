@@ -1,78 +1,76 @@
 package main
 
 import (
-	"path"
-
 	"github.com/davecgh/go-spew/spew"
 	"github.com/imdatngo/mergo"
 	"gopkg.in/yaml.v2"
 )
 
 type ConfigurationBuildStepsExtractColors struct {
-	Enabled bool
-	Extract []string
+	Enabled         bool
+	Extract         []string
 	DefaultFileName string `yaml:"default file name"`
 }
 
 type ConfigurationBuildStepsMakeGifs struct {
-	Enabled bool
+	Enabled          bool
 	FileNameTemplate string `yaml:"file name template"`
 }
 
 type ConfigurationBuildStepsMakeThumbnails struct {
-	Enabled bool
-	Widths []int
-	InputFile string `yaml:"input file"`
+	Enabled          bool
+	Widths           []int
+	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
 }
 
 type ConfigurationBuildSteps struct {
-	ExtractColors ConfigurationBuildStepsExtractColors `yaml:"extract colors"`
-	MakeGifs ConfigurationBuildStepsMakeGifs `yaml:"make GIFs"`
+	ExtractColors  ConfigurationBuildStepsExtractColors  `yaml:"extract colors"`
+	MakeGifs       ConfigurationBuildStepsMakeGifs       `yaml:"make GIFs"`
 	MakeThumbnails ConfigurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
 }
 
 type ConfigurationMarkdownAnchoredHeadings struct {
 	Enabled bool
-	Format string
+	Format  string
 }
 
 type ConfigurationMarkdownCustomSyntax struct {
 	From string
-	To string
+	To   string
 }
 
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
 	BuildSteps ConfigurationBuildSteps `yaml:"build steps"`
-	Features struct {
-		madeWith bool `yaml:"made with"`
+	Features   struct {
+		madeWith      bool `yaml:"made with"`
 		mediaHoisting bool `yaml:"media hoisting"`
 	}
 	Validate struct {
 		Checks struct {
-			SchemaCompliance string `yaml:"schema compliance"`
+			SchemaCompliance     string `yaml:"schema compliance"`
 			WorkFolderUniqueness string `yaml:"work folder uniqueness"`
-			WorkFolderSafeness string `yaml:"work folder safeness"`
-			YamlHeader string `yaml:"yaml header"`
-			TitlePresence string `yaml:"title presence"`
-			TitleUniqueness string `yaml:"title uniqueness"`
-			TagsPresence string `yaml:"tags presence"`
-			TagsKnowledge string `yaml:"tags knowledge"`
-			WorkingMedia string `yaml:"working media"`
-			WorkingUrls string `yaml:"working urls"`
+			WorkFolderSafeness   string `yaml:"work folder safeness"`
+			YamlHeader           string `yaml:"yaml header"`
+			TitlePresence        string `yaml:"title presence"`
+			TitleUniqueness      string `yaml:"title uniqueness"`
+			TagsPresence         string `yaml:"tags presence"`
+			TagsKnowledge        string `yaml:"tags knowledge"`
+			WorkingMedia         string `yaml:"working media"`
+			WorkingUrls          string `yaml:"working urls"`
 		}
 	}
 	Markdown struct {
-		Abbreviations bool `yaml:"abbreviations"`
-		DefinitionLists bool `yaml:"definition lists"`
-		Admonitions bool `yaml:"admonitions"`
-		Footnotes bool `yaml:"footnotes"`
-		MarkdownInHTML bool `yaml:"markdown in html"`
-		NewLineToLineBreak bool `yaml:"new-line-to-line-break"`
-		SmartyPants bool `yaml:"smarty pants"`
-		AnchoredHeadings ConfigurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
-		CustomSyntaxes []ConfigurationMarkdownCustomSyntax `yaml:"custom syntaxes"`
+		Abbreviations      bool                                  `yaml:"abbreviations"`
+		DefinitionLists    bool                                  `yaml:"definition lists"`
+		Admonitions        bool                                  `yaml:"admonitions"`
+		Footnotes          bool                                  `yaml:"footnotes"`
+		MarkdownInHTML     bool                                  `yaml:"markdown in html"`
+		NewLineToLineBreak bool                                  `yaml:"new-line-to-line-break"`
+		SmartyPants        bool                                  `yaml:"smarty pants"`
+		AnchoredHeadings   ConfigurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
+		CustomSyntaxes     []ConfigurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
 	}
 }
 
