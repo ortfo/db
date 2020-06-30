@@ -8,7 +8,15 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
 
 ## Installation
 
-(I havent decided which programming language to use for this, but I'm leaning towards Go)
+Pre-compiled binaries are available through [GitHub Releases](https://help.github.com/en/github/administering-a-repository/releasing-projects-on-github):
+
+```shell
+$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/portfoliodb
+# Put the command in a directory that is in your PATH, so that you can use portfoliodb from anywhere, e.g.:
+$ mv portfoliodb /usr/bin/portfoliodb
+```
+
+See [Compiling](#compiling) for instructions on how to compile this yourself
 
 ## Usage
 
@@ -263,3 +271,10 @@ markdown:
     - from: '>\[(<fallback>[^\]]+)\]\((<source>.+)\)'
       to: <video src="${source}">${fallback}</video>
 ```
+
+# Compiling
+
+1. Clone the repository: `git clone https://github.com/ewen-lbh/portfoliodb`
+2. `cd` into it: `cd portfoliodb`
+3. `make` the binary: `make`
+4. Install it (this just copies the file to `/usr/bin/`): `make install`
