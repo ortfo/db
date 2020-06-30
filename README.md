@@ -268,7 +268,7 @@ markdown:
     format: <content> # default value
   custom syntaxes:
     # this is just an example, not an actual implementation of the video/audio embed feature
-    - from: '>\[(<fallback>[^\]]+)\]\((<source>.+)\)'
+    - from: '>\[(?P<fallback>[^\]]+)\]\((?P<source>.+)\)'
       to: <video src="${source}">${fallback}</video>
 ```
 
