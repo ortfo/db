@@ -32,6 +32,7 @@ func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 		}
 		// Read the description.md file
 		descriptionRaw := ReadFile(descriptionFilepath)
+		
 		// Build the list of media filepaths
 		mediaFiles, err := ioutil.ReadDir(path.Join(databaseDirectory, file.Name()))
 		var mediaFilepaths []string
