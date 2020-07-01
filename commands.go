@@ -9,13 +9,19 @@ import (
 func RunCommandBuild(args docopt.Opts) error {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
-	config, err := GetConfigurationFromCLIArgs(args)
+	_, err := GetConfigurationFromCLIArgs(args)
 	projects, err := BuildProjectsTree(databaseDirectory)
 	if err != nil {
 		return err
 	}
-	spew.Dump(config)
-	spew.Dump(projects)
+	for _, project := range projects {
+		metadata, description := ParseYAMLHeader(project.DescriptionRaw)
+		spew.Dump(metadata)
+		abbreviationsMap := CollectAbbreviationDeclarations(description)
+		description = ReplaceAbbreviations(description, abbreviationsMap)
+		description = ConvertMarkdownToHTML(description)
+		
+	}
 	return nil
 }
 
