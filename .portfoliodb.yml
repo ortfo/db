@@ -47,14 +47,14 @@ validate:
     working urls: off
 
 markdown:
-  abbreviations: on
-  definition lists: on
-  admonitions: on
-  footnotes: on
-  markdown in HTML: on
-  new-line-to-line-break: off
-  smarty pants: on
-  anchored headings:
+  abbreviations: on # supported
+  definition lists: on # supported
+  admonitions: on # need to support manullay?
+  footnotes: on # supported
+  markdown in HTML: on #?
+  new-line-to-line-break: off # supported
+  smarty pants: on # supported?
+  anchored headings: # supported
     enabled: no
     format: <content>
-  custom syntaxes: []
+  custom syntaxes: [] # pretty ez
