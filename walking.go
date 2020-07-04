@@ -12,6 +12,10 @@ type ProjectTreeElement struct {
 	MediaFilepaths []string
 }
 
+func (p *ProjectTreeElement) GetProjectPath(databaseDirectory string) string {
+	return path.Join(".", databaseDirectory, p.ID)
+}
+
 func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 	var tree []ProjectTreeElement
 	files, err := ioutil.ReadDir(databaseDirectory)

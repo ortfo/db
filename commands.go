@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"path"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/docopt/docopt-go"
 )
@@ -17,10 +20,14 @@ func RunCommandBuild(args docopt.Opts) error {
 	for _, project := range projects {
 		metadata, description := ParseYAMLHeader(project.DescriptionRaw)
 		spew.Dump(metadata)
-		abbreviationsMap := CollectAbbreviationDeclarations(description)
+		abbreviationsMap, description := CollectAbbreviationDeclarations(description)
 		description = ReplaceAbbreviations(description, abbreviationsMap)
 		description = ConvertMarkdownToHTML(description)
-		
+		for _, filepath := range project.MediaFilepaths {
+			filepath = path.Join(project.GetProjectPath(databaseDirectory), filepath)
+			fmt.Printf("Decoding %#v\n", filepath)
+			spew.Dump(ReadImage(filepath))
+		}
 	}
 	return nil
 }
