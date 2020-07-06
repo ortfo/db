@@ -9,21 +9,26 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-// ReadImage reads an image at ``filepath``, decodes it, and returns an ``image.Image`` object as well as some metadata
-func ReadImage(filepath string) (image.Image, ImageMetadata, error) {
-	img, err := OpenImage(filepath)
-	if err != nil {
-		return nil, ImageMetadata{}, err
-	}
-	meta, err := GetImageMetadata(img, filepath)
-	if err != nil {
-		return img, ImageMetadata{}, err
-	}
-	return img, meta, nil
+// ImageDimensions represents metadata about a media as it's extracted from its file
+type ImageDimensions struct {
+	Width int
+	Height int
+	AspectRatio float32
+}
+
+// Media represents a media object inserted in the work object's ``media`` array.
+type Media struct {
+	ID string
+	Alt string
+	Title string
+	Source string
+	Type string
+	MIMEType *mimetype.MIME
+	dimensions ImageDimensions
 }
 
 // ReadImage reads an image at ``filepath``, decodes it, and returns an ``image.Image`` object
-func OpenImage(filepath string) (image.Image, error) {
+func ReadImage(filepath string) (image.Image, error) {
 	// Open the file
 	reader, err := os.Open(filepath)
 	if err != nil {
@@ -36,25 +41,12 @@ func OpenImage(filepath string) (image.Image, error) {
 	return img, nil
 }
 
-type ImageMetadata struct {
-	Width int
-	Height int
-	AspectRatio float32
-	MIMEType *mimetype.MIME
-}
-
-// GetImageMetadata returns an ``ImageMetadata`` object, given the image object and the image's filepath
-// TODO: pass a file object instead for improved performance
-func GetImageMetadata(img image.Image, filepath string) (ImageMetadata, error) {
-	// Get filetype
-	mime, err := mimetype.DetectFile(filepath)
-	if err != nil {
-		return ImageMetadata{}, err
-	}
+// GetImageDimensions returns an ``ImageDimensions`` object, given the image object
+func GetImageDimensions(img image.Image) (ImageDimensions, error) {
 	// Get height & width
 	height := img.Bounds().Dy()
 	width := img.Bounds().Dx()
 	// Get aspect ratio
 	ratio := float32(width) / float32(height)
-	return ImageMetadata{width, height, ratio, mime}, nil
+	return ImageDimensions{width, height, ratio}, nil
 }
