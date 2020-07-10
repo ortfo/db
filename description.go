@@ -22,9 +22,7 @@ type UnknownYAMLObject interface{}
 type DescriptionParseResult struct {
 	HTML       string
 	YAMLHeader map[string]interface{}
-	MadeWith   []string
 	Links      map[string]string
-	Tags       []string
 }
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns
@@ -91,4 +89,36 @@ func ReplaceAbbreviations(markdownRaw string, abbreviations map[string]string) s
 		markdownRaw = strings.ReplaceAll(markdownRaw, abbr, markup)
 	}
 	return markdownRaw
+}
+
+// MediaEmbedDeclaration represents a media embed declaration found in description files such as `>[alt "title"](source)`
+type MediaEmbedDeclaration struct {
+	Source string
+	Alt    string
+	Title  string
+}
+
+// ParseMediaEmbedDeclaration parses a >\[media "embed"\](declaration) and returns (theHTMLResult, AListOfFoundMediaEmbeds)
+// the HTML result is not complete yet, as the <EMBED> element is meant to be replaced with either:
+// - an `<iframe>` for embedded YouTube videos
+// - an `<audio>` tag
+// - a `<video>` tag
+func ParseMediaEmbedDeclaration(markdownRaw string) (string, []MediaEmbedDeclaration) {
+	pattern := regexp.MustCompile("^>\\[([^\\]\"]+)(?: \"([^\\]\"]+)\")?\\]\\(([^)]+)\\)$")
+	var embeds []MediaEmbedDeclaration
+	var parsedLines string
+	for _, line := range strings.Split(markdownRaw, "\n") {
+		if pattern.MatchString(line) {
+			groups := pattern.FindStringSubmatch(line)
+			embed := MediaEmbedDeclaration{
+				Alt:    groups[0],
+				Source: groups[1],
+				Title:  groups[2],
+			}
+			embeds = append(embeds, embed)
+			line = "<EMBED alt=\"" + embed.Alt + "\" title=\"" + embed.Title + "\" src=\"" + embed.Source + "\"></EMBED>"
+		}
+		parsedLines += line + "\n"
+	}
+	return parsedLines, embeds
 }
