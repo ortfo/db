@@ -60,19 +60,20 @@ Information inside YAML headers is arbitrary, put any key and it will be added t
 Some YAML keys are interpreted in a certain way though:
 
 - `collection`: This _needs_ to refer to a valid collection id, and associates that work with the collection
-- `color`: nothing special about this, but note that it overrides `extract color from`. 
-  It can be an object (with keys `secondary` and `primary`) or a string 
+- `color`: nothing special about this, but note that it overrides `extract color from`.
+  It can be an object (with keys `secondary` and `primary`) or a string
   (which is the same as setting `primary` and setting `secondary` to null.
-- `extract color from`: portfoliodb has an optional build step to extract the primary and secondary colors from a given image, 
+- `extract color from`: portfoliodb has an optional build step to extract the primary and secondary colors from a given image,
   this sets the filename. With the build step turned on and without this, _portfoliodb_ will look for image files in the work's folder,
   and if it founds only one image, it will use it, else the build will fail.
 
 Other information is extracted from the contents themselves:
 
-- `name` is extracted from the document's title (`# phelng` here)
-- `links` is extracted from a list that only contains named links (`- [code source](https://github.com/ewen-lbh/phelng)` here)
+- `name` is extracted from the document's first `<h1>` element.
+- `paragraphs` contains the list of paragraphs, by default the `id` is the first sentence slugified
+- `media` contains the list of media files present in the markdown content, whether it's an image or another media file
 
-A special syntax is added to easily embed video or audio files, either from files in the work's folder, or from YouTube (playlists and videos):
+A special syntax is added to easily embed other media files:
 
 ```markdown
 >[fallback text "Optional title"](filename or youtube URL)
@@ -85,7 +86,7 @@ YouTube URLs always become video embeds and for local files, the MIME type and e
 
 ```markdown
 ---
-created: 2020-05
+created: 2020-05-00
 wip: yes
 best: yes
 color:
@@ -126,15 +127,15 @@ Mais il y a quelques problèmes avec cette technique:
 
 - **On ne peut pas ajouter d'informations supplémentaires sans restreindre les titres des pistes**
 
-  Certains artistes aiment ajouter des titres "Intro" et/ou "Outro" à leurs albums, par exemple
-  Imaginez qu'un artiste ait deux albums _A_ et _B_, chacun ayant une piste d'intro nommée exactement _Intro_.
+  Certains artistes aiment ajouter des titres "Intro" et/ou "Outro" à leurs albums. par exemple,
+  imaginez qu'un artiste ait deux albums _A_ et _B_, chacun ayant une piste d'intro nommée exactement _Intro_.
   Si vous voulez télécharger la _Intro_ de **_B_**, vous ne pouvez pas le spécifier.
   Une nouvelle syntaxe pourrait être introduite, quelque chose comme "artiste - piste [album]" mais, encore une fois, que faire si le titre de la piste contient un crochet ouvrant "[" ?
 
 La solution : utiliser un caractère _tab littéral_ comme séparateur d'informations.
 
 Et certains y ont déjà pensé, nous avons donc l'avantage d'utiliser un langage déjà existant :
-le format de fichier _tsv_, ou valeurs séparées par des tabulations.
+le format de fichier _tsv_, ou valeurs séparées par des tabulations (**t**ab-**s**eparated **v**alues).
 Cela signifie également que vous pouvez facilement modifier et consulter votre bibliothèque dans
 n'importe quel logiciel de tableur.
 
@@ -145,12 +146,12 @@ au début du fichier pour vous aider à vous souvenir du format.
 
 Comme nous ne voulons pas limiter les caractères que les noms d'artistes peuvent contenir, nous ne pouvons pas utiliser quelque chose comme "un commentaire" ou "un autre". Comme les deux premiers champs sont _requis_, le simple fait d'avoir une ligne qui commence par un caractère de tabulation est ignoré par _phelng_, et signifierait autrement que la colonne "artiste" est indéfinie pour cette ligne.
 
-Ainsi, le format (jusqu'à présent*) est le suivant (avec `⭾` représentant un caractère de tabulation)
+Ainsi, le format (jusqu'à présent[^1]) est le suivant (avec `⭾` représentant un caractère de tabulation)
 
     commentaire ⭾A (ignoré par phelng)
     Artist⭾Track title⭾Album (facultatif)⭾Duration (en quelques secondes, facultatif)
 
-*Des champs supplémentaires pourraient être ajoutés à l'avenir, _sans rupture de la compatibilité ascendante_, puisque l'ordre des champs sera _toujours conservé_.
+[^1]: Des champs supplémentaires pourraient être ajoutés à l'avenir, _sans rupture de la compatibilité ascendante_, puisque l'ordre des champs sera _toujours conservé_.
 
 ```
 
