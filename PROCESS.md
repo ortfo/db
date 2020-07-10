@@ -153,7 +153,7 @@ Footnotes & abbreviations processing
               {
                   "id": "another-paragraph-id",
 -                 "contents": "the PARA lorem ipsum, and footnote[1]"
-+                 "contents": "the <abbr title=\"The abbreviation definition\">PARA</abbr> lorem ipsum, and footnote<a href=\"#footnote-1\" title=\"A footnote reference\" id=\"footnote-1-ref-1\"><sup>1</sup></a>
++                 "contents": "the <abbr title=\"The abbreviation definition\">PARA</abbr> lorem ipsum, and footnote<a href=\"#footnote-1\" title=\"A footnote reference\" id=\"footnote-1-ref-1\"><sup>1</sup></a>"
               }
           ]
 ```
@@ -238,7 +238,7 @@ Relevant functions:
 +                 "colors": {
 +                   "primary": "#ebf580",
 +                   "secondary": "#c0ffee",
-+                 }
++                 },
                   "thumbnails": [
                       {
                           "height": 20,
