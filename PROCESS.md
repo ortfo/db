@@ -14,10 +14,10 @@ yaml: header
 :: lang-PLACE
 
 (paragraph-id)
-paragraph contents
+paragraph contents with _italic text_ and **bold text** that also has `code` (inline) and [a link](https://and-its-url.com/)
 
 (another-paragraph-id)
-the PARA lorem ipsum
+the PARA lorem ipsum, and footnote[1]
 
 ![alt "title (optional)"](image source uri)
 
@@ -26,76 +26,66 @@ the PARA lorem ipsum
 [link name](url)
 
 *[PARA]: The abbreviation definition
+[1]: A footnote reference
 ```
 
-Standard markdown parser
-------------------------
+Abbreviations & footnotes collection
+------------------------------------
 
 Relevant functions:
 
-- `description.go:StandardParse`
+- `description.go:CollectAbbreviation`
+- `description.go:CollectFootnote`
 
-```json
-{
-    "yaml": "header"
+```diff
+  ---
+  yaml: header
+  ---
+
+  # name
+
+  :: lang-PLACE
+
+  (paragraph-id)
+  paragraph contents with _italic text_ and **bold text** that also has   `code` (inline) and [a link](https://and-its-url.com/)
+
+  (another-paragraph-id)
+  the PARA lorem ipsum, and footnote[1]
+
+  ![alt "title (optional)"](image source uri)
+
+  >[alt "title"](video/audio/pdf/plaintext/other source uri)
+
+  [link name](url)
+-
+- *[PARA]: The abbreviation definition
+- [1]: A footnote reference
+```
+
+Collected abbreviations
+
+```go
+type Abbreviation {
+  Name string
+  Definition string
 }
+
+collected := [
+  Abbreviation{Name: "PARA", Definition: "The abbreviation definition"}
+]
 ```
 
-and
+Collected footnotes
 
-```html
-<h1>name</h1>
-
-<p>:: lang-PLACE</p>
-
-<p>(paragraph-id)<br/>paragraph contents</p>
-
-<p>(another-paragraph-id)<br/>the PARA lorem ipsum</p>
-
-<p><img alt="alt" title="title (optional)" src="image source uri"/></p>
-
-<p>&gt;[alt "title"](video/audio/pdf/plaintext/other source uri)</p>
-
-<p><a href="url">link name</a></p>
-
-<p>*[PARA]: The abbreviation definition</p>
-```
-
-Custom markdown syntaxes
-------------------------
-
-Relevant functions:
-
-- `description.go:ParseMediaEmbed`
-- `description.go:CollectionAbreviation`
-- `description.go:ApplyAbbreviations`
-- `description.go:AnchorParagraphs`
-- `description.go:ParseLanguageDeclarations`
-
-```json
-{
-    "yaml": "header"
+```go
+type Footnote {
+  Number uint16 // Oh no, what a bummer, you can't have more than 65 535 footnotes
+  Content string
 }
-```
 
-and
-
-```html
-<h1>name</h1>
-
-<div lang="lang-PLACE">
-
-<p id="paragraph-id">paragraph contents</p>
-
-<p id="another-paragraph-id">the <abbr title="The abbreviation definition</p>">PARA</abbr> lorem ipsum</p>
-
-<p><img alt="alt" title="title (optional)" src="image source uri"/></p>
-
-<p><MEDIA alt="alt" title="title" src="video/audio/pdf/plaintext/other source uri" /></p>
-
-<p><a href="url">link name</a></p>
-
-</div>
+collected := [
+  Footnote{Number: 1, Content: "A footnote reference"}
+]
 ```
 
 To JSON object
@@ -113,11 +103,11 @@ Relevant functions:
         "lang-PLACE": [
             {
                 "id": "paragraph-id",
-                "contents": "paragraph contents"
+                "contents": "paragraph contents with _italic text_ and **bold text** that also has `code` (inline) and [a link](https://and-its-url.com/)"
             },
             {
                 "id": "another-paragraph-id",
-                "contents": "the <abbr title=\"The abbreviation definition</p>\">PARA</abbr> lorem ipsum"
+                "contents": "the PARA lorem ipsum, and footnote[1]"
             }
         ]
     },
@@ -150,61 +140,41 @@ Relevant functions:
 }
 ```
 
-Media filetype detection
+Footnotes & abbreviations processing
+------------------------------------
+
+```diff
+      "paragraphs": {
+          "lang-PLACE": [
+              {
+                  "id": "paragraph-id",
+                  "contents": "paragraph contents with _italic text_ and **bold text** that also has `code` (inline) and [a link](https://and-its-url.com/)"
+              },
+              {
+                  "id": "another-paragraph-id",
+-                 "contents": "the PARA lorem ipsum, and footnote[1]"
++                 "contents": "the <abbr title=\"The abbreviation definition\">PARA</abbr> lorem ipsum, and footnote<a href=\"#footnote-1\" title=\"A footnote reference\" id=\"footnote-1-ref-1\"><sup>1</sup></a>
+              }
+          ]
+```
+
+Markdown to HTML for paragraphs' content
 -----------------------
 
 Relevant functions:
 
 - `media.go:GetFiletype`
 
-```json
-{
-    "yaml": "header",
-    "name": "name",
-    "paragraphs": {
-        "lang-PLACE": [
-            {
-                "id": "paragraph-id",
-                "contents": "paragraph contents"
-            },
-            {
-                "id": "another-paragraph-id",
-                "contents": "the <abbr title=\"The abbreviation definition</p>\">PARA</abbr> lorem ipsum"
-            }
-        ]
-    },
-    "media": {
-        "lang-PLACE": [
-            {
-                "id": "alt",
-                "type": "image",
-                "format": "png",
-                "mime": "image/png",
-                "source": "image source uri",
-                "alt": "alt",
-                "title": "title (optional)"
-            },
-            {
-                "id": "alt-1",
-                "source": "video/audio/pdf/plaintext/other source uri",
-                "type": "video",
-                "format": "mp4",
-                "mime": "video/mp4",
-                "alt": "alt",
-                "title": "title"
-            }
-        ]
-    },
-    "links": {
-      "lang-PLACE": [
-        {
-          "id": "link-name",
-          "name": "link name",
-          "url": "url"
-        }
-      ]
-    }
-}
+```diff
+...
+     "paragraphs": {
+         "lang-PLACE": [
+             {
+                 "id": "paragraph-id",
+-                "contents": "paragraph contents with _italic text_ and **bold text** that also has `code` (inline) and [a link](https://and-its-url.com/)"
++                "contents": "paragraph contents with <em>italic text</em> and <strong>bold text</strong> that also has <code>code</code> (inline) and <a href="https://and-its-url.com/">a link &quot;with a title&quot;</a>"
+             },
+...
 ```
 
 Thumbnails generation (build step)
@@ -216,11 +186,11 @@ Relevant functions:
 
 ```diff
 ...
-                "format": "png",
-                "mime": "image/png",
-                "source": "image source uri",
-                "alt": "alt",
-                "title": "title (optional)",
+                  "format": "png",
+                  "mime": "image/png",
+                  "source": "image source uri",
+                  "alt": "alt",
+                  "title": "title (optional)",
 +                 "thumbnails": [
 +                     {
 +                         "height": 20,
@@ -243,32 +213,36 @@ Relevant functions:
 +                     }
 +                 ]
 +             },
-            {
-                "id": "alt-1",
-                "source": "video/audio/pdf/plaintext/other source uri",
-                "type": "video",
-                "format": "mp4",
+              {
+                  "id": "alt-1",
+                  "source": "video/audio/pdf/plaintext/other source uri",
+                  "type": "video",
+                  "format": "mp4",
 ...
 ```
 
 Color extraction (build step)
 -----------------------------
 
+Relevant functions:
+
+- `media.go:ExtractColors`
+
 ```diff
 ...
-                "format": "png",
-                "mime": "image/png",
-                "source": "image source uri",
-                "alt": "alt",
-                "title": "title (optional)",
+                  "format": "png",
+                  "mime": "image/png",
+                  "source": "image source uri",
+                  "alt": "alt",
+                  "title": "title (optional)",
 +                 "colors": {
 +                   "primary": "#ebf580",
 +                   "secondary": "#c0ffee",
 +                 }
-                "thumbnails": [
-                    {
-                        "height": 20,
-                        "width": 20,
-                        "aspect_ratio": 1,
+                  "thumbnails": [
+                      {
+                          "height": 20,
+                          "width": 20,
+                          "aspect_ratio": 1,
 ...
 ```
