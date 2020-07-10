@@ -70,9 +70,7 @@ Some YAML keys are interpreted in a certain way though:
 Other information is extracted from the contents themselves:
 
 - `name` is extracted from the document's title (`# phelng` here)
-- `tags` is extracted from the first paragraph following the title, and are split on commas and newlines (`[cli, automation, program]` here)
 - `links` is extracted from a list that only contains named links (`- [code source](https://github.com/ewen-lbh/phelng)` here)
-- `made_with` is extracted from an unordered list following an `<h2>` named "Made with" (`## Made with`), each list item become a string and is added to `using` (`[python]` here)
 
 A special syntax is added to easily embed video or audio files, either from files in the work's folder, or from YouTube (playlists and videos):
 
@@ -85,27 +83,24 @@ It also renders not-too-bad on regular markdown, embedding a media can be sort o
 
 YouTube URLs always become video embeds and for local files, the MIME type and extension are checked to determine if it's an audio or video file.
 
-Each description "chunk" is separaed by an horizontal rule (`----`).
-
-The first chunk is added to `summary`, while others are added as an array of strings to `description_chunks`
-
 ```markdown
 ---
 created: 2020-05
 wip: yes
 best: yes
-color: FFFFFF
+color:
+  primary: white
+  secondary: black
+made with:
+  - python
+tags:
+  - program
+  - cli
 ---
 
 <!-- name -->
 
 # phelng
-
-<!-- tags -->
-
-cli,
-automation,
-program
 
 <!-- links -->
 
@@ -119,10 +114,8 @@ Un script pour télécharger automatiquement des musiques, en utilisant YouTube 
 Pour chaque morceau, la bonne vidéo YouTube est sélectionnée en coïncidant des informations telles que la durée du morceau et celle de la vidéo,
 puis est téléchargée, les métadonnées (incluant une image de la pochette) est appliquée, puis le volume sonore est normalisé.
 
-----
 
 La liste de morceaux à télécharger est stockée dans un fichier `.tsv`:
-
 Au début, j'ai eu l'idée d'utiliser le format de fichier le plus simple et le plus intuitif possible : un fichier texte, chaque piste d'une ligne, au format `{artiste} - {titre}`.
 
 Mais il y a quelques problèmes avec cette technique:
@@ -138,8 +131,6 @@ Mais il y a quelques problèmes avec cette technique:
   Si vous voulez télécharger la _Intro_ de **_B_**, vous ne pouvez pas le spécifier.
   Une nouvelle syntaxe pourrait être introduite, quelque chose comme "artiste - piste [album]" mais, encore une fois, que faire si le titre de la piste contient un crochet ouvrant "[" ?
 
-----
-
 La solution : utiliser un caractère _tab littéral_ comme séparateur d'informations.
 
 Et certains y ont déjà pensé, nous avons donc l'avantage d'utiliser un langage déjà existant :
@@ -152,8 +143,6 @@ norme pour les commentaires. Les commentaires peuvent être utiles dans votre fi
 pour "désactiver" temporairement les pistes et empêcher leur téléchargement, ou pour servir d'en-tête
 au début du fichier pour vous aider à vous souvenir du format.
 
-----
-
 Comme nous ne voulons pas limiter les caractères que les noms d'artistes peuvent contenir, nous ne pouvons pas utiliser quelque chose comme "un commentaire" ou "un autre". Comme les deux premiers champs sont _requis_, le simple fait d'avoir une ligne qui commence par un caractère de tabulation est ignoré par _phelng_, et signifierait autrement que la colonne "artiste" est indéfinie pour cette ligne.
 
 Ainsi, le format (jusqu'à présent*) est le suivant (avec `⭾` représentant un caractère de tabulation)
@@ -163,11 +152,6 @@ Ainsi, le format (jusqu'à présent*) est le suivant (avec `⭾` représentant u
 
 *Des champs supplémentaires pourraient être ajoutés à l'avenir, _sans rupture de la compatibilité ascendante_, puisque l'ordre des champs sera _toujours conservé_.
 
-<!-- using -->
-
-## Made with
-
-- python
 ```
 
 ## Configuration
@@ -189,18 +173,9 @@ build steps:
 
   - step: make thumbnails
     widths: [20, 100, 500]
-    input file: logo.png # If the directory has one image file and no logo.png, it uses this file instead
     # Paths are always relative to the work's database folder
     file name template: ../../static/thumbs/<id>/<width>.png
 
-
-features:
-  # Specified by an <ul> directly after a <h2>Made with</h2>
-  made with: on
-  # Extract media from the document and put it in an object:
-  # { media: [type]: [{ name, url }, {name, url}, ...] }
-  # with [type] one of audio, image and video
-  media hoisting: off
 
 validate:
   checks:

@@ -5,7 +5,7 @@ Usage:
   portfoliodb [options] <database> validate <database>
 
 Options:
-  -C --config=<filepath>      Use the configuration path at FILE. [default: .portfoliodb.yml]
+  -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
 
 Examples:
   portfoliodb database build database.json
