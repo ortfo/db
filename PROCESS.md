@@ -93,7 +93,11 @@ To JSON object
 
 Relevant functions:
 
-- `description.go:PseudoHTMLtoWorkObject`
+- `description.go:ExtractName`
+- `description.go:ExtractParagraphs`
+- `description.go:ExtractMedia`
+- `description.go:ExtractLink`
+- `description.go:SplitOnLanguageMarkers`
 
 ```json
 {
@@ -142,6 +146,11 @@ Relevant functions:
 
 Footnotes & abbreviations processing
 ------------------------------------
+
+Relevant functions:
+
+- `description.go:ApplyAbbreviation`
+- `description.go:ApplyFootnote`
 
 ```diff
       "paragraphs": {
