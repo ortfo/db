@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"path"
+	// "fmt"
+	// "path"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/docopt/docopt-go"
@@ -18,11 +18,16 @@ func RunCommandBuild(args docopt.Opts) error {
 		return err
 	}
 	for _, project := range projects {
-		metadata, description := ParseYAMLHeader(project.DescriptionRaw)
-		spew.Dump(metadata)
-		abbreviationsMap, description := CollectAbbreviationDeclarations(description)
-		description = ReplaceAbbreviations(description, abbreviationsMap)
-		description = ConvertMarkdownToHTML(description)
+		spew.Dump(project.DescriptionRaw)
+		_, descriptionRaw := ParseYAMLHeader(project.DescriptionRaw)
+		// spew.Dump(metadata)
+		descriptionAbove, descriptions := SplitOnLanguageMarkers(descriptionRaw)
+		spew.Dump(descriptions)
+		for language, description := range descriptions {
+			paragraphs := ExtractParagraphs(description)
+			spew.Dump(language, paragraphs)
+		}
+		spew.Dump(descriptionAbove)
 	}
 	return nil
 }

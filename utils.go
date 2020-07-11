@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -48,4 +49,14 @@ func FileExists(filepath string) bool {
 		return false
 	}
 	return true
+}
+
+func RegexpMatches(regex string, s string) bool {
+	p := regexp.MustCompile(regex)
+	return p.MatchString(s)
+}
+
+func RegexpGroups(regex string, s string) []string {
+	p := regexp.MustCompile(regex)
+	return p.FindStringSubmatch(s)
 }

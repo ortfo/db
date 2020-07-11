@@ -1,29 +1,27 @@
 package main
 
 import (
-	// "fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
-	// "github.com/davecgh/go-spew/spew"
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/parser"
 	"gopkg.in/yaml.v2"
+
+	// "github.com/davecgh/go-spew/spew"
+	// "github.com/gomarkdown/markdown"
+	// "github.com/gomarkdown/markdown/parser"
+	// "github.com/gomarkdown/markdown/renderer"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/metal3d/go-slugify"
 )
 
-// UnknownYAMLObject represents an object with unknown structure
-// and is used to store the YAML header of description.md files
-type UnknownYAMLObject interface{}
-
-// DescriptionParseResult represents a parsed description.md file.
-// It does *not* represent a complete project object, though, as
-// it is not aware of any media files in the project's directory,
-// for example.
-type DescriptionParseResult struct {
-	HTML       string
-	YAMLHeader map[string]interface{}
-	Links      map[string]string
-}
+const (
+	patternImageOrMediaOrLinkDeclaration string = `^([!>]?)\[([^"\]]+)(?: "([^"\]]+)")?\]\(([^\)]+)\)$`
+	patternLanguageMarker                string = `^::\s+(.+)$`
+	patternFootnoteDeclaration           string = `^\[(\d+)\]:\s+(.+)$`
+	patternAbbreviationDefinition        string = `^\*\[([^\]]+)\]:\s+(.+)$`
+	patternParagraphID                   string = `^\(([a-z-]+)\)$`
+)
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns
 // the rest of the content (all except the YAML header)
@@ -32,9 +30,9 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 	var rawYAMLPart string
 	var markdownPart string
 	for _, line := range strings.Split(descriptionRaw, "\n") {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
+		// if strings.TrimSpace(line) == "" && !inYAMLHeader {
+		// 	continue
+		// }
 		if strings.TrimSpace(line) == "---" {
 			inYAMLHeader = !inYAMLHeader
 			continue
@@ -50,75 +48,192 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 	return parsedYAMLPart, markdownPart
 }
 
-// ConvertMarkdownToHTML converts a markdown string to an HTML string,
-// using CommonExtensions and AutoHeadingIDs extensions github.com/gomarkdown/markdown
-func ConvertMarkdownToHTML(markdownRaw string) string {
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
-	parser := parser.NewWithExtensions(extensions)
-	markdownBytes := []byte(markdownRaw)
-	return string(markdown.ToHTML(markdownBytes, parser, nil))
+// Abbreviation represents an abbreviation declaration in a description.md file
+type Abbreviation struct {
+	Name       string
+	Definition string
 }
 
-// CollectAbbreviationDeclarations looks for Abbreviations & acronyms definitions in a markdown string
-// and returns them as a map, with keys being the abbreivations and values their respective definitions as the first return value
-// and the raw markdown string with abbreviation declarations stripped.
-func CollectAbbreviationDeclarations(markdownRaw string) (map[string]string, string) {
-	lines := strings.Split(markdownRaw, "\n")
-	pattern := regexp.MustCompile("\\s*\\*\\[([^\\]]+)\\]: (.+)")
-	abbreviations := make(map[string]string)
-	var markdownStripped string
-	for _, line := range lines {
-		isAnAbbreviationDefinition := pattern.MatchString(line)
-		if isAnAbbreviationDefinition {
-			groups := pattern.FindStringSubmatch(line)
-			abbreviations[groups[1]] = groups[2]
-		} else {
-			markdownStripped += line + "\n"
-		}
-	}
-	return abbreviations, markdownStripped
+// Footnote represents a footnote declaration in a description.md file
+type Footnote struct {
+	Number  uint16 // Oh no, what a bummer, you can't have more than 65 535 footnotes
+	Content string
 }
 
-// ReplaceAbbreviations takes in a markdown string and a map of abbreviation: definition and replaces
-// occurences of ``abbreviation`` with the appropriate HTML markup (<abbr> tag)
-func ReplaceAbbreviations(markdownRaw string, abbreviations map[string]string) string {
-	for abbr, def := range abbreviations {
-		//TODO: Replace on word boundaries
-		escapedDef := strings.ReplaceAll(def, "\"", "\\\"")
-		markup := "<abbr title=\"" + escapedDef + "\">" + abbr + "</abbr>"
-		markdownRaw = strings.ReplaceAll(markdownRaw, abbr, markup)
-	}
-	return markdownRaw
+type Paragraph struct {
+	ID      string
+	Content string
 }
 
-// MediaEmbedDeclaration represents a media embed declaration found in description files such as `>[alt "title"](source)`
+type Link struct {
+	ID    string
+	Name  string
+	Title string
+	URL   string
+}
+
+type WorkObject struct {
+	Name       string
+	Paragraphs map[string][]Paragraph
+	Media      map[string][]Media
+	Links      map[string][]Link
+	Colors     map[string]string
+}
+
+// MediaEmbedDeclaration represents >[media](...) embeds.
+// Only stores the info extracted from the syntax, no filesystem interactions.
 type MediaEmbedDeclaration struct {
-	Source string
 	Alt    string
 	Title  string
+	Source string
 }
 
-// ParseMediaEmbedDeclaration parses a >\[media "embed"\](declaration) and returns (theHTMLResult, AListOfFoundMediaEmbeds)
-// the HTML result is not complete yet, as the <EMBED> element is meant to be replaced with either:
-// - an `<iframe>` for embedded YouTube videos
-// - an `<audio>` tag
-// - a `<video>` tag
-func ParseMediaEmbedDeclaration(markdownRaw string) (string, []MediaEmbedDeclaration) {
-	pattern := regexp.MustCompile("^>\\[([^\\]\"]+)(?: \"([^\\]\"]+)\")?\\]\\(([^)]+)\\)$")
-	var embeds []MediaEmbedDeclaration
-	var parsedLines string
-	for _, line := range strings.Split(markdownRaw, "\n") {
-		if pattern.MatchString(line) {
-			groups := pattern.FindStringSubmatch(line)
-			embed := MediaEmbedDeclaration{
-				Alt:    groups[0],
-				Source: groups[1],
-				Title:  groups[2],
-			}
-			embeds = append(embeds, embed)
-			line = "<EMBED alt=\"" + embed.Alt + "\" title=\"" + embed.Title + "\" src=\"" + embed.Source + "\"></EMBED>"
-		}
-		parsedLines += line + "\n"
+// ImageEmbedDeclaration represents ![media](...) embeds.
+// Only stores the info extracted from the syntax, no filesystem interactions.
+type ImageEmbedDeclaration = MediaEmbedDeclaration
+
+// CollectAbbreviation tries to match the given line and collect an abbreviation.
+// Return values:
+// 1. Abbreviation struct
+// 2. Whether the line defines an abbreviation (bool)
+func CollectAbbreviation(line string) (Abbreviation, bool) {
+	pattern := regexp.MustCompile(patternAbbreviationDefinition)
+	if pattern.MatchString(line) {
+		matches := pattern.FindStringSubmatch(line)
+		return Abbreviation{Name: matches[0], Definition: matches[1]}, true
 	}
-	return parsedLines, embeds
+	return Abbreviation{}, false
+}
+
+// CollectFootnote tries to match the given line and collect a footnote declaration.
+// Return values:
+// 1. Footnote struct
+// 2. Whether the line declares a footnote (bool)
+func CollectFootnote(line string) (Footnote, bool) {
+	pattern := regexp.MustCompile(patternFootnoteDeclaration)
+	if pattern.MatchString(line) {
+		matches := pattern.FindStringSubmatch(line)
+		footnoteNumber, _ := strconv.ParseUint(matches[0], 10, 16)
+		return Footnote{Number: uint16(footnoteNumber), Content: matches[1]}, true
+	}
+	return Footnote{}, false
+}
+
+// CollectAbbreviationsAndFootnotes iterates through the document's lines and
+// extracts abbreviations and footnotes declarations from the file
+// The first returned value is the markdown document with parsed declarations removed.
+func CollectAbbreviationsAndFootnotes(markdownRaw string) (string, []Abbreviation, []Footnote) {
+	lines := strings.Split(markdownRaw, "\n")
+	markdownRet := ""
+	abbreviations := make([]Abbreviation, 8^16)
+	footnotes := make([]Footnote, 8^16)
+	for _, line := range lines {
+		abbreviation, definesAbbreviation := CollectAbbreviation(line)
+		footnote, declaresFootnote := CollectFootnote(line)
+		if definesAbbreviation {
+			abbreviations = append(abbreviations, abbreviation)
+		} else if declaresFootnote {
+			footnotes = append(footnotes, footnote)
+		} else {
+			markdownRet += line + "\n"
+			continue
+		}
+
+	}
+	return markdownRet, abbreviations, footnotes
+}
+
+// SplitOnLanguageMarkers returns two values:
+// 1. the text before any language markers
+// 2. a map with language codes as keys and the content as values
+func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
+	lines := strings.Split(markdownRaw, "\n")
+	pattern := regexp.MustCompile(patternLanguageMarker)
+	currentLanguage := ""
+	before := ""
+	retMap := map[string]string{}
+	for _, line := range lines {
+		if pattern.MatchString(line) {
+			currentLanguage := pattern.FindStringSubmatch(line)[0]
+			retMap[currentLanguage] = ""
+		}
+		if currentLanguage == "" {
+			before += line + "\n"
+		} else {
+			retMap[currentLanguage] += line + "\n"
+		}
+	}
+	return before, retMap
+}
+
+// ExtractName extracts the first <h1> from markdown
+func ExtractName(line string) string {
+	pattern := regexp.MustCompile(`^#\s+(.+)$`)
+	if pattern.MatchString(line) {
+		return pattern.FindStringSubmatch(line)[0]
+	}
+	return ""
+}
+
+// ExtractMedia extracts media declarations (>[alt "title"](source)), images (![alt "title"](source)) or links ([alt "title"](source))
+// Return value is a regex match string array: first character (empty for links), alt, title, source.
+func extractMediaOrImageOrLink(line string) []string {
+	pattern := regexp.MustCompile(patternImageOrMediaOrLinkDeclaration)
+	if pattern.MatchString(line) {
+		matches := pattern.FindStringSubmatch(line)
+		return matches
+	}
+	return make([]string, 0)
+}
+
+func extractLink(regexMatches []string) Link {
+	return Link{
+		ID:    slugify.Marshal(regexMatches[1]),
+		Name:  regexMatches[1],
+		Title: regexMatches[2],
+		URL:   regexMatches[3],
+	}
+}
+
+func extractImage(regexMatches []string) ImageEmbedDeclaration {
+	return ImageEmbedDeclaration{
+		Alt:    regexMatches[1],
+		Title:  regexMatches[2],
+		Source: regexMatches[3],
+	}
+}
+
+func extractMedia(regexMatches []string) MediaEmbedDeclaration {
+	return MediaEmbedDeclaration{
+		Alt:    regexMatches[1],
+		Title:  regexMatches[2],
+		Source: regexMatches[3],
+	}
+}
+
+// ExtractParagraphs extracts the paragraphs and their IDs (if present)
+// and returns an array of paragraphs
+func ExtractParagraphs(markdownRaw string) []Paragraph {
+	chunks := strings.Split(markdownRaw, "\n\n")
+	spew.Dump(chunks)
+	paragraphs := make([]Paragraph, 0)
+	firstParagraphIDPattern := regexp.MustCompile(patternParagraphID)
+	currentParagraphID := ""
+
+	for _, chunk := range chunks {
+		chunkLines := strings.Split(chunk, "\n")
+		isAParagraphChunk := !RegexpMatches(patternAbbreviationDefinition, chunk) && !RegexpMatches(patternFootnoteDeclaration, chunk) && !RegexpMatches(patternImageOrMediaOrLinkDeclaration, chunk) && !RegexpMatches(patternLanguageMarker, chunk)
+
+		if firstParagraphIDPattern.MatchString(chunkLines[0]) {
+			currentParagraphID = firstParagraphIDPattern.FindStringSubmatch(chunkLines[0])[0]
+			chunkLines = chunkLines[1:]
+		}
+		if isAParagraphChunk {
+			paragraphs = append(paragraphs, Paragraph{
+				ID:      currentParagraphID,
+				Content: strings.Join(chunkLines, "\n"),
+			})
+		}
+	}
+	return paragraphs
 }
