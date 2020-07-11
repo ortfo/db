@@ -65,7 +65,7 @@ Relevant functions:
 Collected abbreviations
 
 ```go
-type Abbreviation {
+type Abbreviation struct {
   Name string
   Definition string
 }
@@ -78,7 +78,7 @@ collected := [
 Collected footnotes
 
 ```go
-type Footnote {
+type Footnote struct {
   Number uint16 // Oh no, what a bummer, you can't have more than 65 535 footnotes
   Content string
 }
