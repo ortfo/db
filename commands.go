@@ -4,12 +4,14 @@ import (
 	// "fmt"
 	// "path"
 
-	"github.com/davecgh/go-spew/spew"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/docopt/docopt-go"
 )
 
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt
 func RunCommandBuild(args docopt.Opts) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	_, err := GetConfigurationFromCLIArgs(args)
@@ -18,16 +20,10 @@ func RunCommandBuild(args docopt.Opts) error {
 		return err
 	}
 	for _, project := range projects {
-		spew.Dump(project.DescriptionRaw)
-		_, descriptionRaw := ParseYAMLHeader(project.DescriptionRaw)
-		// spew.Dump(metadata)
-		descriptionAbove, descriptions := SplitOnLanguageMarkers(descriptionRaw)
-		spew.Dump(descriptions)
-		for language, description := range descriptions {
-			paragraphs := ExtractParagraphs(description)
-			spew.Dump(language, paragraphs)
-		}
-		spew.Dump(descriptionAbove)
+		description := ParseDescription(project.DescriptionRaw)
+		bytes, err := json.MarshalIndent(description, "", "  ")
+		println(err.Error())
+		println(string(bytes))
 	}
 	return nil
 }
