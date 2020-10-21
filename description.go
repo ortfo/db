@@ -1,7 +1,10 @@
 package main
 
-//TODO: deal with abbreviations & footnotes
-//TODO: turn paragraphs into HTML
+//TODO: deal with footnote references
+//TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
+// - french guillemets -> renderer:SmartypantsQuotesNBSP
+// - open links in new tab -> renderer:HrefTargetBlank
+// ...
 
 import (
 	"regexp"
@@ -11,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	// "github.com/davecgh/go-spew/spew"
-	// "github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown"
 	// "github.com/gomarkdown/markdown/parser"
 	// "github.com/gomarkdown/markdown/renderer"
 	// "github.com/davecgh/go-spew/spew"
@@ -244,6 +247,13 @@ func extractMedia(regexMatches []string) MediaEmbedDeclaration {
 	}
 }
 
+func extractAbbreviation(regexMatches []string) Abbreviation {
+	return Abbreviation{
+		Name:       regexMatches[1],
+		Definition: regexMatches[2],
+	}
+}
+
 // ParseParagraph takes a chunk of type "paragraph" or "paragraphWithID" and returns a parsed Paragraph with HTML content
 func ParseParagraph(chunk Chunk) Paragraph {
 	var paragraphID string = ""
@@ -307,6 +317,10 @@ func ParseLinkChunk(chunk Chunk) Link {
 	return extractLink(RegexpGroups(patternImageOrMediaOrLinkDeclaration, chunk.Content))
 }
 
+func ParseAbbreviationChunk(chunk Chunk) Abbreviation {
+	return extractAbbreviation(RegexpGroups(patternAbbreviationDefinition, chunk.Content))
+}
+
 // GetAllLanguages returns all language codes used in the document
 func GetAllLanguages(markdownRaw string) []string {
 	lines := strings.Split(markdownRaw, "\n")
@@ -329,8 +343,10 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 	links := make(map[string][]Link, 0)
 	title := make(map[string]string, 0)
 	footnotes := make(map[string][]Footnote, 0)
+	abbreviations := make(map[string][]Abbreviation, 0)
+	// First pass to collect everything
 	for _, language := range GetAllLanguages(markdownRaw) {
-		// unlocalized stuff appears the same in every language.
+		// Unlocalized stuff appears the same in every language.
 		chunks := ParseLanguagedChunks(notLocalizedRaw)
 		chunks = append(chunks, ParseLanguagedChunks(localizedRawBlocks[language])...)
 		currentLanguageParagraphs := make([]Paragraph, 0)
@@ -338,6 +354,7 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		currentLanguageImageEmbedDeclarations := make([]ImageEmbedDeclaration, 0)
 		currentLanguageLinks := make([]Link, 0)
 		currentLanguageFootnotes := make([]Footnote, 0)
+		currentLanguageAbbreviations := make([]Abbreviation, 0)
 		var currentLanguageTitle string
 		for _, chunk := range chunks {
 			if chunk.Type == "title" {
@@ -353,6 +370,24 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 				currentLanguageImageEmbedDeclarations = append(currentLanguageImageEmbedDeclarations, ParseImageChunk(chunk))
 			} else if chunk.Type == "links" {
 				currentLanguageLinks = append(currentLanguageLinks, ParseLinkChunk(chunk))
+			} else if chunk.Type == "abbreviation" {
+				currentLanguageAbbreviations = append(currentLanguageAbbreviations, ParseAbbreviationChunk(chunk))
+			}
+		}
+		// Second pass to replace abbreviations (if any) and render to HTML
+		for i, paragraph := range currentLanguageParagraphs {
+			abbreviationsProcessed := paragraph.Content
+			for _, abbreviation := range currentLanguageAbbreviations {
+				var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
+				abbreviationsProcessed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\"" + abbreviation.Definition + "\">" + abbreviation.Name + "</abbr>")
+			}
+			convertedToHTML := string(markdown.ToHTML([]byte(abbreviationsProcessed), nil, nil))
+			// Remove outer paragraph tag & eventual whitespace
+			patternOuterParagraph := `\s*<p>(.+)</p>\s*`
+			convertedToHTML = RegexpGroups(patternOuterParagraph, convertedToHTML)[1]
+			currentLanguageParagraphs[i] = Paragraph{
+				ID:      paragraph.ID,
+				Content: convertedToHTML,
 			}
 		}
 		paragraphs[language] = currentLanguageParagraphs
@@ -361,6 +396,7 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		mediaEmbedDeclarations[language] = currentLanguageMediaEmbedDeclarations
 		imageEmbedDeclarations[language] = currentLanguageImageEmbedDeclarations
 		footnotes[language] = currentLanguageFootnotes
+		abbreviations[language] = currentLanguageAbbreviations
 	}
 	return ParsedDescription{
 		Metadata:               metadata,
