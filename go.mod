@@ -10,6 +10,8 @@ require (
 	github.com/imdatngo/mergo v0.3.9
 	github.com/json-iterator/go v1.1.10
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
+	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/xeipuuv/gojsonschema v1.2.0
+	gitlab.com/opennota/screengen v0.0.0-20191122132138-74a8d677a1a5
 	gopkg.in/yaml.v2 v2.3.0
 )
