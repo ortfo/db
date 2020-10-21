@@ -21,14 +21,12 @@ func RunCommandBuild(args docopt.Opts) error {
 	}
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
-		bytes, err := json.MarshalIndent(description, "", "  ")
-		// bytes, err := json.Marshal(description)
-		if err != nil {
-			println(err.Error())
-		} else {
-			println(string(bytes))
+		jsonDescription, _ := json.Marshal(description)
+		println(string(jsonDescription))
+		// media := make([]Media, 0)
+		for _, filepath := range project.MediaFilepaths {
+			println(filepath)
 		}
-		println("===================================================================================")
 	}
 	return nil
 }

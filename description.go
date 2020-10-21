@@ -5,6 +5,8 @@ package main
 // - open links in new tab -> renderer:HrefTargetBlank
 // ...
 
+//TODO: reorganize that file, it's a hot mess.
+
 import (
 	"regexp"
 	"strings"
@@ -92,7 +94,6 @@ type ParsedDescription struct {
 	Title                  map[string]string
 	Paragraphs             map[string][]Paragraph
 	MediaEmbedDeclarations map[string][]MediaEmbedDeclaration
-	ImageEmbedDeclarations map[string][]ImageEmbedDeclaration
 	Links                  map[string][]Link
 	Footnotes              map[string][]Footnote
 }
@@ -119,10 +120,6 @@ type MediaEmbedDeclaration struct {
 	Title  string
 	Source string
 }
-
-// ImageEmbedDeclaration represents ![media](...) embeds.
-// Only stores the info extracted from the syntax, no filesystem interactions.
-type ImageEmbedDeclaration = MediaEmbedDeclaration
 
 // CollectAbbreviation tries to match the given line and collect an abbreviation.
 // Return values:
@@ -206,14 +203,6 @@ func extractLink(regexMatches []string) Link {
 	}
 }
 
-func extractImage(regexMatches []string) ImageEmbedDeclaration {
-	return ImageEmbedDeclaration{
-		Alt:    regexMatches[2],
-		Title:  regexMatches[3],
-		Source: regexMatches[4],
-	}
-}
-
 func extractMedia(regexMatches []string) MediaEmbedDeclaration {
 	return MediaEmbedDeclaration{
 		Alt:    regexMatches[2],
@@ -282,9 +271,6 @@ func ParseLanguagedChunks(markdownRaw string) []Chunk {
 	return typedChunks
 }
 
-func ParseImageChunk(chunk Chunk) ImageEmbedDeclaration {
-	return extractImage(RegexpGroups(patternImageOrMediaOrLinkDeclaration, chunk.Content))
-}
 func ParseMediaChunk(chunk Chunk) MediaEmbedDeclaration {
 	return extractMedia(RegexpGroups(patternImageOrMediaOrLinkDeclaration, chunk.Content))
 }
@@ -332,7 +318,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
 	paragraphs := make(map[string][]Paragraph, 0)
 	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration, 0)
-	imageEmbedDeclarations := make(map[string][]ImageEmbedDeclaration, 0)
 	links := make(map[string][]Link, 0)
 	title := make(map[string]string, 0)
 	footnotes := make(map[string][]Footnote, 0)
@@ -344,7 +329,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		chunks = append(chunks, ParseLanguagedChunks(localizedRawBlocks[language])...)
 		currentLanguageParagraphs := make([]Paragraph, 0)
 		currentLanguageMediaEmbedDeclarations := make([]MediaEmbedDeclaration, 0)
-		currentLanguageImageEmbedDeclarations := make([]ImageEmbedDeclaration, 0)
 		currentLanguageLinks := make([]Link, 0)
 		currentLanguageFootnotes := make([]Footnote, 0)
 		currentLanguageAbbreviations := make([]Abbreviation, 0)
@@ -357,10 +341,8 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 				currentLanguageFootnotes = append(currentLanguageFootnotes, footnote)
 			} else if chunk.Type == "paragraph" || chunk.Type == "paragraphWithID" {
 				currentLanguageParagraphs = append(currentLanguageParagraphs, ParseParagraph(chunk))
-			} else if chunk.Type == "media" {
+			} else if chunk.Type == "media" || chunk.Type == "image"{
 				currentLanguageMediaEmbedDeclarations = append(currentLanguageMediaEmbedDeclarations, ParseMediaChunk(chunk))
-			} else if chunk.Type == "image" {
-				currentLanguageImageEmbedDeclarations = append(currentLanguageImageEmbedDeclarations, ParseImageChunk(chunk))
 			} else if chunk.Type == "links" {
 				currentLanguageLinks = append(currentLanguageLinks, ParseLinkChunk(chunk))
 			} else if chunk.Type == "abbreviation" {
@@ -390,7 +372,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		links[language] = currentLanguageLinks
 		title[language] = currentLanguageTitle
 		mediaEmbedDeclarations[language] = currentLanguageMediaEmbedDeclarations
-		imageEmbedDeclarations[language] = currentLanguageImageEmbedDeclarations
 		footnotes[language] = currentLanguageFootnotes
 		abbreviations[language] = currentLanguageAbbreviations
 	}
@@ -400,7 +381,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		Links:                  links,
 		Title:                  title,
 		MediaEmbedDeclarations: mediaEmbedDeclarations,
-		ImageEmbedDeclarations: imageEmbedDeclarations,
 		Footnotes:              footnotes,
 	}
 }
