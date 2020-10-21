@@ -1,6 +1,5 @@
 package main
 
-//FIXME: Footnote reference links all have text "1" (because each paragraph is isolated)
 //TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
 // - french guillemets -> renderer:SmartypantsQuotesNBSP
 // - open links in new tab -> renderer:HrefTargetBlank
@@ -15,6 +14,7 @@ import (
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
+
 	// "github.com/gomarkdown/markdown/renderer"
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/metal3d/go-slugify"
@@ -313,6 +313,19 @@ func MarkdownToHTML(markdownRaw string) string {
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
 }
 
+// ProcessFootnoteReferences renders to HTML all footnote references in markdownRaw
+func ProcessFootnoteReferences(markdownRaw string) string {
+	patternFootnoteReference := regexp.MustCompile(`\[\^([^\]]+)\]`)
+	processed := markdownRaw
+	for _, referencePosition := range patternFootnoteReference.FindAllStringIndex(markdownRaw, -1) {
+		reference := markdownRaw[referencePosition[0]:referencePosition[1]]
+		footnoteName := patternFootnoteReference.FindStringSubmatch(reference)[1]
+		//TODO: make the href (and <sup> class) customizable
+		processed = strings.ReplaceAll(processed, reference, `<sup class="foonote-ref"><a href="#footnote:` + footnoteName + `">` + footnoteName + `</a></sup>`)
+	}
+	return processed
+}
+
 func ParseDescription(markdownRaw string) ParsedDescription {
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
@@ -334,9 +347,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		currentLanguageImageEmbedDeclarations := make([]ImageEmbedDeclaration, 0)
 		currentLanguageLinks := make([]Link, 0)
 		currentLanguageFootnotes := make([]Footnote, 0)
-		// we also store a raw version to give footnote definitions to the markdown-to-HTML converter
-		// since each paragraph is given to the converter separately, _all_ footnote declarations must be appended to each paragraph before being given to the converter.
-		currentLanguageFootnotesRaw := make([]string, 0)
 		currentLanguageAbbreviations := make([]Abbreviation, 0)
 		var currentLanguageTitle string
 		for _, chunk := range chunks {
@@ -345,7 +355,6 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 			} else if chunk.Type == "footnote" {
 				footnote := ParseFootnote(chunk.Content)
 				currentLanguageFootnotes = append(currentLanguageFootnotes, footnote)
-				currentLanguageFootnotesRaw = append(currentLanguageFootnotesRaw, chunk.Content)
 			} else if chunk.Type == "paragraph" || chunk.Type == "paragraphWithID" {
 				currentLanguageParagraphs = append(currentLanguageParagraphs, ParseParagraph(chunk))
 			} else if chunk.Type == "media" {
@@ -358,18 +367,18 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 				currentLanguageAbbreviations = append(currentLanguageAbbreviations, ParseAbbreviationChunk(chunk))
 			}
 		}
-		// Second pass to replace abbreviations (if any) and render to HTML
+		// Second pass to replace abbreviations (if any), render footnote references (if any) and render to HTML
 		for i, paragraph := range currentLanguageParagraphs {
 			processed := paragraph.Content
 			for _, abbreviation := range currentLanguageAbbreviations {
 				var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
 				processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+abbreviation.Definition+"\">"+abbreviation.Name+"</abbr>")
 			}
-			// Add all footnotes declarations for them to be available to that paragraph.
-			processed += "\n" + strings.Join(currentLanguageFootnotesRaw, "\n")
+			processed = ProcessFootnoteReferences(processed)
 			convertedToHTML := MarkdownToHTML(processed)
+			// Fix footnote references' links having a number as text instead of the footnote's name: here, every paragraph is isolated, so the converter can't possibly asssign correct footnote reference numbers.
+			// We use the footnote's name directly instead.
 			// Remove outer paragraph tag & eventual whitespace
-			println(convertedToHTML)
 			patternOuterParagraph := `\s*<p>(.+)</p>\s*`
 			convertedToHTML = RegexpGroups(patternOuterParagraph, convertedToHTML)[1]
 			currentLanguageParagraphs[i] = Paragraph{

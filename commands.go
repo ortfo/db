@@ -22,6 +22,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
 		bytes, err := json.MarshalIndent(description, "", "  ")
+		// bytes, err := json.Marshal(description)
 		if err != nil {
 			println(err.Error())
 		} else {
