@@ -174,19 +174,19 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	pattern := regexp.MustCompile(patternLanguageMarker)
 	currentLanguage := ""
 	before := ""
-	retMap := map[string]string{}
+	markdownRawPerLanguage := map[string]string{}
 	for _, line := range lines {
 		if pattern.MatchString(line) {
 			currentLanguage = pattern.FindStringSubmatch(line)[1]
-			retMap[currentLanguage] = ""
+			markdownRawPerLanguage[currentLanguage] = ""
 		}
 		if currentLanguage == "" {
 			before += line + "\n"
 		} else {
-			retMap[currentLanguage] += line + "\n"
+			markdownRawPerLanguage[currentLanguage] += line + "\n"
 		}
 	}
-	return before, retMap
+	return before, markdownRawPerLanguage
 }
 
 // ExtractTitle extracts the first <h1> from markdown
