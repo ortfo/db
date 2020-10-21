@@ -27,6 +27,7 @@ func RunCommandBuild(args docopt.Opts) error {
 		} else {
 			println(string(bytes))
 		}
+		println("===================================================================================")
 	}
 	return nil
 }

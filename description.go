@@ -1,6 +1,6 @@
 package main
 
-//TODO: deal with footnote references
+//FIXME: Footnote reference links all have text "1" (because each paragraph is isolated)
 //TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
 // - french guillemets -> renderer:SmartypantsQuotesNBSP
 // - open links in new tab -> renderer:HrefTargetBlank
@@ -8,14 +8,13 @@ package main
 
 import (
 	"regexp"
-	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/gomarkdown/markdown"
-	// "github.com/gomarkdown/markdown/parser"
+	"github.com/gomarkdown/markdown/parser"
 	// "github.com/gomarkdown/markdown/renderer"
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/metal3d/go-slugify"
@@ -24,7 +23,7 @@ import (
 const (
 	patternImageOrMediaOrLinkDeclaration string = `^([!>]?)\[([^"\]]+)(?: "([^"\]]+)")?\]\(([^\)]+)\)$`
 	patternLanguageMarker                string = `^::\s+(.+)$`
-	patternFootnoteDeclaration           string = `^\[(\d+)\]:\s+(.+)$`
+	patternFootnoteDeclaration           string = `^\[\^([^\^]+)\]:\s+(.+)$`
 	patternAbbreviationDefinition        string = `^\*\[([^\]]+)\]:\s+(.+)$`
 	patternParagraphID                   string = `^\(([a-z-]+)\)$`
 	patternTitle                         string = `^#\s+(.+)$`
@@ -63,7 +62,7 @@ type Abbreviation struct {
 
 // Footnote represents a footnote declaration in a description.md file
 type Footnote struct {
-	Number  uint16 // Oh no, what a bummer, you can't have more than 65 535 footnotes
+	Name    string
 	Content string
 }
 
@@ -140,33 +139,9 @@ func CollectAbbreviation(line string) (Abbreviation, bool) {
 
 // ParseFootnote parses raw markdown into a footnote struct.
 func ParseFootnote(markdownRaw string) Footnote {
+	println("parsing footnote from raw markdown: ", markdownRaw)
 	groups := RegexpGroups(patternFootnoteDeclaration, markdownRaw)
-	footnoteNumber, _ := strconv.ParseInt(groups[0], 10, 16)
-	return Footnote{Number: uint16(footnoteNumber), Content: groups[1]}
-}
-
-// CollectAbbreviationsAndFootnotes iterates through the document's lines and
-// extracts abbreviations and footnotes declarations from the file
-// The first returned value is the markdown document with parsed declarations removed.
-func CollectAbbreviationsAndFootnotes(markdownRaw string) (string, []Abbreviation, []Footnote) {
-	lines := strings.Split(markdownRaw, "\n")
-	markdownRet := ""
-	abbreviations := make([]Abbreviation, 8^16)
-	footnotes := make([]Footnote, 8^16)
-	for _, line := range lines {
-		abbreviation, definesAbbreviation := CollectAbbreviation(line)
-		footnote := ParseFootnote(line)
-		if definesAbbreviation {
-			abbreviations = append(abbreviations, abbreviation)
-		} else if footnote.Content != "" {
-			footnotes = append(footnotes, footnote)
-		} else {
-			markdownRet += line + "\n"
-			continue
-		}
-
-	}
-	return markdownRet, abbreviations, footnotes
+	return Footnote{Name: groups[1], Content: groups[2]}
 }
 
 // SplitOnLanguageMarkers returns two values:
@@ -294,7 +269,7 @@ func ParseLanguagedChunks(markdownRaw string) []Chunk {
 				typedChunks = append(typedChunks, Chunk{Content: chunk, Type: "image"})
 			}
 		} else if RegexpMatches(patternFootnoteDeclaration, chunk) {
-			typedChunks = append(typedChunks, Chunk{Content: chunk, Type: "footnoteDeclaration"})
+			typedChunks = append(typedChunks, Chunk{Content: chunk, Type: "footnote"})
 		} else if RegexpMatches(patternLanguageMarker, chunk) {
 			continue
 		} else if RegexpMatches(patternTitle, chunk) {
@@ -333,6 +308,11 @@ func GetAllLanguages(markdownRaw string) []string {
 	return languages
 }
 
+func MarkdownToHTML(markdownRaw string) string {
+	extensions := parser.CommonExtensions | parser.Footnotes | parser.AutoHeadingIDs
+	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
+}
+
 func ParseDescription(markdownRaw string) ParsedDescription {
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
@@ -354,6 +334,9 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		currentLanguageImageEmbedDeclarations := make([]ImageEmbedDeclaration, 0)
 		currentLanguageLinks := make([]Link, 0)
 		currentLanguageFootnotes := make([]Footnote, 0)
+		// we also store a raw version to give footnote definitions to the markdown-to-HTML converter
+		// since each paragraph is given to the converter separately, _all_ footnote declarations must be appended to each paragraph before being given to the converter.
+		currentLanguageFootnotesRaw := make([]string, 0)
 		currentLanguageAbbreviations := make([]Abbreviation, 0)
 		var currentLanguageTitle string
 		for _, chunk := range chunks {
@@ -362,6 +345,7 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 			} else if chunk.Type == "footnote" {
 				footnote := ParseFootnote(chunk.Content)
 				currentLanguageFootnotes = append(currentLanguageFootnotes, footnote)
+				currentLanguageFootnotesRaw = append(currentLanguageFootnotesRaw, chunk.Content)
 			} else if chunk.Type == "paragraph" || chunk.Type == "paragraphWithID" {
 				currentLanguageParagraphs = append(currentLanguageParagraphs, ParseParagraph(chunk))
 			} else if chunk.Type == "media" {
@@ -376,13 +360,16 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		}
 		// Second pass to replace abbreviations (if any) and render to HTML
 		for i, paragraph := range currentLanguageParagraphs {
-			abbreviationsProcessed := paragraph.Content
+			processed := paragraph.Content
 			for _, abbreviation := range currentLanguageAbbreviations {
 				var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
-				abbreviationsProcessed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\"" + abbreviation.Definition + "\">" + abbreviation.Name + "</abbr>")
+				processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+abbreviation.Definition+"\">"+abbreviation.Name+"</abbr>")
 			}
-			convertedToHTML := string(markdown.ToHTML([]byte(abbreviationsProcessed), nil, nil))
+			// Add all footnotes declarations for them to be available to that paragraph.
+			processed += "\n" + strings.Join(currentLanguageFootnotesRaw, "\n")
+			convertedToHTML := MarkdownToHTML(processed)
 			// Remove outer paragraph tag & eventual whitespace
+			println(convertedToHTML)
 			patternOuterParagraph := `\s*<p>(.+)</p>\s*`
 			convertedToHTML = RegexpGroups(patternOuterParagraph, convertedToHTML)[1]
 			currentLanguageParagraphs[i] = Paragraph{
