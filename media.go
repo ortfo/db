@@ -8,6 +8,8 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -43,6 +45,7 @@ type Media struct {
 	Size        uint64 // In bytes
 	Dimensions  ImageDimensions
 	Duration    uint // In seconds
+	Online      bool // Whether the media is hosted online (referred to by an URL)
 }
 
 // TODO: support for pdf files.
@@ -61,8 +64,8 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	return ImageDimensions{width, height, ratio}, nil
 }
 
-// AnalyzeFile analyzes the file at filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
-func AnalyzeFile(filename string, embedDeclaration MediaEmbedDeclaration) Media {
+// AnalyzeMediaFile analyzes the file at filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
+func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) Media {
 	file, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -108,7 +111,7 @@ func AnalyzeFile(filename string, embedDeclaration MediaEmbedDeclaration) Media 
 	}
 
 	return Media{
-		ID:          slugify.Marshal(filename),
+		ID:          slugify.Marshal(filepath.Base(filename)),
 		Alt:         embedDeclaration.Alt,
 		Title:       embedDeclaration.Title,
 		Source:      filename,
@@ -149,4 +152,32 @@ func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, dur
 	}
 	duration = uint(video.Duration) / 1000
 	return dimensions, duration
+}
+
+func AnalyzeAllMedia(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) map[string][]Media {
+	analyzedMediae := make(map[string][]Media, 0)
+	analyzedMediaeBySource := make(map[string]Media, 0)
+	for language, mediae := range embedDeclarations {
+		analyzedMediae[language] = make([]Media, 0)
+		for _, media := range mediae {
+			filepath, _ := filepath.Abs(path.Join(currentDirectory, media.Source))
+			if IsValidURL(media.Source) {
+				analyzedMedia := Media{
+					Alt:    media.Alt,
+					Title:  media.Title,
+					Source: media.Source,
+					Online: true,
+				}
+				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
+			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filepath]; ok {
+
+				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
+			} else {
+				analyzedMedia := AnalyzeMediaFile(filepath, media)
+				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
+				analyzedMediaeBySource[filepath] = analyzedMedia
+			}
+		}
+	}
+	return analyzedMediae
 }

@@ -1,9 +1,6 @@
 package main
 
 import (
-	// "fmt"
-	// "path"
-
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/docopt/docopt-go"
@@ -12,21 +9,35 @@ import (
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt
 func RunCommandBuild(args docopt.Opts) error {
 	json := jsoniter.ConfigFastest
+	SetJSONNamingStrategy(LowerCaseWithUnderscores)
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
+	outputFilename, _ := args.String("<to-filepath>")
+	println("outputting database to file", outputFilename)
 	_, err := GetConfigurationFromCLIArgs(args)
 	projects, err := BuildProjectsTree(databaseDirectory)
 	if err != nil {
 		return err
 	}
+	works := make([]WorkObject, 0)
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
-		jsonDescription, _ := json.Marshal(description)
-		println(string(jsonDescription))
-		// media := make([]Media, 0)
-		for _, filepath := range project.MediaFilepaths {
-			println(filepath)
+		analyzedMediae := AnalyzeAllMedia(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		work := WorkObject{
+			Metadata:   description.Metadata,
+			Title:      description.Title,
+			Paragraphs: description.Paragraphs,
+			Media:      analyzedMediae,
+			Links:      description.Links,
+			Footnotes:  description.Footnotes,
 		}
+		works = append(works, work)
+	}
+	worksJSON, _ := json.Marshal(works)
+	println(string(worksJSON))
+	err = WriteFile(outputFilename, worksJSON)
+	if err != nil {
+		println(err.Error())
 	}
 	return nil
 }

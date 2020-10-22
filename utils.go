@@ -2,7 +2,9 @@ package main
 
 import (
 	"io/ioutil"
+	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -22,6 +24,25 @@ func ReadFileBytes(filepath string) []byte {
 // ReadFile reads the content of ``filepath`` and returns the contents as a string
 func ReadFile(filepath string) string {
 	return string(ReadFileBytes(filepath))
+}
+
+// WriteFile writes content to file filepath
+func WriteFile(filename string, content []byte) error {
+	absfilepath, err := filepath.Abs(filename)
+	f, err := os.Create(absfilepath)
+    if err != nil {
+        return err
+    }
+    _, err = f.Write(content)
+    if err != nil {
+        f.Close()
+        return err
+	}
+    err = f.Close()
+    if err != nil {
+        return err
+	}
+	return nil
 }
 
 // ValidateWithJSONSchema checks if the JSON document at ``documentFilepath`` conforms to the JSON schema at ``schemaFilepath``
@@ -59,4 +80,19 @@ func RegexpMatches(regex string, s string) bool {
 func RegexpGroups(regex string, s string) []string {
 	p := regexp.MustCompile(regex)
 	return p.FindStringSubmatch(s)
+}
+
+// IsValidURL tests a string to determine if it is a well-structured url or not.
+func IsValidURL(toTest string) bool {
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	}
+
+	u, err := url.Parse(toTest)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+
+	return true
 }
