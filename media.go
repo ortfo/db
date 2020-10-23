@@ -41,7 +41,6 @@ type Media struct {
 	Title       string
 	Source      string
 	ContentType string
-	Thumbnails  []Thumbnail
 	Size        uint64 // In bytes
 	Dimensions  ImageDimensions
 	Duration    uint // In seconds
@@ -89,7 +88,6 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 
 	dimensions := ImageDimensions{}
 	var duration uint
-	thumbnails := make([]Thumbnail, 0)
 
 	if isImage {
 		dimensions, err = GetImageDimensions(file)
@@ -106,10 +104,6 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 		duration = GetAudioDuration(file, duration)
 	}
 
-	if isImage || isVideo {
-		// TODO: Handle thumbnails
-	}
-
 	return Media{
 		ID:          slugify.Marshal(filepath.Base(filename)),
 		Alt:         embedDeclaration.Alt,
@@ -118,7 +112,6 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 		ContentType: contentType,
 		Dimensions:  dimensions,
 		Duration:    duration,
-		Thumbnails:  thumbnails,
 		Size:        uint64(fileInfo.Size()),
 	}
 }
