@@ -13,7 +13,6 @@ func RunCommandBuild(args docopt.Opts) error {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	outputFilename, _ := args.String("<to-filepath>")
-	println("outputting database to file", outputFilename)
 	_, err := GetConfigurationFromCLIArgs(args)
 	projects, err := BuildProjectsTree(databaseDirectory)
 	if err != nil {
@@ -33,7 +32,12 @@ func RunCommandBuild(args docopt.Opts) error {
 		}
 		works = append(works, work)
 	}
-	worksJSON, _ := json.Marshal(works)
+	var worksJSON []byte
+	if val, _ := args.Bool("--minified"); val {
+		worksJSON, _ = json.Marshal(works)
+	} else {
+		worksJSON, _ = json.MarshalIndent(works, "", "    ")
+	}
 	println(string(worksJSON))
 	err = WriteFile(outputFilename, worksJSON)
 	if err != nil {

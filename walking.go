@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path"
 )
@@ -23,7 +22,6 @@ func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 		return nil, err
 	}
 	for _, file := range files {
-		fmt.Println("Scanning " + file.Name())
 		// If it's not a directory, it's not a project folder
 		// so it has nothing to do with this
 		if !file.IsDir() {
@@ -36,7 +34,7 @@ func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 		}
 		// Read the description.md file
 		descriptionRaw := ReadFile(descriptionFilepath)
-		
+
 		// Build the list of media filepaths
 		mediaFiles, err := ioutil.ReadDir(path.Join(databaseDirectory, file.Name()))
 		var mediaFilepaths []string

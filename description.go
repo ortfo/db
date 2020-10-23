@@ -136,7 +136,6 @@ func CollectAbbreviation(line string) (Abbreviation, bool) {
 
 // ParseFootnote parses raw markdown into a footnote struct.
 func ParseFootnote(markdownRaw string) Footnote {
-	println("parsing footnote from raw markdown: ", markdownRaw)
 	groups := RegexpGroups(patternFootnoteDeclaration, markdownRaw)
 	return Footnote{Name: groups[1], Content: groups[2]}
 }
