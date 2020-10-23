@@ -47,7 +47,9 @@ func LowerCaseWithUnderscores(name string) string {
 		if i == 0 {
 			newName = append(newName, unicode.ToLower(c))
 		} else {
-			if unicode.IsUpper(c) {
+			if c == ' ' {
+				newName = append(newName, '_')
+			} else if unicode.IsUpper(c) {
 				newName = append(newName, '_')
 				newName = append(newName, unicode.ToLower(c))
 			} else {
