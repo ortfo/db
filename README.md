@@ -25,7 +25,7 @@ See usage [here](./USAGE)
 ## How it works
 
 Your database is a folder, which has one folder per work in it.
-In each folder, you'll have a markdown file describing your work, and some files, which can be videos, audio files or images.
+In each folder, you'll have a markdown file describing your work, and other files relevant to the work (images, PDFs, audio files, videos, etc.).
 
 Here's an example tree:
 
@@ -38,122 +38,84 @@ database/
 │   └── description.md
 ├── portfolio
 │   └── description.md
-├── portfoliodb
-│   └── description.md
-└── schoolsyst
-    ├── description.md
-    ├── api
-    │   └── description.md
-    ├── presentation
-    │   └── description.md
-    └── webapp
-        └── description.md
+└── portfoliodb
+    └── description.md
 ```
+
+"Building" your database is just translating that easy-to-maintain and natural directory tree to a single JSON file, easily consummable by your frontend website. This way, you can add new projects to your portfolio without having to write a single line of code: just create a new folder, describe your project, build the database, upload it, and done!
 
 ### `description.md` files
 
-The most information is extracted from natural markdown, however, you can add some information via a YAML header.
-Here's an example `description.md`
+Description files are separated in "blocks": blocks are separated by an empty line.
+There are:
 
-Information inside YAML headers is arbitrary, put any key and it will be added to the work's JSON object.
+- [blocks of text (paragraphs)](#paragraphs)
+- [embed declarations (images, videos, audio files, PDFs, etc.)](#media)
+- [(isolated) links](#links): useful for linking to other places where the work appears, e.g. a marketplace where to work is sold, a source code repository, etc.
 
-Some YAML keys are interpreted in a certain way though:
+You can also translate your description.md file into multiple languages by using [language markers](#language-markers)
 
-- `collection`: This _needs_ to refer to a valid collection id, and associates that work with the collection
-- `color`: nothing special about this, but note that it overrides `extract color from`.
-  It can be an object (with keys `secondary` and `primary`) or a string
-  (which is the same as setting `primary` and setting `secondary` to null.
-- `extract color from`: portfoliodb has an optional build step to extract the primary and secondary colors from a given image,
-  this sets the filename. With the build step turned on and without this, _portfoliodb_ will look for image files in the work's folder,
-  and if it founds only one image, it will use it, else the build will fail.
+Start your file with a top-level header `# Like this` to give your work a title (it can differ from the folder's name, since the folder name is used as the work's identifier, and is guaranteed to be unique).
 
-Other information is extracted from the contents themselves:
+#### Paragraphs
 
-- `name` is extracted from the document's first `<h1>` element.
-- `paragraphs` contains the list of paragraphs, by default the `id` is the first sentence slugified
-- `media` contains the list of media files present in the markdown content, whether it's an image or another media file
+These blocks allow you to write some text using an extended markdown syntax, adding support for abbreviations and footnotes.
 
-A special syntax is added to easily embed other media files:
+Paragraphs will be accessible in the JSON file in the `paragraphs` object. Each paragraph has two properties: `content`, which contains the paragraph content, and an `id`, which can be specified manually:
 
 ```markdown
->[fallback text "Optional title"](filename or youtube URL)
+other stuff...
+
+(my-paragraph-id)
+The start of the paragraph.
+Specify the paragraph's ID by starting your paragraph with the ID surrounded by parentheses on a single line.
+
+other stuff...
 ```
 
-This syntax was chosen to ressemble the image's, and because the `>` symbolizes a "play" button.
-It also renders not-too-bad on regular markdown, embedding a media can be sort of seen as a quotation
+and will be empty otherwise. This `id` can be useful to link to a specific paragraph of your page by using it as, for example, a `<p>` tag's `id`: you can then link to that specific paragraph with `https://example.com/...#my-paragraph-id`
 
-YouTube URLs always become video embeds and for local files, the MIME type and extension are checked to determine if it's an audio or video file.
+#### Media
+
+A "media" block allows you to declare files embedded in your page: YouTube videos, local files, etc.
+
+Since markdown does not natively support the declaration of embeds other than images, a new syntax was created:
 
 ```markdown
----
-created: 2020-05-00
-wip: yes
-best: yes
-color:
-  primary: white
-  secondary: black
-made with:
-  - python
-tags:
-  - program
-  - cli
----
-
-<!-- name -->
-
-# phelng
-
-<!-- links -->
-
-- [code source](https://github.com/ewen-lbh/phelng)
-
-<!-- youtube -->
-
->[video](https://www.youtube.com/watch?v=qj2fglI1sYw)
-
-Un script pour télécharger automatiquement des musiques, en utilisant YouTube comme source audio et Spotify comme source de métadonnées.
-Pour chaque morceau, la bonne vidéo YouTube est sélectionnée en coïncidant des informations telles que la durée du morceau et celle de la vidéo,
-puis est téléchargée, les métadonnées (incluant une image de la pochette) est appliquée, puis le volume sonore est normalisé.
-
-
-La liste de morceaux à télécharger est stockée dans un fichier `.tsv`:
-Au début, j'ai eu l'idée d'utiliser le format de fichier le plus simple et le plus intuitif possible : un fichier texte, chaque piste d'une ligne, au format `{artiste} - {titre}`.
-
-Mais il y a quelques problèmes avec cette technique:
-
-- **Les noms d'artistes ne peuvent pas contenir " - "**
-
-  ...ce qui ne se produirait jamais de toute façon, mais avec [les titres des pistes que _Four Tet_ propose](https://open.spotify.com/album/6iFZ3Kcx8CDmcMNyKRqUwc?highlight=spotify:track:3bCs4oOGpM0KkVB78Laiqp), il ne faut jamais sous-estimer la créativité parfois affichée dans les titres).
-
-- **On ne peut pas ajouter d'informations supplémentaires sans restreindre les titres des pistes**
-
-  Certains artistes aiment ajouter des titres "Intro" et/ou "Outro" à leurs albums. par exemple,
-  imaginez qu'un artiste ait deux albums _A_ et _B_, chacun ayant une piste d'intro nommée exactement _Intro_.
-  Si vous voulez télécharger la _Intro_ de **_B_**, vous ne pouvez pas le spécifier.
-  Une nouvelle syntaxe pourrait être introduite, quelque chose comme "artiste - piste [album]" mais, encore une fois, que faire si le titre de la piste contient un crochet ouvrant "[" ?
-
-La solution : utiliser un caractère _tab littéral_ comme séparateur d'informations.
-
-Et certains y ont déjà pensé, nous avons donc l'avantage d'utiliser un langage déjà existant :
-le format de fichier _tsv_, ou valeurs séparées par des tabulations (**t**ab-**s**eparated **v**alues).
-Cela signifie également que vous pouvez facilement modifier et consulter votre bibliothèque dans
-n'importe quel logiciel de tableur.
-
-La seule mise en garde pour ce cas d'utilisation avec les fichiers tsv est qu'il n'existe pas de
-norme pour les commentaires. Les commentaires peuvent être utiles dans votre fichier de bibliothèque
-pour "désactiver" temporairement les pistes et empêcher leur téléchargement, ou pour servir d'en-tête
-au début du fichier pour vous aider à vous souvenir du format.
-
-Comme nous ne voulons pas limiter les caractères que les noms d'artistes peuvent contenir, nous ne pouvons pas utiliser quelque chose comme "un commentaire" ou "un autre". Comme les deux premiers champs sont _requis_, le simple fait d'avoir une ligne qui commence par un caractère de tabulation est ignoré par _phelng_, et signifierait autrement que la colonne "artiste" est indéfinie pour cette ligne.
-
-Ainsi, le format (jusqu'à présent[^1]) est le suivant (avec `⭾` représentant un caractère de tabulation)
-
-    commentaire ⭾A (ignoré par phelng)
-    Artist⭾Track title⭾Album (facultatif)⭾Duration (en quelques secondes, facultatif)
-
-[^1]: Des champs supplémentaires pourraient être ajoutés à l'avenir, _sans rupture de la compatibilité ascendante_, puisque l'ordre des champs sera _toujours conservé_.
-
+>[alt text "title"](./demo.mp4)
 ```
+
+The syntax is the same as the image's, by replacing the `!` by a `>` (it looks like a play button).
+
+`source` can be a relative path, an absolute one or a URL, just like images.
+
+When building, the compiler will look for these files and analyze them to determine their content type, dimensions, aspect ratio, duration and file size, and will then be accessible in the JSON file as an array of media objects having the following structure:
+
+```json
+{
+  "dimensions": {
+    "height": 1080, // 0 if the file has no dimensions (eg. an audio file)
+    "width": 1920, // 0 for the same reasons
+    "aspect_ratio": 1.777777778 // 0 if either of the dimensions are zero. aspect_ratio is width / height.
+  },
+  "source": "./demo.mp4",
+  "alt": "alt text",
+  "title": "title",
+  "duration": 68, // In seconds. 0 if the file has no duration (eg. an image)
+  "size": 1854210, // In bytes
+  "content_type": "video/mp4", // MIME types
+}
+```
+
+You _can_ use the `![]()` for images (and anything else in fact), the compiler doesn't care, since it analyzes each file to determine its content type.
+
+#### Links
+
+Of course, you can use links inside of a paragraphs, but you can also declare isolated links that don't need context to be meaningful. Here are some use cases:
+
+- For a website, you can link to the source code repository and the website itself,
+- For a t-shirt, you can link to a marketplace so that people viewing that work can buy it
+- and plenty of other use cases
 
 ## Configuration
 
