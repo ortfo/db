@@ -1,15 +1,16 @@
 Usage:
-  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH]
+  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [--minified]
   portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   portfoliodb [options] <database> add <fullname> [<metadata-item>...]
   portfoliodb [options] <database> validate <database>
 
 Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
+  -m --minified               Output a minifed JSON file
 
 Examples:
   portfoliodb database build database.json
-  portfoliodb database add schoolsyst/presentation -#web -#site --color 268CCE 
+  portfoliodb database add schoolsyst/presentation -#web -#site --color 268CCE
   portfoliodb replicate database.json replicated-database --config=.portfoliodb.yml
 
 Commands:
@@ -17,23 +18,23 @@ Commands:
     Scan in <from-directory> for folders with `description.md` files
     (and potential media files)
     and compile the whole database into a JSON file at <to-filepath>
-  
+
   replicate <from-filepath> <to-directory>
     The reverse operation of 'build'.
     Note that <to-directory> must be an empty directory
-  
+
   add <name> [<metadata-item>...]
     Creates a new `description.md` in the appropriate folder.
     <name> is the work's name.
     You can provide additional metadata items in the form --ITEM_NAME=VALUE,
-    eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md, 
+    eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md,
     with the following contents:
     ---
     collection: null
     ---
     # phelng
     program, cli
-  
+
   validate <database>
     Make sure that everything is OK in the database:
     Each one of these checks are configurable and deactivable in .portfoliodb.yml:validate.checks,
