@@ -1,5 +1,6 @@
 package main
 
+//TODO: handle files with *no language markers*!!!!!1
 //TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
 // - french guillemets -> renderer:SmartypantsQuotesNBSP
 // - open links in new tab -> renderer:HrefTargetBlank
