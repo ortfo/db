@@ -1,7 +1,7 @@
 package main
 
 // Functions to analyze media files.
-// Used to go from a ParsedDescription struct to a WorkObject.
+// Used to go from a ParsedDescription struct to a Work struct.
 
 import (
 	"image"

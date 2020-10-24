@@ -26,7 +26,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	works := make([]WorkObject, 0)
+	works := make([]Work, 0)
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
 		analyzedMediae := AnalyzeAllMedia(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
@@ -34,7 +34,7 @@ func RunCommandBuild(args docopt.Opts) error {
 		if config.BuildSteps.ExtractColors.Enabled {
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
 		}
-		work := WorkObject{
+		work := Work{
 			Metadata:   metadata,
 			Title:      description.Title,
 			Paragraphs: description.Paragraphs,

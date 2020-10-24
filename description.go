@@ -83,8 +83,8 @@ type Link struct {
 	URL   string
 }
 
-// WorkObject represents a complete work, with analyzed mediae
-type WorkObject struct {
+// Work represents a complete work, with analyzed mediae
+type Work struct {
 	Metadata   map[string]interface{}
 	Title      map[string]string
 	Paragraphs map[string][]Paragraph
