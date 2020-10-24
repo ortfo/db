@@ -1,5 +1,5 @@
 Usage:
-  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [--minified]
+  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [--minified] [--silent]
   portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   portfoliodb [options] <database> add <fullname> [<metadata-item>...]
   portfoliodb [options] <database> validate <database>
@@ -7,6 +7,7 @@ Usage:
 Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
   -m --minified               Output a minifed JSON file
+  -s --silent                 Do not write to stdout
 
 Examples:
   portfoliodb database build database.json
