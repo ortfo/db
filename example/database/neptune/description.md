@@ -22,9 +22,9 @@ Cet album représente différents aspects de notre étrange et infini univers. L
 
 >[Neptune](https://www.youtube.com/watch?v=k43WtSBPeko)
 
-![Pochette (1:1)](https://media.ewen.works/neptune/square-cover-art.png)
+![Pochette (1:1)](square-cover-art.jpeg)
 
-![Pochette (16:9)](https://media.ewen.works/neptune/wide-cover-art.png)
+![Pochette (16:9)](wide-cover-art.jpeg)
 
 :: en-US
 
@@ -32,6 +32,6 @@ This album represents different aspects of our infinite, strange universe. Most 
 
 >[Neptune](https://www.youtube.com/watch?v=k43WtSBPeko)
 
-![Square cover art](https://media.ewen.works/neptune/square-cover-art.png)
+![Square cover art](square-cover-art.jpeg)
 
-![Wide cover art](https://media.ewen.works/neptune/wide-cover-art.png)
+![Wide cover art](wide-cover-art.jpeg)

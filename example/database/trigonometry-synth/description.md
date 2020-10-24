@@ -23,7 +23,7 @@ wip: no
 (summary)
 À la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, sin, tan et cotan.
 
-![Trigonometry Synth](https://database.ewen.works/trigonometry-synth/trigonometry-synth.png)
+![Trigonometry Synth](./trigonometry-synth.png)
 
 [post-reddit](https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/)
 
@@ -36,12 +36,16 @@ En réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un
 (change-of-interpretation)
 En réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur r/synthesizers et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration.
 
+*[sin]: sinusoïdale
+
 :: en-US
 
 (summary)
 Looking for interesting ways to represent trigonometric identities, I tried to connect the different symmetry formulas of cos, sin, tan and cotan.
 
-[Trigonometry Synth](https://database.ewen.works/trigonometry-synth/trigonometry-synth.png)
+*[sin]: sinusoïdal
+
+![Trigonometry Synth](./trigonometry-synth.png)
 
 [post-reddit](https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/)
 
@@ -49,7 +53,9 @@ Looking for interesting ways to represent trigonometric identities, I tried to c
 While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on [r/synthesizers](https://reddit.com/r/synthesizers) and received a lot of positive feedback and possible musical interpretations of an illustration.
 
 (connect)
-Looking for interesting ways to represent trigonometric identities, I tried to connect the different symmetry formulas of cos, sin, tan and cotan.
+Looking for interesting ways to represent trigonometric identities, I tried to connect the[^abcEF] different symmetry formulas of cos, sin, tan and cotan.
 
 (change-of-interpretation)
-While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on r/synthesizers and received a lot of positive feedback and possible musical interpretations of an illustration.
+While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on r/synthesizers and received a lot of positive feedback and possible musical interpretations of an illustration[^abcEF].
+
+[^abcEF]: geogrje
