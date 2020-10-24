@@ -150,18 +150,7 @@
 					"type": "boolean"
 				},
 				"anchored headings": {
-					"type": [
-						"object",
-						"boolean"
-					],
-					"properties": {
-						"enabled": {
-							"type": "boolean"
-						},
-						"format": {
-							"type": "string"
-						}
-					}
+					"type": "boolean"
 				},
 				"custom syntaxes": {
 					"type": "array",

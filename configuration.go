@@ -120,15 +120,14 @@ func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfi
 	return explicitlySpecifiedConfigurationFilepath
 }
 
-// ValidateConfiguration uses `configuration.schema.json` to validate the configuration file at configFilepath
+// ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath
 func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError) {
-	absSchemaFilepath, _ := filepath.Abs("configuration.schema.json")
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
 	yaml.Unmarshal(ReadFileBytes(configFilepath), &configuration)
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
-	return ValidateWithJSONSchema(string(configurationDocument), absSchemaFilepath)
+	return ValidateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema)
 }
 
 // GetConfigurationFromCLIArgs gets the configuration by using the CLI arguments

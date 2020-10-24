@@ -45,9 +45,9 @@ func WriteFile(filename string, content []byte) error {
 	return nil
 }
 
-// ValidateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema at ``schemaFilepath``
-func ValidateWithJSONSchema(document string, schemaFilepath string) (bool, []gojsonschema.ResultError) {
-	schemaLoader := gojsonschema.NewReferenceLoader("file://" + schemaFilepath)
+// ValidateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema ``schema``
+func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError) {
+	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewStringLoader(document)
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {

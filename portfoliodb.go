@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	usage := ReadFile("./USAGE")
+	usage := CLIUsage
 	args, _ := docopt.ParseDoc(usage)
-	
+
 	if err := dispatchCommand(args); err != nil {
 		panic(err)
 	}

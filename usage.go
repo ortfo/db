@@ -1,3 +1,7 @@
+package main
+
+// CLIUsage is the entire usage string for the CLI
+const CLIUsage = `
 Usage:
   portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [--minified] [--silent]
   portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
@@ -16,7 +20,7 @@ Examples:
 
 Commands:
   build <from-directory> <to-filepath>
-    Scan in <from-directory> for folders with `description.md` files
+    Scan in <from-directory> for folders with description.md files
     (and potential media files)
     and compile the whole database into a JSON file at <to-filepath>
 
@@ -25,7 +29,7 @@ Commands:
     Note that <to-directory> must be an empty directory
 
   add <name> [<metadata-item>...]
-    Creates a new `description.md` in the appropriate folder.
+    Creates a new description.md in the appropriate folder.
     <name> is the work's name.
     You can provide additional metadata items in the form --ITEM_NAME=VALUE,
     eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md,
@@ -50,3 +54,4 @@ Commands:
         e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
+`
