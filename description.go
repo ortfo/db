@@ -69,11 +69,13 @@ type Footnote struct {
 	Content string
 }
 
+// Paragraph represents a paragraph declaration in a description.md file
 type Paragraph struct {
 	ID      string
 	Content string
 }
 
+// Link represents an (isolated) link declaration in a description.md file
 type Link struct {
 	ID    string
 	Name  string
@@ -81,6 +83,7 @@ type Link struct {
 	URL   string
 }
 
+// WorkObject represents a complete work, with analyzed mediae
 type WorkObject struct {
 	Metadata   map[string]interface{}
 	Title      map[string]string
@@ -90,6 +93,7 @@ type WorkObject struct {
 	Footnotes  map[string][]Footnote
 }
 
+// ParsedDescription represents a work, but without analyzed media. All it contains is information from the description.md file
 type ParsedDescription struct {
 	Metadata               map[string]interface{}
 	Title                  map[string]string
