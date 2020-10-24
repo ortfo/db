@@ -1,6 +1,5 @@
 package main
 
-//TODO: handle files with *no language markers*!!!!!1
 //TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
 // - french guillemets -> renderer:SmartypantsQuotesNBSP
 // - open links in new tab -> renderer:HrefTargetBlank
@@ -290,18 +289,6 @@ func ParseAbbreviationChunk(chunk Chunk) Abbreviation {
 	return extractAbbreviation(RegexpGroups(patternAbbreviationDefinition, chunk.Content))
 }
 
-// GetAllLanguages returns all language codes used in the document
-func GetAllLanguages(markdownRaw string) []string {
-	lines := strings.Split(markdownRaw, "\n")
-	languages := make([]string, 0)
-	for _, line := range lines {
-		if RegexpMatches(patternLanguageMarker, line) {
-			languages = append(languages, RegexpGroups(patternLanguageMarker, line)[1])
-		}
-	}
-	return languages
-}
-
 // MarkdownToHTML converts markdown markdownRaw into an HTML string
 func MarkdownToHTML(markdownRaw string) string {
 	//TODO: handle markdown extensions (need to take in a "config Configuration" parameter)
@@ -317,7 +304,7 @@ func ProcessFootnoteReferences(markdownRaw string) string {
 		reference := markdownRaw[referencePosition[0]:referencePosition[1]]
 		footnoteName := patternFootnoteReference.FindStringSubmatch(reference)[1]
 		//TODO: make the href (and <sup> class) customizable
-		processed = strings.ReplaceAll(processed, reference, `<sup class="foonote-ref"><a href="#footnote:` + footnoteName + `">` + footnoteName + `</a></sup>`)
+		processed = strings.ReplaceAll(processed, reference, `<sup class="foonote-ref"><a href="#footnote:`+footnoteName+`">`+footnoteName+`</a></sup>`)
 	}
 	return processed
 }
@@ -327,23 +314,33 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
+	localized := len(localizedRawBlocks) > 0
+	var allLanguages []string
+	if localized {
+		allLanguages = MapKeys(localizedRawBlocks)
+	} else {
+		allLanguages = make([]string, 1)
+		allLanguages[0] = "default" // TODO: make this configurable
+	}
 	paragraphs := make(map[string][]Paragraph, 0)
 	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration, 0)
 	links := make(map[string][]Link, 0)
 	title := make(map[string]string, 0)
 	footnotes := make(map[string][]Footnote, 0)
 	abbreviations := make(map[string][]Abbreviation, 0)
-	// First pass to collect everything
-	for _, language := range GetAllLanguages(markdownRaw) {
+	for _, language := range allLanguages {
 		// Unlocalized stuff appears the same in every language.
 		chunks := ParseLanguagedChunks(notLocalizedRaw)
-		chunks = append(chunks, ParseLanguagedChunks(localizedRawBlocks[language])...)
+		if localized {
+			chunks = append(chunks, ParseLanguagedChunks(localizedRawBlocks[language])...)
+		}
 		currentLanguageParagraphs := make([]Paragraph, 0)
 		currentLanguageMediaEmbedDeclarations := make([]MediaEmbedDeclaration, 0)
 		currentLanguageLinks := make([]Link, 0)
 		currentLanguageFootnotes := make([]Footnote, 0)
 		currentLanguageAbbreviations := make([]Abbreviation, 0)
 		var currentLanguageTitle string
+		// First pass to collect everything
 		for _, chunk := range chunks {
 			if chunk.Type == "title" {
 				currentLanguageTitle = RegexpGroups(patternTitle, chunk.Content)[1]
@@ -352,7 +349,7 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 				currentLanguageFootnotes = append(currentLanguageFootnotes, footnote)
 			} else if chunk.Type == "paragraph" || chunk.Type == "paragraphWithID" {
 				currentLanguageParagraphs = append(currentLanguageParagraphs, ParseParagraph(chunk))
-			} else if chunk.Type == "media" || chunk.Type == "image"{
+			} else if chunk.Type == "media" || chunk.Type == "image" {
 				currentLanguageMediaEmbedDeclarations = append(currentLanguageMediaEmbedDeclarations, ParseMediaChunk(chunk))
 			} else if chunk.Type == "links" {
 				currentLanguageLinks = append(currentLanguageLinks, ParseLinkChunk(chunk))
@@ -362,18 +359,7 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		}
 		// Second pass to replace abbreviations (if any), render footnote references (if any) and render to HTML
 		for i, paragraph := range currentLanguageParagraphs {
-			processed := paragraph.Content
-			for _, abbreviation := range currentLanguageAbbreviations {
-				var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
-				processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+abbreviation.Definition+"\">"+abbreviation.Name+"</abbr>")
-			}
-			processed = ProcessFootnoteReferences(processed)
-			convertedToHTML := MarkdownToHTML(processed)
-			// Fix footnote references' links having a number as text instead of the footnote's name: here, every paragraph is isolated, so the converter can't possibly asssign correct footnote reference numbers.
-			// We use the footnote's name directly instead.
-			// Remove outer paragraph tag & eventual whitespace
-			patternOuterParagraph := `\s*<p>(.+)</p>\s*`
-			convertedToHTML = RegexpGroups(patternOuterParagraph, convertedToHTML)[1]
+			convertedToHTML := processParagraph(paragraph, currentLanguageAbbreviations)
 			currentLanguageParagraphs[i] = Paragraph{
 				ID:      paragraph.ID,
 				Content: convertedToHTML,
@@ -394,4 +380,18 @@ func ParseDescription(markdownRaw string) ParsedDescription {
 		MediaEmbedDeclarations: mediaEmbedDeclarations,
 		Footnotes:              footnotes,
 	}
+}
+
+func processParagraph(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) string {
+	processed := paragraph.Content
+	for _, abbreviation := range currentLanguageAbbreviations {
+		var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
+		processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+abbreviation.Definition+"\">"+abbreviation.Name+"</abbr>")
+	}
+	processed = ProcessFootnoteReferences(processed)
+	convertedToHTML := MarkdownToHTML(processed)
+
+	patternOuterParagraph := `\s*<p>(.+)</p>\s*`
+	convertedToHTML = RegexpGroups(patternOuterParagraph, convertedToHTML)[1]
+	return convertedToHTML
 }
