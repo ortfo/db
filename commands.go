@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/docopt/docopt-go"
@@ -13,7 +14,10 @@ func RunCommandBuild(args docopt.Opts) error {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	outputFilename, _ := args.String("<to-filepath>")
-	_, err := GetConfigurationFromCLIArgs(args)
+	config, err := GetConfigurationFromCLIArgs(args)
+	if err != nil {
+		return err
+	}
 	projects, err := BuildProjectsTree(databaseDirectory)
 	if err != nil {
 		return err
@@ -22,8 +26,12 @@ func RunCommandBuild(args docopt.Opts) error {
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
 		analyzedMediae := AnalyzeAllMedia(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		metadata := description.Metadata
+		if config.BuildSteps.ExtractColors.Enabled {
+			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
+		}
 		work := WorkObject{
-			Metadata:   description.Metadata,
+			Metadata:   metadata,
 			Title:      description.Title,
 			Paragraphs: description.Paragraphs,
 			Media:      analyzedMediae,
@@ -38,8 +46,10 @@ func RunCommandBuild(args docopt.Opts) error {
 	} else {
 		worksJSON, _ = json.MarshalIndent(works, "", "    ")
 	}
-	println(string(worksJSON))
 	err = WriteFile(outputFilename, worksJSON)
+	if val, _ := args.Bool("--silent"); !val {
+		println(string(worksJSON))
+	}
 	if err != nil {
 		println(err.Error())
 	}

@@ -12,7 +12,7 @@ import (
 type ConfigurationBuildStepsExtractColors struct {
 	Enabled         bool
 	Extract         []string
-	DefaultFileName string `yaml:"default file name"`
+	DefaultFileName []string `yaml:"default file name"`
 }
 
 type ConfigurationBuildStepsMakeGifs struct {
@@ -123,6 +123,7 @@ func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, error) {
 	databaseDirectory := args["<database>"].([]string)[0]
 	explicitConfigFilepath, _ := args.String("--config")
 	configFilepath := ResolveConfigurationPath(databaseDirectory, explicitConfigFilepath)
+	println("loading config file at:", configFilepath)
 	var config Configuration
 	if err := LoadConfiguration(configFilepath, &config); err != nil {
 		return Configuration{}, err

@@ -15,6 +15,14 @@ func (p *ProjectTreeElement) GetProjectPath(databaseDirectory string) string {
 	return path.Join(".", databaseDirectory, p.ID)
 }
 
+func (p *ProjectTreeElement) MediaAbsoluteFilepaths(databaseDirectory string) []string {
+	absoluted := make([]string, len(p.MediaFilepaths))
+	for _, item := range p.MediaFilepaths {
+		absoluted = append(absoluted, path.Join(p.GetProjectPath(databaseDirectory), item))
+	}
+	return absoluted
+}
+
 func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 	var tree []ProjectTreeElement
 	files, err := ioutil.ReadDir(databaseDirectory)

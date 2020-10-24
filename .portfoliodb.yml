@@ -1,8 +1,7 @@
 build steps:
   extract colors:
-    enabled: no
-    extract: []
-    default file name: ""
+    enabled: yes
+    default file name: []
 
   make gifs:
     enabled: no
@@ -15,15 +14,6 @@ build steps:
     input file: "" # If the directory has one image file and no logo.png, it uses this file instead
     # Paths are always relative to the work's database folder
     file name template: ""
-
-
-features:
-  # Specified by an <ul> directly after a <h2>Made with</h2>
-  made with: on
-  # Extract media from the document and put it in an object:
-  # { media: [type]: [{ name, url }, {name, url}, ...] }
-  # with [type] one of audio, image and video
-  media hoisting: off
 
 validate:
   checks:
@@ -53,7 +43,7 @@ markdown:
   footnotes: on # supported
   markdown in HTML: on #?
   new-line-to-line-break: off # supported
-  smarty pants: on # supported?
+  smarty pants: on # supported
   anchored headings: # supported
     enabled: no
     format: <content>

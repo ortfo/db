@@ -96,3 +96,22 @@ func IsValidURL(toTest string) bool {
 
 	return true
 }
+
+func StringInSlice(haystack []string, needle string) bool {
+	for _, v := range haystack {
+		if v == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func FilterSlice(s []string, cond func(string) bool) []string {
+	filtered := make([]string, 0)
+	for _, item := range s {
+		if cond(item) {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
