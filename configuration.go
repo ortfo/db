@@ -2,10 +2,14 @@ package main
 
 import (
 	"path"
+	"path/filepath"
+	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/docopt/docopt-go"
 	"github.com/imdatngo/mergo"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/xeipuuv/gojsonschema"
+	"github.com/mitchellh/colorstring"
 	"gopkg.in/yaml.v2"
 )
 
@@ -101,7 +105,6 @@ func GetConfiguration(filepath string) (Configuration, error) {
 	if err := LoadConfiguration(filepath, &userConfig); err != nil {
 		return Configuration{}, err
 	}
-	spew.Dump(userConfig, defaultConfig)
 	// Then merge defaultConfig into userConfig, to fill out uninitialized fields
 	if err := mergo.Merge(&userConfig, &defaultConfig); err != nil {
 		return Configuration{}, err
@@ -117,16 +120,41 @@ func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfi
 	return explicitlySpecifiedConfigurationFilepath
 }
 
+func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError) {
+	absSchemaFilepath, _ := filepath.Abs("configuration.schema.json")
+	// read file → unmarshal YAML → marshal JSON
+	var configuration interface{}
+	yaml.Unmarshal(ReadFileBytes(configFilepath), &configuration)
+	json := jsoniter.ConfigFastest
+	configurationDocument, _ := json.Marshal(configuration)
+	return ValidateWithJSONSchema(string(configurationDocument), absSchemaFilepath)
+}
+
 // GetConfigurationFromCLIArgs gets the configuration by using the CLI arguments
-func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, error) {
+func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, []gojsonschema.ResultError, error) {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	explicitConfigFilepath, _ := args.String("--config")
 	configFilepath := ResolveConfigurationPath(databaseDirectory, explicitConfigFilepath)
-	println("loading config file at:", configFilepath)
+	configFilepath, err := filepath.Abs(configFilepath)
+	if err != nil {
+		panic(err)
+	}
+	validated, validationErrors := ValidateConfiguration(configFilepath)
+	if !validated {
+		return Configuration{}, validationErrors, nil
+	}
 	var config Configuration
 	if err := LoadConfiguration(configFilepath, &config); err != nil {
-		return Configuration{}, err
+		return Configuration{}, make([]gojsonschema.ResultError, 0), err
 	}
-	return config, nil
+	return config, make([]gojsonschema.ResultError, 0), nil
+}
+
+func DisplayValidationErrors(errors []gojsonschema.ResultError) {
+	println("Your configuration file is invalid. Here are the validation errors:\n")
+	for _, err := range errors {
+		colorstring.Println("- " + strings.ReplaceAll(err.Field(), ".", "[blue][bold]/[reset]"))
+		colorstring.Println("    [red]" + err.Description())
+	}
 }

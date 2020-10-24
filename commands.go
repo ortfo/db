@@ -14,7 +14,11 @@ func RunCommandBuild(args docopt.Opts) error {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	outputFilename, _ := args.String("<to-filepath>")
-	config, err := GetConfigurationFromCLIArgs(args)
+	config, validationErrs, err := GetConfigurationFromCLIArgs(args)
+	if len(validationErrs) > 0 {
+		DisplayValidationErrors(validationErrs)
+		return nil
+	}
 	if err != nil {
 		return err
 	}

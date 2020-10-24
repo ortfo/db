@@ -30,26 +30,26 @@ func ReadFile(filepath string) string {
 func WriteFile(filename string, content []byte) error {
 	absfilepath, err := filepath.Abs(filename)
 	f, err := os.Create(absfilepath)
-    if err != nil {
-        return err
-    }
-    _, err = f.Write(content)
-    if err != nil {
-        f.Close()
-        return err
+	if err != nil {
+		return err
 	}
-    err = f.Close()
-    if err != nil {
-        return err
+	_, err = f.Write(content)
+	if err != nil {
+		f.Close()
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-// ValidateWithJSONSchema checks if the JSON document at ``documentFilepath`` conforms to the JSON schema at ``schemaFilepath``
-func ValidateWithJSONSchema(documentFilepath string, schemaFilepath string) (bool, []gojsonschema.ResultError) {
-	schema := gojsonschema.NewReferenceLoader("file://" + schemaFilepath)
-	document := gojsonschema.NewReferenceLoader("file://" + documentFilepath)
-	result, err := gojsonschema.Validate(schema, document)
+// ValidateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema at ``schemaFilepath``
+func ValidateWithJSONSchema(document string, schemaFilepath string) (bool, []gojsonschema.ResultError) {
+	schemaLoader := gojsonschema.NewReferenceLoader("file://" + schemaFilepath)
+	documentLoader := gojsonschema.NewStringLoader(document)
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
 		panic(err.Error())
 	}
