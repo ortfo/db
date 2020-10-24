@@ -93,7 +93,7 @@ The syntax is the same as the image's, by replacing the `!` by a `>` (it looks l
 
 When building, the compiler will look for these files and analyze them to determine their content type, dimensions, aspect ratio, duration and file size, and will then be accessible in the JSON file as an array of media objects having the following structure:
 
-```json
+```js
 {
   "dimensions": {
     "height": 1080, // 0 if the file has no dimensions (eg. an audio file)
