@@ -12,6 +12,7 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/lucasb-eyer/go-colorful v1.0.3 // indirect
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/oliamb/cutter v0.2.2 // indirect
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
