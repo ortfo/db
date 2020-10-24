@@ -1,5 +1,7 @@
 {
     "yaml.schemas": {
-        "configuration.schema.json": ["example/.portfoliodb.yml", ".porfoliodb.yml"]
-    }
+        ".portfoliodb.yml.schema.json": ["example/.portfoliodb.yml", ".porfoliodb.yml"]
+    },
+    "go.inferGopath": false,
+    "python.formatting.provider": "black"
 }
