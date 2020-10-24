@@ -13,43 +13,43 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type ConfigurationBuildStepsExtractColors struct {
+type configurationBuildStepsExtractColors struct {
 	Enabled         bool
 	Extract         []string
 	DefaultFileName []string `yaml:"default file name"`
 }
 
-type ConfigurationBuildStepsMakeGifs struct {
+type configurationBuildStepsMakeGifs struct {
 	Enabled          bool
 	FileNameTemplate string `yaml:"file name template"`
 }
 
-type ConfigurationBuildStepsMakeThumbnails struct {
+type configurationBuildStepsMakeThumbnails struct {
 	Enabled          bool
 	Widths           []int
 	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
 }
 
-type ConfigurationBuildSteps struct {
-	ExtractColors  ConfigurationBuildStepsExtractColors  `yaml:"extract colors"`
-	MakeGifs       ConfigurationBuildStepsMakeGifs       `yaml:"make GIFs"`
-	MakeThumbnails ConfigurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
+type configurationBuildSteps struct {
+	ExtractColors  configurationBuildStepsExtractColors  `yaml:"extract colors"`
+	MakeGifs       configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
+	MakeThumbnails configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
 }
 
-type ConfigurationMarkdownAnchoredHeadings struct {
+type configurationMarkdownAnchoredHeadings struct {
 	Enabled bool
 	Format  string
 }
 
-type ConfigurationMarkdownCustomSyntax struct {
+type configurationMarkdownCustomSyntax struct {
 	From string
 	To   string
 }
 
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
-	BuildSteps ConfigurationBuildSteps `yaml:"build steps"`
+	BuildSteps configurationBuildSteps `yaml:"build steps"`
 	Features   struct {
 		madeWith      bool `yaml:"made with"`
 		mediaHoisting bool `yaml:"media hoisting"`
@@ -76,8 +76,8 @@ type Configuration struct {
 		MarkdownInHTML     bool                                  `yaml:"markdown in html"`
 		NewLineToLineBreak bool                                  `yaml:"new-line-to-line-break"`
 		SmartyPants        bool                                  `yaml:"smarty pants"`
-		AnchoredHeadings   ConfigurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
-		CustomSyntaxes     []ConfigurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
+		AnchoredHeadings   configurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
+		CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
 	}
 }
 
@@ -120,6 +120,7 @@ func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfi
 	return explicitlySpecifiedConfigurationFilepath
 }
 
+// ValidateConfiguration uses `configuration.schema.json` to validate the configuration file at configFilepath
 func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError) {
 	absSchemaFilepath, _ := filepath.Abs("configuration.schema.json")
 	// read file → unmarshal YAML → marshal JSON
@@ -151,6 +152,7 @@ func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, []gojsonschem
 	return config, make([]gojsonschema.ResultError, 0), nil
 }
 
+// DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal
 func DisplayValidationErrors(errors []gojsonschema.ResultError) {
 	println("Your configuration file is invalid. Here are the validation errors:\n")
 	for _, err := range errors {

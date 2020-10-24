@@ -101,7 +101,7 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 	}
 
 	if isAudio {
-		duration = GetAudioDuration(file, duration)
+		duration = GetAudioDuration(file)
 	}
 
 	return Media{
@@ -116,7 +116,9 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 	}
 }
 
-func GetAudioDuration(file *os.File, duration uint) uint {
+// GetAudioDuration takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.
+func GetAudioDuration(file *os.File) uint {
+	var duration uint
 	decoder := mp3.NewDecoder(file)
 	skipped := 0
 	var frame mp3.Frame
@@ -131,6 +133,7 @@ func GetAudioDuration(file *os.File, duration uint) uint {
 	return duration
 }
 
+// GetVideoDimensionsDuration returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
 func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, duration uint) (ImageDimensions, uint) {
 	video, err := screengen.NewGenerator(filename)
 	if err != nil {
@@ -147,7 +150,8 @@ func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, dur
 	return dimensions, duration
 }
 
-func AnalyzeAllMedia(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) map[string][]Media {
+// AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
+func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) map[string][]Media {
 	analyzedMediae := make(map[string][]Media, 0)
 	analyzedMediaeBySource := make(map[string]Media, 0)
 	for language, mediae := range embedDeclarations {

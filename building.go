@@ -26,6 +26,7 @@ func kmeans(img image.Image) (ExtractedColors, error) {
 	}, nil
 }
 
+// ExtractedColors reprensents the object in a Work's metadata.colors
 type ExtractedColors struct {
 	Primary   string
 	Secondary string
@@ -59,6 +60,7 @@ func extractColorsFromFiles(files []string, config Configuration) (ExtractedColo
 	return extractColors(files[0])
 }
 
+// StepExtractColors executes the step "extract colors" and returns a metadata object with the `colors` entry modified accordingly.
 func StepExtractColors(metadata map[string]interface{}, project ProjectTreeElement, databaseDirectory string, config Configuration) map[string]interface{} {
 	// Do not overwrite manually-set `colors` metadata entry
 	if _, ok := metadata["colors"]; !ok {

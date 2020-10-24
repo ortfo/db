@@ -72,11 +72,13 @@ func FileExists(filepath string) bool {
 	return true
 }
 
+// RegexpMatches checks if s matches the regex regex at least once
 func RegexpMatches(regex string, s string) bool {
 	p := regexp.MustCompile(regex)
 	return p.MatchString(s)
 }
 
+// RegexpGroups returns all the capture groups' contents from the first match of regex regex in s. The first element [0] is the entire match. [1] is the first capture group's content, et cætera.
 func RegexpGroups(regex string, s string) []string {
 	p := regexp.MustCompile(regex)
 	return p.FindStringSubmatch(s)
@@ -97,6 +99,7 @@ func IsValidURL(toTest string) bool {
 	return true
 }
 
+// StringInSlice checks if needle is in haystack
 func StringInSlice(haystack []string, needle string) bool {
 	for _, v := range haystack {
 		if v == needle {
@@ -106,6 +109,7 @@ func StringInSlice(haystack []string, needle string) bool {
 	return false
 }
 
+// FilterSlice returns a slice of strings containing only the elements that return true when called with cond.
 func FilterSlice(s []string, cond func(string) bool) []string {
 	filtered := make([]string, 0)
 	for _, item := range s {

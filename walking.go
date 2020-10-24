@@ -5,16 +5,20 @@ import (
 	"path"
 )
 
+
+// ProjectTreeElement represents a project
 type ProjectTreeElement struct {
 	ID             string
 	DescriptionRaw string
 	MediaFilepaths []string
 }
 
+// GetProjectPath returns the project's folder path with regard to databaseDirectory
 func (p *ProjectTreeElement) GetProjectPath(databaseDirectory string) string {
 	return path.Join(".", databaseDirectory, p.ID)
 }
 
+// MediaAbsoluteFilepaths is like MediaFilepaths but returns absolute paths with regard to databaseDirectory
 func (p *ProjectTreeElement) MediaAbsoluteFilepaths(databaseDirectory string) []string {
 	absoluted := make([]string, len(p.MediaFilepaths))
 	for _, item := range p.MediaFilepaths {
@@ -23,6 +27,7 @@ func (p *ProjectTreeElement) MediaAbsoluteFilepaths(databaseDirectory string) []
 	return absoluted
 }
 
+// BuildProjectsTree scans databaseDirectory to return a slice of ProjectTreeElement's, gathering media files and other various information
 func BuildProjectsTree(databaseDirectory string) ([]ProjectTreeElement, error) {
 	var tree []ProjectTreeElement
 	files, err := ioutil.ReadDir(databaseDirectory)

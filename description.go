@@ -275,13 +275,17 @@ func ParseLanguagedChunks(markdownRaw string) []Chunk {
 	return typedChunks
 }
 
+// ParseMediaChunk takes a chunk of type "media" and returns a MediaEmbedDeclaration
 func ParseMediaChunk(chunk Chunk) MediaEmbedDeclaration {
 	return extractMedia(RegexpGroups(patternImageOrMediaOrLinkDeclaration, chunk.Content))
 }
+
+// ParseLinkChunk takes a chunk of type "link" and returns a Link
 func ParseLinkChunk(chunk Chunk) Link {
 	return extractLink(RegexpGroups(patternImageOrMediaOrLinkDeclaration, chunk.Content))
 }
 
+// ParseAbbreviationChunk takes a chunk of type "abbreviation" and returns an Abbreviation
 func ParseAbbreviationChunk(chunk Chunk) Abbreviation {
 	return extractAbbreviation(RegexpGroups(patternAbbreviationDefinition, chunk.Content))
 }
@@ -298,7 +302,9 @@ func GetAllLanguages(markdownRaw string) []string {
 	return languages
 }
 
+// MarkdownToHTML converts markdown markdownRaw into an HTML string
 func MarkdownToHTML(markdownRaw string) string {
+	//TODO: handle markdown extensions (need to take in a "config Configuration" parameter)
 	extensions := parser.CommonExtensions | parser.Footnotes | parser.AutoHeadingIDs
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
 }
@@ -316,6 +322,7 @@ func ProcessFootnoteReferences(markdownRaw string) string {
 	return processed
 }
 
+// ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription
 func ParseDescription(markdownRaw string) ParsedDescription {
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
