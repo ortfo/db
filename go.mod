@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/EdlinOrg/prominentcolor v1.0.0
-	github.com/davecgh/go-spew v1.1.1
+	github.com/anaskhan96/soup v1.2.4
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gomarkdown/markdown v0.0.0-20200824053859-8c8b3816f167
