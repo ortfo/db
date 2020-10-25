@@ -1,10 +1,5 @@
 package main
 
-//TODO: deal with markdown extensions (see https://pkg.go.dev/github.com/gomarkdown/markdown/parser#Extensions):
-// - french guillemets -> renderer:SmartypantsQuotesNBSP
-// - open links in new tab -> renderer:HrefTargetBlank
-// ...
-
 import (
 	"regexp"
 	"strings"
@@ -180,8 +175,8 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		firstChild := paragraph.Children()[0]
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			mediae = append(mediae, MediaEmbedDeclaration{
-				Alt: firstChild.Attrs()["alt"], //FIXME: breaks if "alt" not in img.Attrs().keys()
-				Title: firstChild.Attrs()["title"], //FIXME: same issue as above
+				Alt: firstChild.Attrs()["alt"],
+				Title: firstChild.Attrs()["title"],
 				Source: firstChild.Attrs()["src"],
 			})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {

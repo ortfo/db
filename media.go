@@ -47,8 +47,6 @@ type Media struct {
 	Online      bool // Whether the media is hosted online (referred to by an URL)
 }
 
-// TODO: support for pdf files.
-
 // GetImageDimensions returns an ``ImageDimensions`` object, given a pointer to a file
 func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	img, _, err := image.Decode(file)
