@@ -68,9 +68,9 @@ Paragraphs will be accessible in the JSON file in the `paragraphs` object. Each 
 ```markdown
 other stuff...
 
-(my-paragraph-id)
+{#my-paragraph-id}
 The start of the paragraph.
-Specify the paragraph's ID by starting your paragraph with the ID surrounded by parentheses on a single line.
+Specify the paragraph's ID by starting your paragraph with a {#your-identifier} on a single line.
 
 other stuff...
 ```
@@ -81,15 +81,13 @@ and will be empty otherwise. This `id` can be useful to link to a specific parag
 
 A "media" block allows you to declare files embedded in your page: YouTube videos, local files, etc.
 
-Since markdown does not natively support the declaration of embeds other than images, a new syntax was created:
+With native markdown, you can only declare embeds for _images_. We abuse the syntax to extend it to _any file you want_.
 
 ```markdown
->[alt text "title"](./demo.mp4)
+![alt text "title"](./demo.mp4)
 ```
 
-The syntax is the same as the image's, by replacing the `!` by a `>` (it looks like a play button).
-
-`source` can be a relative path, an absolute one or a URL, just like images.
+`source` can be a relative path, an absolute one or a URL.
 
 When building, the compiler will look for these files and analyze them to determine their content type, dimensions, aspect ratio, duration and file size, and will then be accessible in the JSON file as an array of media objects having the following structure:
 
@@ -108,8 +106,6 @@ When building, the compiler will look for these files and analyze them to determ
   "content_type": "video/mp4", // MIME types
 }
 ```
-
-You _can_ use the `![]()` for images (and anything else in fact), the compiler doesn't care, since it analyzes each file to determine its content type.
 
 #### Links
 
