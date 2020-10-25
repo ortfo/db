@@ -83,7 +83,10 @@ type Configuration struct {
 
 // LoadConfiguration loads the .portfoliodb.yml file in ``databaseFolderPath`` and puts it contents into ``loadInto``.
 func LoadConfiguration(filepath string, loadInto *Configuration) error {
-	raw := ReadFileBytes(filepath)
+	raw, err := ReadFileBytes(filepath)
+	if err != nil {
+		return err
+	}
 	return yaml.Unmarshal(raw, loadInto)
 }
 
@@ -121,10 +124,14 @@ func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfi
 }
 
 // ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath
-func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError) {
+func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError, error) {
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
-	yaml.Unmarshal(ReadFileBytes(configFilepath), &configuration)
+	configContent, err := ReadFileBytes(configFilepath)
+	if err != nil {
+		return false, nil, err
+	}
+	yaml.Unmarshal(configContent, &configuration)
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
 	return ValidateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema)
@@ -138,9 +145,12 @@ func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, []gojsonschem
 	configFilepath := ResolveConfigurationPath(databaseDirectory, explicitConfigFilepath)
 	configFilepath, err := filepath.Abs(configFilepath)
 	if err != nil {
-		panic(err)
+		return Configuration{}, nil, err
 	}
-	validated, validationErrors := ValidateConfiguration(configFilepath)
+	validated, validationErrors, err := ValidateConfiguration(configFilepath)
+	if err != nil {
+		return Configuration{}, nil, err
+	}
 	if !validated {
 		return Configuration{}, validationErrors, nil
 	}

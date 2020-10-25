@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/docopt/docopt-go"
@@ -29,7 +28,10 @@ func RunCommandBuild(args docopt.Opts) error {
 	works := make([]Work, 0)
 	for _, project := range projects {
 		description := ParseDescription(project.DescriptionRaw)
-		analyzedMediae := AnalyzeAllMediae(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		analyzedMediae, err := AnalyzeAllMediae(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		if err != nil {
+			return err
+		}
 		metadata := description.Metadata
 		if config.BuildSteps.ExtractColors.Enabled {
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)

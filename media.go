@@ -64,14 +64,14 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 }
 
 // AnalyzeMediaFile analyzes the file at filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
-func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) Media {
+func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return Media{}, err
 	}
 	fileInfo, err := file.Stat()
 	if err != nil {
-		panic(err)
+		return Media{}, err
 	}
 
 	var contentType string
@@ -92,12 +92,12 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 	if isImage {
 		dimensions, err = GetImageDimensions(file)
 		if err != nil {
-			panic(err)
+			return Media{}, err
 		}
 	}
 
 	if isVideo {
-		dimensions, duration = GetVideoDimensionsDuration(filename, dimensions, duration)
+		dimensions, duration, err = GetVideoDimensionsDuration(filename, dimensions, duration)
 	}
 
 	if isAudio {
@@ -105,7 +105,7 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 	}
 
 	return Media{
-		ID:          slugify.Marshal(filepath.Base(filename)),
+		ID:          slugify.Marshal(FilepathBaseNoExt(filename)),
 		Alt:         embedDeclaration.Alt,
 		Title:       embedDeclaration.Title,
 		Source:      filename,
@@ -113,7 +113,7 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) M
 		Dimensions:  dimensions,
 		Duration:    duration,
 		Size:        uint64(fileInfo.Size()),
-	}
+	}, nil
 }
 
 // GetAudioDuration takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.
@@ -134,10 +134,10 @@ func GetAudioDuration(file *os.File) uint {
 }
 
 // GetVideoDimensionsDuration returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
-func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, duration uint) (ImageDimensions, uint) {
+func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, duration uint) (ImageDimensions, uint, error) {
 	video, err := screengen.NewGenerator(filename)
 	if err != nil {
-		panic(err)
+		return ImageDimensions{}, 0, err
 	}
 	height := video.Height()
 	width := video.Width()
@@ -147,17 +147,22 @@ func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, dur
 		AspectRatio: float32(width) / float32(height),
 	}
 	duration = uint(video.Duration) / 1000
-	return dimensions, duration
+	return dimensions, duration, nil
 }
 
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
-func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) map[string][]Media {
+func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
 	analyzedMediae := make(map[string][]Media, 0)
 	analyzedMediaeBySource := make(map[string]Media, 0)
 	for language, mediae := range embedDeclarations {
 		analyzedMediae[language] = make([]Media, 0)
 		for _, media := range mediae {
-			filepath, _ := filepath.Abs(path.Join(currentDirectory, media.Source))
+			var filename string
+			if !filepath.IsAbs(media.Source) {
+				filename, _ = filepath.Abs(path.Join(currentDirectory, media.Source))
+			} else {
+				filename = media.Source
+			}
 			if IsValidURL(media.Source) {
 				analyzedMedia := Media{
 					Alt:    media.Alt,
@@ -166,15 +171,18 @@ func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, curr
 					Online: true,
 				}
 				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filepath]; ok {
+			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
 
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
 			} else {
-				analyzedMedia := AnalyzeMediaFile(filepath, media)
+				analyzedMedia, err := AnalyzeMediaFile(filename, media)
+				if err != nil {
+					return map[string][]Media{}, err
+				}
 				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-				analyzedMediaeBySource[filepath] = analyzedMedia
+				analyzedMediaeBySource[filename] = analyzedMedia
 			}
 		}
 	}
-	return analyzedMediae
+	return analyzedMediae, nil
 }

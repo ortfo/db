@@ -4,26 +4,32 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
 )
 
 // ReadFileBytes reads the content of ``filepath`` and returns the contents as a byte array
-func ReadFileBytes(filepath string) []byte {
+func ReadFileBytes(filepath string) ([]byte, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
 	defer file.Close()
 	b, err := ioutil.ReadAll(file)
-	return b
+	return b, nil
 }
 
 // ReadFile reads the content of ``filepath`` and returns the contents as a string
-func ReadFile(filepath string) string {
-	return string(ReadFileBytes(filepath))
+func ReadFile(filepath string) (string, error) {
+	content, err := ReadFileBytes(filepath)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
 
 // WriteFile writes content to file filepath
@@ -46,22 +52,22 @@ func WriteFile(filename string, content []byte) error {
 }
 
 // ValidateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema ``schema``
-func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError) {
+func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError, error) {
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewStringLoader(document)
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		panic(err.Error())
+		return false, nil, err
 	}
 
 	if result.Valid() {
-		return true, nil
+		return true, nil, nil
 	}
 	var errorMessages []gojsonschema.ResultError
 	for _, desc := range result.Errors() {
 		errorMessages = append(errorMessages, desc)
 	}
-	return false, errorMessages
+	return false, errorMessages, nil
 }
 
 // FileExists checks if the file at ``filepath`` exists, and returns ``true`` if it exists or ``false`` otherwise
@@ -85,13 +91,13 @@ func RegexpGroups(regex string, s string) []string {
 }
 
 // IsValidURL tests a string to determine if it is a well-structured url or not.
-func IsValidURL(toTest string) bool {
-	_, err := url.ParseRequestURI(toTest)
+func IsValidURL(URL string) bool {
+	_, err := url.ParseRequestURI(URL)
 	if err != nil {
 		return false
 	}
 
-	u, err := url.Parse(toTest)
+	u, err := url.Parse(URL)
 	if err != nil || u.Scheme == "" || u.Host == "" {
 		return false
 	}
@@ -127,4 +133,9 @@ func MapKeys(m map[string]string) []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+// FilepathBaseNoExt returns the basename of pth with the extension removed
+func FilepathBaseNoExt(pth string) string {
+	return strings.TrimSuffix(filepath.Base(pth), path.Ext(pth))
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/docopt/docopt-go"
+	"github.com/mitchellh/colorstring"
 )
 
 func main() {
@@ -9,7 +10,8 @@ func main() {
 	args, _ := docopt.ParseDoc(usage)
 
 	if err := dispatchCommand(args); err != nil {
-		panic(err)
+		colorstring.Println("[red][bold]An error occured[reset]")
+		colorstring.Println("\t[red]" + err.Error())
 	}
 }
 
