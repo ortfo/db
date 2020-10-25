@@ -38,9 +38,9 @@ func (extension *namingStrategyExtension) UpdateStructDescriptor(structDescripto
 
 // LowerCaseWithUnderscores one strategy to SetNamingStrategy for. It will change HelloWorld to hello_world.
 func LowerCaseWithUnderscores(name string) string {
-	// Special case for ID: id, not i_d
-	if name == "ID" {
-		return "id"
+	// Handle acronyms
+	if isAllUpper(name) {
+		return strings.ToLower(name)
 	}
 	newName := []rune{}
 	for i, c := range name {
@@ -58,4 +58,13 @@ func LowerCaseWithUnderscores(name string) string {
 		}
 	}
 	return string(newName)
+}
+
+func isAllUpper(s string) bool {
+	for _, c := range s {
+		if !unicode.IsUpper(c) {
+			return false
+		}
+	}
+	return true
 }
