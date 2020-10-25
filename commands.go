@@ -65,7 +65,25 @@ func RunCommandBuild(args docopt.Opts) error {
 
 // RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt
 func RunCommandReplicate(args docopt.Opts) error {
-	return nil
+	// TODO: validate database.json with a JSON schema
+	var parsedDatabase []Work
+	json := jsoniter.ConfigFastest
+	SetJSONNamingStrategy(LowerCaseWithUnderscores)
+	databaseFilepath, err := args.String("<from-filepath>")
+	targetDatabasePath, err := args.String("<to-directory>")
+	if err != nil {
+		return err
+	}
+	content, err := ReadFileBytes(databaseFilepath)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(content, &parsedDatabase)
+	if err != nil {
+		return err
+	}
+	err = ReplicateAll(targetDatabasePath, parsedDatabase)
+	return err
 }
 
 // RunCommandAdd runs the command 'add' given parsed CLI args from docopt
