@@ -111,6 +111,7 @@ type Link struct {
 
 // Work represents a complete work, with analyzed mediae
 type Work struct {
+	ID         string
 	Metadata   map[string]interface{}
 	Title      map[string]string
 	Paragraphs map[string][]Paragraph

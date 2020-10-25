@@ -37,6 +37,7 @@ func RunCommandBuild(args docopt.Opts) error {
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
 		}
 		work := Work{
+			ID: project.ID,
 			Metadata:   metadata,
 			Title:      description.Title,
 			Paragraphs: description.Paragraphs,
