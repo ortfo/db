@@ -1,10 +1,27 @@
 package main
 
 import (
+	"fmt"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/docopt/docopt-go"
 )
+
+// RunContext holds several "global" references used throughout all the functions of a command
+type RunContext struct {
+	config         *Configuration
+	currentProject *ProjectTreeElement
+	progress       struct {
+		current int
+		total   int
+	}
+}
+
+func (ctx *RunContext) Status(text string) {
+	fmt.Print("\033[2K\r")
+	fmt.Printf("[%v/%v] %v: %v", ctx.progress.current, ctx.progress.total, ctx.currentProject.ID, text)
+}
 
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt
 func RunCommandBuild(args docopt.Opts) error {
@@ -25,19 +42,32 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
+	defer fmt.Print("\033[2K\r\n")
+	ctx := RunContext{
+		config: &config,
+		progress: struct {
+			current int
+			total   int
+		}{
+			total: len(projects),
+		},
+	}
 	works := make([]Work, 0)
 	for _, project := range projects {
-		description := ParseDescription(project.DescriptionRaw)
-		analyzedMediae, err := AnalyzeAllMediae(description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		ctx.currentProject = &project
+		ctx.progress.current++
+		description := ParseDescription(ctx, project.DescriptionRaw)
+		analyzedMediae, err := AnalyzeAllMediae(ctx, description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
 		if err != nil {
 			return err
 		}
 		metadata := description.Metadata
 		if config.BuildSteps.ExtractColors.Enabled {
+			ctx.Status("Extracting colors")
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
 		}
 		work := Work{
-			ID: project.ID,
+			ID:         project.ID,
 			Metadata:   metadata,
 			Title:      description.Title,
 			Paragraphs: description.Paragraphs,
@@ -55,6 +85,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	}
 	err = WriteFile(outputFilename, worksJSON)
 	if val, _ := args.Bool("--silent"); !val {
+		fmt.Print("\033[2K\r\n")
 		println(string(worksJSON))
 	}
 	if err != nil {
@@ -79,6 +110,9 @@ func RunCommandReplicate(args docopt.Opts) error {
 		return err
 	}
 	validated, validationErrors, err := ValidateWithJSONSchema(string(content), DatabaseJSONSchema)
+	if err != nil {
+		return err
+	}
 	if !validated {
 		DisplayValidationErrors(validationErrors, "database JSON")
 		return nil
@@ -87,8 +121,16 @@ func RunCommandReplicate(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	err = ReplicateAll(targetDatabasePath, parsedDatabase)
-	return err
+	ctx := RunContext{
+		config: &Configuration{},
+		progress: struct{current int; total int}{total: len(parsedDatabase)},
+	}
+	defer fmt.Print("\033[2K\r\n")
+	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // RunCommandAdd runs the command 'add' given parsed CLI args from docopt

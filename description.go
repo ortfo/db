@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	patternLanguageMarker                string = `^::\s+(.+)$`
-	patternAbbreviationDefinition        string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
+	patternLanguageMarker         string = `^::\s+(.+)$`
+	patternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
 )
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns
@@ -47,7 +47,8 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 }
 
 // ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription
-func ParseDescription(markdownRaw string) ParsedDescription {
+func ParseDescription(ctx RunContext, markdownRaw string) ParsedDescription {
+	ctx.Status("Parsing description.md")
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := splitOnLanguageMarkers(markdownRaw)
@@ -176,28 +177,28 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		firstChild := paragraph.Children()[0]
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			mediae = append(mediae, MediaEmbedDeclaration{
-				Alt: firstChild.Attrs()["alt"],
-				Title: firstChild.Attrs()["title"],
+				Alt:    firstChild.Attrs()["alt"],
+				Title:  firstChild.Attrs()["title"],
 				Source: firstChild.Attrs()["src"],
 			})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			links = append(links, Link{
-				ID: slugify.Marshal(firstChild.FullText()),
-				Name: innerHTML(firstChild),
+				ID:    slugify.Marshal(firstChild.FullText()),
+				Name:  innerHTML(firstChild),
 				Title: firstChild.Attrs()["title"],
-				URL: firstChild.Attrs()["href"],
+				URL:   firstChild.Attrs()["href"],
 			})
 		} else if RegexpMatches(patternAbbreviationDefinition, innerHTML(paragraph)) {
 			groups := RegexpGroups(patternAbbreviationDefinition, innerHTML(paragraph))
 			abbreviations = append(abbreviations, Abbreviation{
-				Name: groups[1],
+				Name:       groups[1],
 				Definition: groups[2],
 			})
 		} else if RegexpMatches(patternLanguageMarker, innerHTML(paragraph)) {
 			continue
 		} else {
 			paragraphs = append(paragraphs, Paragraph{
-				ID: paragraph.Attrs()["id"],
+				ID:      paragraph.Attrs()["id"],
 				Content: innerHTML(paragraph),
 			})
 		}
@@ -207,7 +208,7 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		if div.Attrs()["class"] == "footnotes" {
 			for _, li := range div.FindAll("li") {
 				footnotes = append(footnotes, Footnote{
-					Name: strings.TrimPrefix(li.Attrs()["id"], "fn:"),
+					Name:    strings.TrimPrefix(li.Attrs()["id"], "fn:"),
 					Content: innerHTML(li),
 				})
 			}
@@ -223,7 +224,7 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
 func innerHTML(element soup.Root) string {
 	var innerHTML string
-	for _, child := range element.Children(){
+	for _, child := range element.Children() {
 		innerHTML += child.HTML()
 	}
 	return innerHTML

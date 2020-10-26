@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/EdlinOrg/prominentcolor v1.0.0
+	github.com/JohannesKaufmann/html-to-markdown v1.2.0
 	github.com/anaskhan96/soup v1.2.4
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/gabriel-vasile/mimetype v1.1.1

@@ -149,7 +149,7 @@ func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, dur
 }
 
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
-func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
+func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
 	analyzedMediae := make(map[string][]Media, 0)
 	analyzedMediaeBySource := make(map[string]Media, 0)
 	for language, mediae := range embedDeclarations {
@@ -173,6 +173,7 @@ func AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, curr
 
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
 			} else {
+				ctx.Status("Analyzing " + path.Base(filename))
 				analyzedMedia, err := AnalyzeMediaFile(filename, media)
 				if err != nil {
 					return map[string][]Media{}, err

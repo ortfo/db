@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
@@ -11,12 +12,15 @@ import (
 )
 
 // ReplicateAll recreates a database inside targetDatabase containing all the works in `works`
-func ReplicateAll(targetDatabase string, works []Work) error {
+func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	for _, work := range works {
+		ctx.currentProject = &ProjectTreeElement{ID: work.ID}
+		ctx.Status("Replicating")
 		err := ReplicateOne(targetDatabase, work)
 		if err != nil {
 			return err
 		}
+		ctx.progress.current++
 	}
 	return nil
 }
@@ -89,7 +93,7 @@ func replicateLocalizedBlock(work Work, language string) (string, error) {
 		parsedHTML := soup.HTMLParse(replicatedParagraph)
 		abbreviations = append(abbreviations, collectAbbreviations(parsedHTML)...)
 		replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
-		replicatedParagraph = transformFootnoteReferences(parsedHTML, replicatedParagraph)
+		replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
 		result += replicatedParagraph + end
 	}
 	for _, link := range work.Links[language] {
@@ -107,12 +111,15 @@ func replicateLanguageMarker(language string) string {
 }
 
 // transformFootnoteReferences turns HTML references to footnotes into markdown ones
-func transformFootnoteReferences(htmlSoup soup.Root, markdown string) string {
+func transformFootnoteReferences(markdown string) string {
+	pattern := regexp.MustCompile(`\[(\d+)\]\(#fn:([^)]+)\)`)
+	lines := strings.Split(markdown, "\n")
 	transformedMarkdown := markdown
-	for _, sup := range htmlSoup.FindAll("sup") {
-		if sup.Attrs()["class"] == "footnote-ref" && len(sup.Children()) == 1 && sup.Children()[0].NodeValue == "a" {
-			footnoteName := strings.TrimPrefix(sup.Attrs()["id"], "fnref:")
-			transformedMarkdown = strings.ReplaceAll(transformedMarkdown, sup.HTML(), "[^"+footnoteName+"]")
+	for _, line := range lines {
+		if pattern.MatchString(line) {
+			for _, groups := range pattern.FindAllStringSubmatch(line, -1) {
+				transformedMarkdown = strings.ReplaceAll(transformedMarkdown, groups[0], "[^" + groups[2] + "]")
+			}
 		}
 	}
 	return transformedMarkdown
@@ -159,9 +166,9 @@ func replicateFootnoteDefinition(footnote Footnote) string {
 
 func replicateLink(link Link) string {
 	if link.Title != "" {
-		return "![" + link.Name + ` "` + link.Title + `"](` + link.URL + ")"
+		return "[" + link.Name + ` "` + link.Title + `"](` + link.URL + ")"
 	}
-	return "![" + link.Name + "](" + link.URL + ")"
+	return "[" + link.Name + "](" + link.URL + ")"
 }
 
 func replicateTitle(title string) string {

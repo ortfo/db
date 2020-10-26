@@ -3,13 +3,11 @@ package main
 import (
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/imdatngo/mergo"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xeipuuv/gojsonschema"
-	"github.com/mitchellh/colorstring"
 	"gopkg.in/yaml.v2"
 )
 
@@ -91,6 +89,7 @@ func LoadConfiguration(filepath string, loadInto *Configuration) error {
 }
 
 // LoadDefaultConfiguration gets the default .portfoliodb.yml configuration (at ./.portfoliodb.yml) and puts it contents into ``loadInto``.
+// FIXME: the default config should be a go file
 func LoadDefaultConfiguration(loadInto *Configuration) error {
 	return LoadConfiguration("./.portfoliodb.yml", loadInto)
 }
@@ -159,13 +158,4 @@ func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, []gojsonschem
 		return Configuration{}, make([]gojsonschema.ResultError, 0), err
 	}
 	return config, make([]gojsonschema.ResultError, 0), nil
-}
-
-// DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal
-func DisplayValidationErrors(errors []gojsonschema.ResultError) {
-	println("Your configuration file is invalid. Here are the validation errors:\n")
-	for _, err := range errors {
-		colorstring.Println("- " + strings.ReplaceAll(err.Field(), ".", "[blue][bold]/[reset]"))
-		colorstring.Println("    [red]" + err.Description())
-	}
 }

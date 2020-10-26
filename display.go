@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/colorstring"
 	"github.com/xeipuuv/gojsonschema"
 )
+
 // DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal
 func DisplayValidationErrors(errors []gojsonschema.ResultError, name string) {
 	println("Your " + name + " file is invalid. Here are the validation errors:\n")
