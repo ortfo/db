@@ -1,6 +1,9 @@
 [
     {
+        "id": "neptune",
         "metadata": {
+            "license": "CC-BY-SA-4.0",
+            "state": "done",
             "made with": [
                 "fl studio",
                 "photoshop"
@@ -10,9 +13,9 @@
                 "music"
             ],
             "colors": {
-                "primary": "11152F",
-                "secondary": "3D60EB",
-                "tertiary": "2F4198"
+                "primary": "10152E",
+                "secondary": "3C60EA",
+                "tertiary": "2F4196"
             },
             "created": "2018-00-00",
             "layout": [
@@ -22,9 +25,7 @@
                     "ml",
                     "mr"
                 ]
-            ],
-            "license": "CC-BY-SA-4.0",
-            "state": "done"
+            ]
         },
         "title": {
             "fr-FR": "Neptune",
@@ -40,29 +41,14 @@
             "en-US": [
                 {
                     "id": "",
-                    "content": "This album represents different aspects of our infinite, strange universe. Most of the melodies encapsulate this feeling of the human race facing the mysteries that lie in the overwhelmingly vast space we&rsquo;re all trapped in forever."
+                    "content": "This album represents different aspects of our infinite, strange universe. Most of the melodies encapsulate this feeling of the human race facing the mysteries that lie in the overwhelmingly vast space we’re all trapped in forever."
                 }
             ]
         },
         "media": {
             "fr-FR": [
                 {
-                    "id": "",
-                    "alt": "Neptune",
-                    "title": "",
-                    "source": "https://www.youtube.com/watch?v=k43WtSBPeko",
-                    "content_type": "",
-                    "size": 0,
-                    "dimensions": {
-                        "width": 0,
-                        "height": 0,
-                        "aspect_ratio": 0
-                    },
-                    "duration": 0,
-                    "online": true
-                },
-                {
-                    "id": "square-cover-artjpeg",
+                    "id": "square-cover-art",
                     "alt": "Pochette (1:1)",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/neptune/square-cover-art.jpeg",
@@ -77,7 +63,7 @@
                     "online": false
                 },
                 {
-                    "id": "wide-cover-artjpeg",
+                    "id": "wide-cover-art",
                     "alt": "Pochette (16:9)",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/neptune/wide-cover-art.jpeg",
@@ -94,22 +80,7 @@
             ],
             "en-US": [
                 {
-                    "id": "",
-                    "alt": "Neptune",
-                    "title": "",
-                    "source": "https://www.youtube.com/watch?v=k43WtSBPeko",
-                    "content_type": "",
-                    "size": 0,
-                    "dimensions": {
-                        "width": 0,
-                        "height": 0,
-                        "aspect_ratio": 0
-                    },
-                    "duration": 0,
-                    "online": true
-                },
-                {
-                    "id": "square-cover-artjpeg",
+                    "id": "square-cover-art",
                     "alt": "Pochette (1:1)",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/neptune/square-cover-art.jpeg",
@@ -124,7 +95,7 @@
                     "online": false
                 },
                 {
-                    "id": "wide-cover-artjpeg",
+                    "id": "wide-cover-art",
                     "alt": "Pochette (16:9)",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/neptune/wide-cover-art.jpeg",
@@ -141,8 +112,22 @@
             ]
         },
         "links": {
-            "fr-FR": [],
-            "en-US": []
+            "en-US": [
+                {
+                    "id": "Neptune",
+                    "name": "Neptune",
+                    "title": "",
+                    "url": "https://www.youtube.com/watch?v=k43WtSBPeko"
+                }
+            ],
+            "fr-FR": [
+                {
+                    "id": "Neptune",
+                    "name": "Neptune",
+                    "title": "",
+                    "url": "https://www.youtube.com/watch?v=k43WtSBPeko"
+                }
+            ]
         },
         "footnotes": {
             "fr-FR": [],
@@ -150,9 +135,8 @@
         }
     },
     {
+        "id": "trigonometry-synth",
         "metadata": {
-            "wip": false,
-            "license": "CC-BY-SA-4.0",
             "tags": [
                 "illustration"
             ],
@@ -173,54 +157,56 @@
                 "pl",
                 "pc"
             ],
-            "created": "2020-05-00"
+            "created": "2020-05-00",
+            "wip": false,
+            "license": "CC-BY-SA-4.0"
         },
         "title": {
-            "en-US": "Trigonometry Synth",
-            "fr-FR": "Trigonometry Synth"
+            "fr-FR": "Trigonometry Synth",
+            "en-US": "Trigonometry Synth"
         },
         "paragraphs": {
             "fr-FR": [
                 {
-                    "id": "summary",
-                    "content": "À la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, <abbr title=\"sinusoïdale\">sin</abbr>, tan et cotan."
+                    "id": "",
+                    "content": "(summary)<br/>\nÀ la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, <abbr title=\"sinusoïdale\">sin</abbr>, tan et cotan."
                 },
                 {
-                    "id": "reddit",
-                    "content": "En réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur <a href=\"https://reddit.com/r/synthesizers\">r/synthesizers</a> et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration."
+                    "id": "",
+                    "content": "(reddit)<br/>\nEn réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur <a href=\"https://reddit.com/r/synthesizers\">r/synthesizers</a> et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration."
                 },
                 {
-                    "id": "connect",
-                    "content": "À la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, <abbr title=\"sinusoïdale\">sin</abbr>, tan et cotan."
+                    "id": "",
+                    "content": "(connect)<br/>\nÀ la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, <abbr title=\"sinusoïdale\">sin</abbr>, tan et cotan."
                 },
                 {
-                    "id": "change-of-interpretation",
-                    "content": "En réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur r/synthesizers et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration."
+                    "id": "",
+                    "content": "(change-of-interpretation)<br/>\nEn réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur r/synthesizers et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration."
                 }
             ],
             "en-US": [
                 {
-                    "id": "summary",
-                    "content": "Looking for interesting ways to represent trigonometric identities, I tried to connect the different symmetry formulas of cos, <abbr title=\"sinusoïdal\">sin</abbr>, tan and cotan."
+                    "id": "",
+                    "content": "(summary)<br/>\nLooking for interesting ways to represent trigonometric identities, I tried to connect the different symmetry formulas of cos, <abbr title=\"sinusoïdal\">sin</abbr>, tan and cotan."
                 },
                 {
-                    "id": "reddit",
-                    "content": "While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on <a href=\"https://reddit.com/r/synthesizers\">r/synthesizers</a> and received a lot of positive feedback and possible musical interpretations of an illustration."
+                    "id": "",
+                    "content": "(reddit)<br/>\nWhile making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on <a href=\"https://reddit.com/r/synthesizers\">r/synthesizers</a> and received a lot of positive feedback and possible musical interpretations of an illustration."
                 },
                 {
-                    "id": "connect",
-                    "content": "Looking for interesting ways to represent trigonometric identities, I tried to connect the<sup class=\"foonote-ref\"><a href=\"#footnote:abcEF\">abcEF</a></sup> different symmetry formulas of cos, <abbr title=\"sinusoïdal\">sin</abbr>, tan and cotan."
+                    "id": "",
+                    "content": "(connect)<br/>\nLooking for interesting ways to represent trigonometric identities, I tried to connect the<sup class=\"footnote-ref\" id=\"fnref:abcEF\"><a href=\"#fn:abcEF\">1</a></sup> different symmetry formulas of cos, <abbr title=\"sinusoïdal\">sin</abbr>, tan and cotan."
                 },
                 {
-                    "id": "change-of-interpretation",
-                    "content": "While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on r/synthesizers and received a lot of positive feedback and possible musical interpretations of an illustration<sup class=\"foonote-ref\"><a href=\"#footnote:abcEF\">abcEF</a></sup>."
+                    "id": "",
+                    "content": "(change-of-interpretation)<br/>\nWhile making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on r/synthesizers and received a lot of positive feedback and possible musical interpretations of an illustration<sup class=\"footnote-ref\" id=\"fnref:abcEF\"><a href=\"#fn:abcEF\">1</a></sup>."
                 }
             ]
         },
         "media": {
             "fr-FR": [
                 {
-                    "id": "trigonometry-synthpng",
+                    "id": "trigonometry-synth",
                     "alt": "Trigonometry Synth",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/trigonometry-synth/trigonometry-synth.png",
@@ -237,7 +223,7 @@
             ],
             "en-US": [
                 {
-                    "id": "trigonometry-synthpng",
+                    "id": "trigonometry-synth",
                     "alt": "Trigonometry Synth",
                     "title": "",
                     "source": "/mnt/d/projects/portfoliodb/example/database/trigonometry-synth/trigonometry-synth.png",
@@ -254,15 +240,29 @@
             ]
         },
         "links": {
-            "fr-FR": [],
-            "en-US": []
+            "fr-FR": [
+                {
+                    "id": "post-reddit",
+                    "name": "post-reddit",
+                    "title": "",
+                    "url": "https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/"
+                }
+            ],
+            "en-US": [
+                {
+                    "id": "post-reddit",
+                    "name": "post-reddit",
+                    "title": "",
+                    "url": "https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/"
+                }
+            ]
         },
         "footnotes": {
             "fr-FR": [],
             "en-US": [
                 {
                     "name": "abcEF",
-                    "content": "geogrje"
+                    "content": "geogrje<br/>\n"
                 }
             ]
         }
