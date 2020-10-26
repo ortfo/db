@@ -1,6 +1,6 @@
 package main
 
-// ConfigurationJSONSchema is the entire json string from configuration.json.schema
+// ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
 const ConfigurationJSONSchema = `{
 	"$schema": "http://json-schema.org/schema",
 	"$id": ".portfoliodb.yml",
@@ -164,6 +164,176 @@ const ConfigurationJSONSchema = `{
 								"type": "string"
 							},
 							"to": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+`
+
+// DatabaseJSONSchema is the entire json string from database.json.schema
+const DatabaseJSONSchema = `{
+	"$schema": "http://json-schema.org/schema",
+	"$id": "portfoliodb-database",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"required": [
+			"id",
+			"metadata",
+			"paragraphs",
+			"title",
+			"media",
+			"links",
+			"footnotes"
+		],
+		"properties": {
+			"id": {
+				"type": "string"
+			},
+			"metadata": {
+				"type": "object"
+			},
+			"paragraphs": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"id",
+							"content"
+						],
+						"properties": {
+							"id": {
+								"type": "string"
+							},
+							"content": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			},
+			"title": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "string"
+				}
+			},
+			"media": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"id",
+							"alt",
+							"title",
+							"source",
+							"content_type",
+							"size",
+							"dimensions",
+							"duration",
+							"online"
+						],
+						"properties": {
+							"id": {
+								"type": "string"
+							},
+							"alt": {
+								"type": "string"
+							},
+							"title": {
+								"type": "string"
+							},
+							"source": {
+								"type": "string"
+							},
+							"content_type": {
+								"type": "string"
+							},
+							"size": {
+								"type": "number"
+							},
+							"dimensions": {
+								"type": "object",
+								"required": [
+									"width",
+									"height",
+									"aspect_ratio"
+								],
+								"properties": {
+									"width": {
+										"type": "number"
+									},
+									"height": {
+										"type": "number"
+									},
+									"aspect_ratio": {
+										"type": "number"
+									}
+								}
+							},
+							"duration": {
+								"type": "number"
+							},
+							"online": {
+								"type": "boolean"
+							}
+						}
+					}
+				}
+			},
+			"links": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"id",
+							"name",
+							"title",
+							"url"
+						],
+						"properties": {
+							"id": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"title": {
+								"type": "string"
+							},
+							"url": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			},
+			"footnotes": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"name",
+							"content"
+						],
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"content": {
 								"type": "string"
 							}
 						}

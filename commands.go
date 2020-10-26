@@ -15,7 +15,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	outputFilename, _ := args.String("<to-filepath>")
 	config, validationErrs, err := GetConfigurationFromCLIArgs(args)
 	if len(validationErrs) > 0 {
-		DisplayValidationErrors(validationErrs)
+		DisplayValidationErrors(validationErrs, "configuration")
 		return nil
 	}
 	if err != nil {
@@ -77,6 +77,11 @@ func RunCommandReplicate(args docopt.Opts) error {
 	content, err := ReadFileBytes(databaseFilepath)
 	if err != nil {
 		return err
+	}
+	validated, validationErrors, err := ValidateWithJSONSchema(string(content), DatabaseJSONSchema)
+	if !validated {
+		DisplayValidationErrors(validationErrors, "database JSON")
+		return nil
 	}
 	err = json.Unmarshal(content, &parsedDatabase)
 	if err != nil {
