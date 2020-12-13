@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+
 type configurationBuildStepsExtractColors struct {
 	Enabled         bool
 	Extract         []string
@@ -45,39 +46,39 @@ type configurationMarkdownCustomSyntax struct {
 	To   string
 }
 
+type checks struct {
+	SchemaCompliance     string `yaml:"schema compliance"`
+	WorkFolderUniqueness string `yaml:"work folder uniqueness"`
+	WorkFolderSafeness   string `yaml:"work folder safeness"`
+	YamlHeader           string `yaml:"yaml header"`
+	TitlePresence        string `yaml:"title presence"`
+	TitleUniqueness      string `yaml:"title uniqueness"`
+	WorkingUrls          string `yaml:"working urls"`
+}
+
+type replaceMediaSource struct {
+	Replace string `yaml:"replace"`
+	With string `yaml:"with"`
+}
+
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
-	BuildSteps configurationBuildSteps `yaml:"build steps"`
-	Features   struct {
-		madeWith      bool `yaml:"made with"`
-		mediaHoisting bool `yaml:"media hoisting"`
-	}
-	Validate struct {
-		Checks struct {
-			SchemaCompliance     string `yaml:"schema compliance"`
-			WorkFolderUniqueness string `yaml:"work folder uniqueness"`
-			WorkFolderSafeness   string `yaml:"work folder safeness"`
-			YamlHeader           string `yaml:"yaml header"`
-			TitlePresence        string `yaml:"title presence"`
-			TitleUniqueness      string `yaml:"title uniqueness"`
-			TagsPresence         string `yaml:"tags presence"`
-			TagsKnowledge        string `yaml:"tags knowledge"`
-			WorkingMedia         string `yaml:"working media"`
-			WorkingUrls          string `yaml:"working urls"`
-		}
-	}
-	Markdown struct {
-		Abbreviations      bool                                  `yaml:"abbreviations"`
-		DefinitionLists    bool                                  `yaml:"definition lists"`
-		Admonitions        bool                                  `yaml:"admonitions"`
-		Footnotes          bool                                  `yaml:"footnotes"`
-		MarkdownInHTML     bool                                  `yaml:"markdown in html"`
-		NewLineToLineBreak bool                                  `yaml:"new-line-to-line-break"`
-		SmartyPants        bool                                  `yaml:"smarty pants"`
-		AnchoredHeadings   configurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
-		CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
-	}
+	configurationBuildSteps
+	Checks checks `yaml:"checks"`
+	ReplaceMediaSources []replaceMediaSource `yaml:"replace media sources"`
+	// Markdown struct {
+	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
+	// 	DefinitionLists    bool                                  `yaml:"definition lists"`
+	// 	Admonitions        bool                                  `yaml:"admonitions"`
+	// 	Footnotes          bool                                  `yaml:"footnotes"`
+	// 	MarkdownInHTML     bool                                  `yaml:"markdown in html"`
+	// 	NewLineToLineBreak bool                                  `yaml:"new-line-to-line-break"`
+	// 	SmartyPants        bool                                  `yaml:"smarty pants"`
+	// 	AnchoredHeadings   configurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
+	// 	CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
+	// }
 }
+
 
 // LoadConfiguration loads the .portfoliodb.yml file in ``databaseFolderPath`` and puts it contents into ``loadInto``.
 func LoadConfiguration(filepath string, loadInto *Configuration) error {
@@ -88,21 +89,11 @@ func LoadConfiguration(filepath string, loadInto *Configuration) error {
 	return yaml.Unmarshal(raw, loadInto)
 }
 
-// LoadDefaultConfiguration gets the default .portfoliodb.yml configuration (at ./.portfoliodb.yml) and puts it contents into ``loadInto``.
-// FIXME: the default config should be a go file
-func LoadDefaultConfiguration(loadInto *Configuration) error {
-	return LoadConfiguration("./.portfoliodb.yml", loadInto)
-}
-
 // GetConfiguration  reads from the .portfoliodb.yml file in ``databaseFolderPath``
 // and returns a ``Configuration`` struct
 func GetConfiguration(filepath string) (Configuration, error) {
 	var userConfig Configuration
-	var defaultConfig Configuration
-	// Load the default configuration
-	if err := LoadDefaultConfiguration(&defaultConfig); err != nil {
-		return Configuration{}, err
-	}
+	defaultConfig := Configuration{}
 	// Load the user's configuration
 	if err := LoadConfiguration(filepath, &userConfig); err != nil {
 		return Configuration{}, err

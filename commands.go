@@ -18,6 +18,7 @@ type RunContext struct {
 	}
 }
 
+// Status prints the current compilation progress
 func (ctx *RunContext) Status(text string) {
 	fmt.Print("\033[2K\r")
 	fmt.Printf("[%v/%v] %v: %v", ctx.progress.current, ctx.progress.total, ctx.currentProject.ID, text)
@@ -62,7 +63,7 @@ func RunCommandBuild(args docopt.Opts) error {
 			return err
 		}
 		metadata := description.Metadata
-		if config.BuildSteps.ExtractColors.Enabled {
+		if config.ExtractColors.Enabled {
 			ctx.Status("Extracting colors")
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
 		}

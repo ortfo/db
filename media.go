@@ -62,7 +62,7 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 }
 
 // AnalyzeMediaFile analyzes the file at filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
-func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
+func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, config Configuration) (Media, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return Media{}, err
@@ -106,12 +106,20 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (
 		ID:          slugify.Marshal(FilepathBaseNoExt(filename)),
 		Alt:         embedDeclaration.Alt,
 		Title:       embedDeclaration.Title,
-		Source:      filename,
+		Source:      transformSource(filename, config),
 		ContentType: contentType,
 		Dimensions:  dimensions,
 		Duration:    duration,
 		Size:        uint64(fileInfo.Size()),
 	}, nil
+}
+
+// transformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration
+func transformSource(source string, config Configuration) string {
+	for _, replacement := range config.ReplaceMediaSources {
+		source = strings.ReplaceAll(source, replacement.Replace, replacement.With)
+	}
+	return source
 }
 
 // GetAudioDuration takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.
@@ -174,7 +182,7 @@ func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedD
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
 			} else {
 				ctx.Status("Analyzing " + path.Base(filename))
-				analyzedMedia, err := AnalyzeMediaFile(filename, media)
+				analyzedMedia, err := AnalyzeMediaFile(filename, media, *ctx.config)
 				if err != nil {
 					return map[string][]Media{}, err
 				}

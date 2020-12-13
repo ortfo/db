@@ -53,7 +53,7 @@ func extractColorsFromFiles(files []string, config Configuration) (ExtractedColo
 		return extractColors(files[0])
 	}
 	for _, filename := range files {
-		if StringInSlice(config.BuildSteps.ExtractColors.DefaultFileName, filename) {
+		if StringInSlice(config.ExtractColors.DefaultFileName, filename) {
 			return extractColors(filename)
 		}
 	}
