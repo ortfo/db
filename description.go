@@ -176,9 +176,10 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		childrenCount := len(paragraph.Children())
 		firstChild := paragraph.Children()[0]
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
+			alt, title := extractTitleFromMediaAlt(firstChild.Attrs()["alt"])
 			mediae = append(mediae, MediaEmbedDeclaration{
-				Alt:    firstChild.Attrs()["alt"],
-				Title:  firstChild.Attrs()["title"],
+				Alt:    alt,
+				Title:  title,
 				Source: firstChild.Attrs()["src"],
 			})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
@@ -219,6 +220,26 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		processedParagraphs = append(processedParagraphs, processParagraph(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
+}
+
+func extractTitleFromMediaAlt(altAttribute string) (string, string) {
+	alt, title := "", ""
+	var inTitleDecl bool
+	var prevRune rune
+	// ideaseed “Ideaseed’s wordmark”
+	for _, curRune := range altAttribute {
+		if curRune == '“' && prevRune == ' ' {
+			inTitleDecl = true
+		} else if curRune == '”' {
+			inTitleDecl = false
+		} else if inTitleDecl {
+			title += string(curRune)
+		} else {
+			alt += string(curRune)
+		}
+		prevRune = rune(curRune)
+	}
+	return alt, title
 }
 
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
