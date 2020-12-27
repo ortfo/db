@@ -239,7 +239,7 @@ func extractTitleFromMediaAlt(altAttribute string) (string, string) {
 		}
 		prevRune = rune(curRune)
 	}
-	return alt, title
+	return strings.TrimSpace(alt), strings.TrimSpace(title)
 }
 
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
