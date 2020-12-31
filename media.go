@@ -45,6 +45,7 @@ type Media struct {
 	Dimensions  ImageDimensions
 	Duration    uint // In seconds
 	Online      bool // Whether the media is hosted online (referred to by an URL)
+	Attributes  MediaAttributes
 }
 
 // GetImageDimensions returns an ``ImageDimensions`` object, given a pointer to a file
@@ -111,6 +112,7 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 		Dimensions:  dimensions,
 		Duration:    duration,
 		Size:        uint64(fileInfo.Size()),
+		Attributes: embedDeclaration.Attributes,
 	}, nil
 }
 
@@ -171,14 +173,14 @@ func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedD
 			}
 			if IsValidURL(media.Source) {
 				analyzedMedia := Media{
-					Alt:    media.Alt,
-					Title:  media.Title,
-					Source: media.Source,
-					Online: true,
+					Alt:        media.Alt,
+					Title:      media.Title,
+					Source:     media.Source,
+					Online:     true,
+					Attributes: media.Attributes,
 				}
 				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
 			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
-
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
 			} else {
 				ctx.Status("Analyzing " + path.Base(filename))

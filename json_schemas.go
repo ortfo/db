@@ -285,6 +285,31 @@ const DatabaseJSONSchema = `{
 							},
 							"online": {
 								"type": "boolean"
+							},
+							"attributes": {
+								"type": "object",
+								"properties": {
+									"looped": {
+										"type": "boolean",
+										"description": "Whether to add looped to the potential HTML element's attributes (<video>, <audio>)."
+									},
+									"autoplay": {
+										"type": "boolean",
+										"description": "Whether to add autoplay to the potential HTML element's attributes (<video>, <audio>)."
+									},
+									"muted": {
+										"type": "boolean",
+										"description": "Whether to add muted to the potential HTML element's attributes (<video>, <audio>)."
+									},
+									"playsinline": {
+										"type": "boolean",
+										"description": "Whether to add playsinline to the potential HTML element's attributes (<video>, <audio>)."
+									},
+									"controls": {
+										"type": "boolean",
+										"description": "Whether to add controls to the potential HTML element's attributes (<video>, <audio>)."
+									}
+								}
 							}
 						}
 					}
