@@ -12,7 +12,7 @@ Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
-  -S --scattered			  Operate in scattered mode. See Scattered Mode section for more information.
+  -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
 
 Examples:
   portfoliodb database build database.json
