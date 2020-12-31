@@ -4,7 +4,7 @@ with open("usage.go", encoding="utf-8") as file:
     usage = "\n".join(file.read().split("\n")[4:-1])
 
 
-with open("_README.md", mode="r", encoding="utf-8") as file:
+with open("tools/_README.md", mode="r", encoding="utf-8") as file:
     readme = file.read()
     readme = readme.replace("<<<<USAGE>>>>", usage)
 
