@@ -3,6 +3,7 @@ package main
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v2"
 
@@ -16,6 +17,9 @@ import (
 const (
 	patternLanguageMarker         string = `^::\s+(.+)$`
 	patternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
+	mediaEmbedAttributeLooped     rune   = '~'
+	mediaEmbedAttributeAutoplay   rune   = '>'
+	mediaEmbedAttributeNoControls rune   = '='
 )
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns
@@ -124,9 +128,19 @@ type Work struct {
 // MediaEmbedDeclaration represents media embeds. (abusing the ![]() syntax to extend it to any file)
 // Only stores the info extracted from the syntax, no filesystem interactions.
 type MediaEmbedDeclaration struct {
-	Alt    string
-	Title  string
-	Source string
+	Alt        string
+	Title      string
+	Source     string
+	Attributes MediaAttributes
+}
+
+// MediaAttributes stores which HTML attributes should be added to the media
+type MediaAttributes struct {
+	Looped      bool // Controlled with attribute character ~ (adds)
+	Autoplay    bool // Controlled with attribute character > (adds)
+	Muted       bool // Controlled with attribute character > (adds)
+	Playsinline bool // Controlled with attribute character = (adds)
+	Controls    bool // Controlled with attribute character = (removes)
 }
 
 // ParsedDescription represents a work, but without analyzed media. All it contains is information from the description.md file
@@ -177,10 +191,12 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		firstChild := paragraph.Children()[0]
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			alt, title := extractTitleFromMediaAlt(firstChild.Attrs()["alt"])
+			alt, attributes := extractAttributesFromAlt(alt)
 			mediae = append(mediae, MediaEmbedDeclaration{
-				Alt:    alt,
-				Title:  title,
-				Source: firstChild.Attrs()["src"],
+				Alt:        alt,
+				Title:      title,
+				Source:     firstChild.Attrs()["src"],
+				Attributes: attributes,
 			})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			links = append(links, Link{
@@ -240,6 +256,47 @@ func extractTitleFromMediaAlt(altAttribute string) (string, string) {
 		prevRune = rune(curRune)
 	}
 	return strings.TrimSpace(alt), strings.TrimSpace(title)
+}
+
+func extractAttributesFromAlt(alt string) (string, MediaAttributes) {
+	attrs := MediaAttributes{
+		Controls: true, // Controls is added by default, others aren't
+	}
+	lastRune, _ := utf8.DecodeLastRuneInString(alt)
+	// If there are no attributes in the alt string, the first (last in the alt string) will not be an attribute character.
+	if !isMediaEmbedAttribute(lastRune) {
+		return alt, attrs
+	}
+	returnedAlt := ""
+	// We iterate backwards:
+	// if there are attributes, they'll be at the end of the alt text separated by a space
+	inAttributesZone := true
+	for i := len([]rune(alt))-1; i >= 0; i-- {
+		revChar := []rune(alt)[i]
+		if revChar == ' ' && inAttributesZone {
+			inAttributesZone = false
+			continue
+		}
+		if inAttributesZone {
+			if revChar == mediaEmbedAttributeAutoplay {
+				attrs.Autoplay = true
+				attrs.Muted = true
+			} else if revChar == mediaEmbedAttributeLooped {
+				attrs.Looped = true
+			} else if revChar == mediaEmbedAttributeNoControls {
+				attrs.Controls = false
+				attrs.Playsinline = true
+			}
+		} else {
+			// TODO better variable name
+			returnedAlt = string(revChar) + returnedAlt
+		}
+	}
+	return returnedAlt, attrs
+}
+
+func isMediaEmbedAttribute(char rune) bool {
+	return char == mediaEmbedAttributeAutoplay || char == mediaEmbedAttributeLooped || char == mediaEmbedAttributeNoControls
 }
 
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
