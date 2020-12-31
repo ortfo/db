@@ -181,6 +181,10 @@ func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedD
 				}
 				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
 			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
+				// Update fields independent of media.Source
+				alreadyAnalyzedMedia.Alt = media.Alt
+				alreadyAnalyzedMedia.Attributes = media.Attributes
+				alreadyAnalyzedMedia.Title = media.Title
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
 			} else {
 				ctx.Status("Analyzing " + path.Base(filename))
