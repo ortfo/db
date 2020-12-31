@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -31,6 +32,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	// Weird bug if args.String("<database>") is used...
 	databaseDirectory := args["<database>"].([]string)[0]
 	outputFilename, _ := args.String("<to-filepath>")
+	scatteredMode, _ := args.Bool("--scattered")
 	config, validationErrs, err := GetConfigurationFromCLIArgs(args)
 	if len(validationErrs) > 0 {
 		DisplayValidationErrors(validationErrs, "configuration")
@@ -39,7 +41,13 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	projects, err := BuildProjectsTree(databaseDirectory)
+	var projects []ProjectTreeElement
+
+	if scatteredMode {
+		projects, err = BuildProjectsTreeScatteredMode(databaseDirectory)
+	} else {
+		projects, err = BuildProjectsTree(databaseDirectory)
+	}
 	if err != nil {
 		return err
 	}
@@ -58,7 +66,13 @@ func RunCommandBuild(args docopt.Opts) error {
 		ctx.currentProject = &project
 		ctx.progress.current++
 		description := ParseDescription(ctx, project.DescriptionRaw)
-		analyzedMediae, err := AnalyzeAllMediae(ctx, description.MediaEmbedDeclarations, project.GetProjectPath(databaseDirectory))
+		var projectPath string
+		if scatteredMode {
+			projectPath = path.Join(project.GetProjectPath(databaseDirectory), ".portfoliodb")
+		} else {
+			projectPath = project.GetProjectPath(databaseDirectory)
+		}
+		analyzedMediae, err := AnalyzeAllMediae(ctx, description.MediaEmbedDeclarations, projectPath)
 		if err != nil {
 			return err
 		}
@@ -124,7 +138,10 @@ func RunCommandReplicate(args docopt.Opts) error {
 	}
 	ctx := RunContext{
 		config: &Configuration{},
-		progress: struct{current int; total int}{total: len(parsedDatabase)},
+		progress: struct {
+			current int
+			total   int
+		}{total: len(parsedDatabase)},
 	}
 	defer fmt.Print("\033[2K\r\n")
 	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)

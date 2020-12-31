@@ -1,0 +1,1299 @@
+[
+    {
+        "id": "alphabet-des-formes",
+        "metadata": {
+            "started": "2019-05-06",
+            "made with": [
+                "illustrator"
+            ],
+            "colors": {
+                "primary": "black",
+                "secondary": "white"
+            }
+        },
+        "title": {
+            "default": "l’Alphabet des Formes"
+        },
+        "paragraphs": {
+            "default": [
+                {
+                    "id": "",
+                    "content": "Combien de formes différentes peut on créer ?"
+                },
+                {
+                    "id": "",
+                    "content": "En utilisant des formes “élémentaires”, combien de formes peut on générer, par rotation, duplication, translation, symmétrie, homotéthie ou combinaison ?<br/>\nQuelles seraient ces formes élémentaires, à partie desquelles l’ont pourrait revenir à toutes les lettres de l’alphabet ?<br/>\nCes nombreux questionnements sur l’étude des formes m’ont mené à m’atteler à une tâche qui semble interminable: lister toutes les formes suffisamment différentes les unes des autres.<br/>\nMême si cette liste est certainement incomplète, elle n’est pas terminée, et je tiens à  y rajouter encore d’autres."
+                },
+                {
+                    "id": "",
+                    "content": "Ce dessin est aussi partiellement inspiré par “Planetarische Folklore” de Vassily Vasarelly: cette liste pourrait être utilisé comme une sorte d’alphabet des formes."
+                }
+            ]
+        },
+        "media": {
+            "default": []
+        },
+        "links": {
+            "default": []
+        },
+        "footnotes": {
+            "default": []
+        }
+    },
+    {
+        "id": "condenses",
+        "metadata": {
+            "created": "2018-10-01",
+            "wip": true,
+            "tags": [
+                "science",
+                "school",
+                "book"
+            ],
+            "made with": [
+                "LaTeX"
+            ],
+            "colors": {
+                "primary": "black",
+                "secondary": "white"
+            },
+            "layout": [
+                "p",
+                [
+                    "m",
+                    "m"
+                ],
+                [
+                    "m",
+                    "m"
+                ],
+                [
+                    "m",
+                    "m"
+                ]
+            ]
+        },
+        "title": {
+            "fr": "Condensés",
+            "en": "Condensés"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "Depuis l’année dernière, j’ai décidé de compiler tout les cours de chaque année des matières scientifiques en un document, en ne laissant que l’essentiel. C’était aussi avec l’écriture de ces condensés que j’ai appris le language LaTeX"
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "Since last year, I decided to compile all the courses of each year of scientific subjects in one document, leaving only the essentials. It was also with the writing of these summaries that I learned the LaTeX language.<br/>\nNote that those “condensés” are in french."
+                }
+            ]
+        },
+        "media": {
+            "fr": [
+                {
+                    "id": "condense-math-mpsi",
+                    "alt": "Condensé de mathématiques de MPSI",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-mpsi.pdf",
+                    "content_type": "application/pdf",
+                    "size": 338588,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-mpsi",
+                    "alt": "Condensé de physique de MPSI",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-mpsi.pdf",
+                    "content_type": "application/pdf",
+                    "size": 110072,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-math-terminale",
+                    "alt": "Condensé de mathématiques de terminale",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-terminale.pdf",
+                    "content_type": "application/pdf",
+                    "size": 304152,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-terminale",
+                    "alt": "Condensé de physique de terminale",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-terminale.pdf",
+                    "content_type": "application/pdf",
+                    "size": 338677,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-math-premiere",
+                    "alt": "Condensé de mathématiques de première",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-première.pdf",
+                    "content_type": "application/pdf",
+                    "size": 327605,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-premiere",
+                    "alt": "Condensé de physique de première",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-première.pdf",
+                    "content_type": "text/plain; charset=utf-8",
+                    "size": 0,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "en": [
+                {
+                    "id": "condense-math-mpsi",
+                    "alt": "Condensé de mathématiques de MPSI",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-mpsi.pdf",
+                    "content_type": "application/pdf",
+                    "size": 338588,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-mpsi",
+                    "alt": "Condensé de physique de MPSI",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-mpsi.pdf",
+                    "content_type": "application/pdf",
+                    "size": 110072,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-math-terminale",
+                    "alt": "Condensé de mathématiques de terminale",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-terminale.pdf",
+                    "content_type": "application/pdf",
+                    "size": 304152,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-terminale",
+                    "alt": "Condensé de physique de terminale",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-terminale.pdf",
+                    "content_type": "application/pdf",
+                    "size": 338677,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-math-premiere",
+                    "alt": "Condensé de mathématiques de première",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-math-première.pdf",
+                    "content_type": "application/pdf",
+                    "size": 327605,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "condense-physique-premiere",
+                    "alt": "Condensé de physique de première",
+                    "title": "",
+                    "source": "/home/ewen/projects/condenses/condense-physique-première.pdf",
+                    "content_type": "text/plain; charset=utf-8",
+                    "size": 0,
+                    "dimensions": {
+                        "width": 0,
+                        "height": 0,
+                        "aspect_ratio": 0
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [],
+            "en": []
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "humanr",
+        "metadata": {
+            "layout": [
+                "m",
+                "p",
+                [
+                    "m",
+                    "p"
+                ],
+                [
+                    "p",
+                    "m"
+                ],
+                [
+                    "m",
+                    "p"
+                ]
+            ],
+            "created": "2018-02-01",
+            "tags": [
+                "poster",
+                "visual identity"
+            ],
+            "made with": [
+                "Assembly",
+                "photoshop"
+            ],
+            "colors": {
+                "primary": "black",
+                "secondary": "white"
+            },
+            "wip": false
+        },
+        "title": {
+            "fr": "HumanR",
+            "en": "HumanR"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "En classe de seconde, on nous a demandé de réaliser une campagne de publicité pour une organisation fictive<br/>\nse battant pour les droits de l’Homme."
+                },
+                {
+                    "id": "",
+                    "content": "J’ai choisi de parler des horribles conditions de travail<br/>\nqu’impliquent certains métiers, notamment conçernant les chaînes de productions d’objets de consommation,<br/>\nsur lesquelles les marques n’hésitent pas à ajouter des marges de prix toujours plus importantes."
+                },
+                {
+                    "id": "",
+                    "content": "J’ai réalisé trois affiches ainsi que le logo d’une organisation fictive, “humanR”, écriture stylisée<br/>\nde l’adjectif comparitif anglais “humaner”, signifiant “plus humain”. En vérité, c’est un ajectif long<br/>\nqui serait correctement traduit par “More human”, mais cette écriture permet un logotype plus court et impactant."
+                },
+                {
+                    "id": "",
+                    "content": "J’ai représenté chaque produit de consommation en haut, sur fond blanc, le contrastant avec le bas de<br/>\nl’image représentant les conditions de travail liées à l’objet au-dessus: l’objet, mis en lumière,<br/>\net les conditions de travail, dans l’obscurité."
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "In the tenth grade, we were asked to create an advertising campaign for a fictitious organization.<br/>\nfighting for human rights."
+                },
+                {
+                    "id": "",
+                    "content": "I chose to talk about the horrible working conditions that certain jobs involve, especially production chains for consumer goods,<br/>\non which brands do not hesitate to add ever-increasing price margins."
+                },
+                {
+                    "id": "",
+                    "content": "I created three posters as well as the logo of a fictitious organization, “humanR”, stylized writing<br/>\nof the comparative adjective “humaner”. This incorrect yet shorter spelling allows for a more impactful logotype."
+                },
+                {
+                    "id": "",
+                    "content": "I represented each consumer product at the top, on a white background, contrasting it with the bottom of<br/>\nthe image representing the working conditions related to the object above: the object, highlighted,<br/>\nand working conditions, in the dark."
+                }
+            ]
+        },
+        "media": {
+            "fr": [
+                {
+                    "id": "logo-black",
+                    "alt": "Logo de HumanR",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/logo-black.png",
+                    "content_type": "image/png",
+                    "size": 62669,
+                    "dimensions": {
+                        "width": 4096,
+                        "height": 2304,
+                        "aspect_ratio": 1.777778
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "apple",
+                    "alt": "Affiche dénonçant Apple",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/apple.png",
+                    "content_type": "image/png",
+                    "size": 4817839,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "levis",
+                    "alt": "Affiche dénonçant Levis",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/levis.png",
+                    "content_type": "image/png",
+                    "size": 8506496,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "nike",
+                    "alt": "Affiche dénonçant Nike",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/nike.png",
+                    "content_type": "image/png",
+                    "size": 5257432,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "en": [
+                {
+                    "id": "logo-black",
+                    "alt": "Logo de HumanR",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/logo-black.png",
+                    "content_type": "image/png",
+                    "size": 62669,
+                    "dimensions": {
+                        "width": 4096,
+                        "height": 2304,
+                        "aspect_ratio": 1.777778
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "apple",
+                    "alt": "Affiche dénonçant Apple",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/apple.png",
+                    "content_type": "image/png",
+                    "size": 4817839,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "levis",
+                    "alt": "Affiche dénonçant Levis",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/levis.png",
+                    "content_type": "image/png",
+                    "size": 8506496,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "nike",
+                    "alt": "Affiche dénonçant Nike",
+                    "title": "",
+                    "source": "/home/ewen/projects/humanr/nike.png",
+                    "content_type": "image/png",
+                    "size": 5257432,
+                    "dimensions": {
+                        "width": 2480,
+                        "height": 3508,
+                        "aspect_ratio": 0.706956
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [],
+            "en": []
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "legmask-spinner",
+        "metadata": {
+            "made with": [
+                "after effects"
+            ],
+            "tags": [
+                "visual identity",
+                "motion design"
+            ],
+            "layout": [
+                "p",
+                "m"
+            ],
+            "colors": {
+                "primary": "white",
+                "secondary": "black"
+            },
+            "started": "2020-12-30",
+            "finished": "2020-12-30",
+            "wip": true
+        },
+        "title": {
+            "fr": "Animation de logo pour LeGmask",
+            "en": "Logo animation for LeGmask"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "J’ai aidé LeGmask à réaliser son site web en effectuant cette animation de logo, qui sert d’animation de chargement de page pour son portfolio."
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "I helped LeGmask with his website by creating this logo animation, which is used on his portfolio as a loading spinner."
+                }
+            ]
+        },
+        "media": {
+            "en": [
+                {
+                    "id": "spinner-background-black",
+                    "alt": "Animated logo",
+                    "title": "",
+                    "source": "/home/ewen/projects/legmask-spinner/spinner-background-black.mp4",
+                    "content_type": "video/mp4",
+                    "size": 37019,
+                    "dimensions": {
+                        "width": 1080,
+                        "height": 1076,
+                        "aspect_ratio": 1.003717
+                    },
+                    "duration": 4,
+                    "online": false
+                }
+            ],
+            "fr": [
+                {
+                    "id": "spinner-background-black",
+                    "alt": "Animated logo",
+                    "title": "",
+                    "source": "/home/ewen/projects/legmask-spinner/spinner-background-black.mp4",
+                    "content_type": "video/mp4",
+                    "size": 37019,
+                    "dimensions": {
+                        "width": 1080,
+                        "height": 1076,
+                        "aspect_ratio": 1.003717
+                    },
+                    "duration": 4,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [],
+            "en": []
+        },
+        "footnotes": {
+            "en": [],
+            "fr": []
+        }
+    },
+    {
+        "id": "neptune",
+        "metadata": {
+            "created": "2019-06-23",
+            "wip": false,
+            "colors": {
+                "primary": "FFFFFF",
+                "secondary": "000000"
+            },
+            "layout": [
+                "p",
+                "m",
+                "l"
+            ],
+            "title style": "outlined",
+            "page background": "starry-sky.png",
+            "tags": [
+                "music",
+                "graphism"
+            ],
+            "made with": [
+                "photoshop",
+                "FL Studio"
+            ]
+        },
+        "title": {
+            "fr": "Neptune",
+            "en": "Neptune"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "Cet album représente différents aspects de notre étrange et infini univers. La plupart des mélodies capturent ce sentiment de l’humain face aux mystères résidant dans l’immense espace, un espace dans lequel nous sommes tous piégés à l’infini."
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "This album represents different aspects of our strange and infinite universe. Most of the melodies capture this feeling of being faced with the mysteries residing in the immense space, a space in which we are all trapped to infinity."
+                }
+            ]
+        },
+        "media": {
+            "fr": [
+                {
+                    "id": "square",
+                    "alt": "Pochette d’album de Neptune",
+                    "title": "",
+                    "source": "/home/ewen/projects/neptune/cover-arts/renders/square.png",
+                    "content_type": "image/png",
+                    "size": 8181299,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "en": [
+                {
+                    "id": "square",
+                    "alt": "Pochette d’album de Neptune",
+                    "title": "",
+                    "source": "/home/ewen/projects/neptune/cover-arts/renders/square.png",
+                    "content_type": "image/png",
+                    "size": 8181299,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "en": [
+                {
+                    "id": "YouTube-Playlist",
+                    "name": "YouTube Playlist",
+                    "title": "",
+                    "url": "https://www.youtube.com/watch?v=6MY39VPqzzQ&list=PLl3OrLj4CmfO1yUNHIqJELaKUfpWfMYTp"
+                }
+            ],
+            "fr": [
+                {
+                    "id": "Playlist-YouTube",
+                    "name": "Playlist YouTube",
+                    "title": "",
+                    "url": "https://www.youtube.com/watch?v=6MY39VPqzzQ&list=PLl3OrLj4CmfO1yUNHIqJELaKUfpWfMYTp"
+                }
+            ]
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "phelng",
+        "metadata": {
+            "made with": [
+                "python",
+                "docopt"
+            ],
+            "colors": {
+                "primary": "0a0a0a",
+                "secondary": "ff0000"
+            },
+            "created": "2020-05-12",
+            "wip": true,
+            "tags": [
+                "cli",
+                "program",
+                "automation"
+            ],
+            "categories": [
+                "software"
+            ]
+        },
+        "title": {
+            "fr": "phelng"
+        },
+        "paragraphs": {
+            "fr": []
+        },
+        "media": {
+            "fr": [
+                {
+                    "id": "phelng-logo",
+                    "alt": "Un logo compris d’un vinyle à étiquette rouge avec une flèche de téléchargement par-dessus",
+                    "title": "",
+                    "source": "/home/ewen/projects/phelng/visual-identity/phelng-logo.png",
+                    "content_type": "image/png",
+                    "size": 63245,
+                    "dimensions": {
+                        "width": 1760,
+                        "height": 1760,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "phelng-wordmark",
+                    "alt": "Le logotype de phelng",
+                    "title": "",
+                    "source": "/home/ewen/projects/phelng/visual-identity/phelng-wordmark.png",
+                    "content_type": "image/png",
+                    "size": 145405,
+                    "dimensions": {
+                        "width": 3651,
+                        "height": 2653,
+                        "aspect_ratio": 1.376178
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [
+                {
+                    "id": "code-source",
+                    "name": "code source",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/phelng"
+                }
+            ]
+        },
+        "footnotes": {
+            "fr": []
+        }
+    },
+    {
+        "id": "portfoliodashb",
+        "metadata": {
+            "created": "2020-12-19",
+            "made with": [
+                "python"
+            ],
+            "colors": {
+                "primary": "000000",
+                "secondary": "FFFFFF"
+            },
+            "layout": [
+                "p"
+            ],
+            "tags": [
+                "cli",
+                "automation",
+                "program"
+            ],
+            "wip": true
+        },
+        "title": {
+            "fr": "portfoliodashb",
+            "en": "portfoliodashb"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "Un utilitaire qui complémente <a href=\"https://fr.ewen.works/portfoliodb\">portfoliodb</a> et m’aide dans le processus d’inscription de chacun de mes projets à mon <a href=\"https://fr.ewen.works/ewen.works\">portfolio</a>."
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "A utility that complements <a href=\"https://fr.ewen.works/portfoliodb\">portfoliodb</a> and helps me in the process of registering each of my projects in my <a href=\"https://en.ewen.works/ewen.works\">portfolio</a>."
+                }
+            ]
+        },
+        "media": {
+            "fr": [],
+            "en": []
+        },
+        "links": {
+            "en": [],
+            "fr": []
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "spotify-playlist-covers",
+        "metadata": {
+            "started": "2020-04-15",
+            "finished": "2020-07-28",
+            "layout": [
+                "p",
+                [
+                    "m",
+                    "m",
+                    "m"
+                ],
+                [
+                    "m",
+                    "m",
+                    "m"
+                ]
+            ],
+            "tags": [
+                "illustration",
+                "graphism"
+            ],
+            "made with": [
+                "photoshop",
+                "illustrator"
+            ]
+        },
+        "title": {
+            "fr": "Pochettes de playlists Spotify",
+            "en": "Spotify playlist covers"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "Des pochettes pour mes playlists spotify principales. Certaines apparaissent sur mon <a href=\"https://ewen.works/to/spotify\">profil d’artiste Spotify</a>"
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "Some covers for my main spotify playlists. Some of them appear on my <a href=\"https://ewen.works/to/spotify\">Spotify artist profile</a>"
+                }
+            ]
+        },
+        "media": {
+            "fr": [
+                {
+                    "id": "rck",
+                    "alt": "Pochette pour la playlist ‘rck’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/rck/rck.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 741508,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "hackr",
+                    "alt": "Pochette pour la playlist ‘hackr’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/hackr/hackr.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 284341,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "intricate-percs",
+                    "alt": "Pochette pour la playlist ‘intricate-percs’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/intricate-percs/intricate-percs.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 129102,
+                    "dimensions": {
+                        "width": 900,
+                        "height": 900,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "jap",
+                    "alt": "Pochette pour la playlist ‘jap’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/jap/jap.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 64494,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "orchstral",
+                    "alt": "Pochette pour la playlist ‘orchstral’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/orchstral/orchstral.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 2374021,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "rage",
+                    "alt": "Pochette pour la playlist ‘rage’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/rage/rage.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 6530370,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "en": [
+                {
+                    "id": "rck",
+                    "alt": "Pochette pour la playlist ‘rck’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/rck/rck.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 741508,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "hackr",
+                    "alt": "Pochette pour la playlist ‘hackr’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/hackr/hackr.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 284341,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "intricate-percs",
+                    "alt": "Pochette pour la playlist ‘intricate-percs’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/intricate-percs/intricate-percs.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 129102,
+                    "dimensions": {
+                        "width": 900,
+                        "height": 900,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "jap",
+                    "alt": "Pochette pour la playlist ‘jap’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/jap/jap.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 64494,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "orchstral",
+                    "alt": "Pochette pour la playlist ‘orchstral’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/orchstral/orchstral.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 2374021,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                },
+                {
+                    "id": "rage",
+                    "alt": "Pochette pour la playlist ‘rage’",
+                    "title": "",
+                    "source": "/home/ewen/projects/spotify-playlist-covers/rage/rage.jpeg",
+                    "content_type": "image/jpeg",
+                    "size": 6530370,
+                    "dimensions": {
+                        "width": 3000,
+                        "height": 3000,
+                        "aspect_ratio": 1
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [],
+            "en": []
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "trigonometry-synth",
+        "metadata": {
+            "layout": [
+                "p",
+                "m",
+                [
+                    "p",
+                    "l"
+                ]
+            ],
+            "tags": [
+                "illustration",
+                "graphism",
+                "math"
+            ],
+            "made with": [
+                "illustrator"
+            ],
+            "created": "2020-06-12",
+            "wip": false,
+            "colors": {
+                "primary": "black",
+                "secondary": "white"
+            }
+        },
+        "title": {
+            "fr": "Trigonometry Synth",
+            "en": "Trigonometry Synth"
+        },
+        "paragraphs": {
+            "fr": [
+                {
+                    "id": "",
+                    "content": "À la recherche de manières intéréssantes de représenter des identités trigonométriques, j’ai tenté de connecter les différentes formules de symmétrie de cos, sin, tan et cotan."
+                },
+                {
+                    "id": "",
+                    "content": "En réalisant l’image, je me suis rendu compte qu’elle s’apparentait à un synthétiseur, plus précisément un synthétiseur modulaire. J’ai aussi posté cette image sur r/synthesizers et ait reçu beaucoup de retours positifs et de possibles interprétations musicales d’une illustration."
+                }
+            ],
+            "en": [
+                {
+                    "id": "",
+                    "content": "Looking for interesting ways to represent trigonometric identities, I tried to connect the different symmetry formulas of cos, sin, tan and cotan."
+                },
+                {
+                    "id": "",
+                    "content": "While making the image, I realized that it was similar to a synthesizer, more precisely a modular synthesizer. I also posted this image on r/synthesizers and received a lot of positive feedback and possible musical interpretations of an illustration."
+                }
+            ]
+        },
+        "media": {
+            "en": [
+                {
+                    "id": "trigonometry-synth",
+                    "alt": "Synthesizer module connecting trigonometric formulas by cables",
+                    "title": "",
+                    "source": "/home/ewen/projects/trigonometry-synth/trigonometry-synth.png",
+                    "content_type": "image/png",
+                    "size": 181491,
+                    "dimensions": {
+                        "width": 2174,
+                        "height": 1525,
+                        "aspect_ratio": 1.425574
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "fr": [
+                {
+                    "id": "trigonometry-synth",
+                    "alt": "Synthesizer module connecting trigonometric formulas by cables",
+                    "title": "",
+                    "source": "/home/ewen/projects/trigonometry-synth/trigonometry-synth.png",
+                    "content_type": "image/png",
+                    "size": 181491,
+                    "dimensions": {
+                        "width": 2174,
+                        "height": 1525,
+                        "aspect_ratio": 1.425574
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "fr": [
+                {
+                    "id": "post-reddit",
+                    "name": "post reddit",
+                    "title": "",
+                    "url": "https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/"
+                }
+            ],
+            "en": [
+                {
+                    "id": "reddit-post",
+                    "name": "reddit post",
+                    "title": "",
+                    "url": "https://www.reddit.com/r/synthesizers/comments/h8vd5d/so_i_was_trying_to_learn_trigonometry_symmetries/"
+                }
+            ]
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    },
+    {
+        "id": "ultisnips-tools",
+        "metadata": {
+            "created": "2020-06-08",
+            "tags": [
+                "web",
+                "app"
+            ],
+            "made with": [
+                "figma",
+                "pug",
+                "stylus",
+                "livescript",
+                "html",
+                "css",
+                "javascript"
+            ],
+            "wip": false,
+            "layout": [
+                "p",
+                "m",
+                [
+                    "l",
+                    "l",
+                    "l"
+                ]
+            ],
+            "colors": {
+                "primary": "FF6978",
+                "secondary": "0B090B"
+            }
+        },
+        "title": {
+            "en": "ultisnips-tools",
+            "fr": "ultisnips-tools"
+        },
+        "paragraphs": {
+            "en": [
+                {
+                    "id": "",
+                    "content": "A website to assist in the creation and understanding of UltiSnips shortcuts. Realized in four days."
+                }
+            ],
+            "fr": [
+                {
+                    "id": "",
+                    "content": "Un site web pour assister la création et la compréhension de raccourcis UltiSnips. Réalisé en 4 jours."
+                }
+            ]
+        },
+        "media": {
+            "en": [
+                {
+                    "id": "scrot",
+                    "alt": "A screenshot of the website",
+                    "title": "",
+                    "source": "/home/ewen/projects/ultisnips-tools/scrot.png",
+                    "content_type": "image/png",
+                    "size": 97469,
+                    "dimensions": {
+                        "width": 1869,
+                        "height": 1625,
+                        "aspect_ratio": 1.150154
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ],
+            "fr": [
+                {
+                    "id": "scrot",
+                    "alt": "A screenshot of the website",
+                    "title": "",
+                    "source": "/home/ewen/projects/ultisnips-tools/scrot.png",
+                    "content_type": "image/png",
+                    "size": 97469,
+                    "dimensions": {
+                        "width": 1869,
+                        "height": 1625,
+                        "aspect_ratio": 1.150154
+                    },
+                    "duration": 0,
+                    "online": false
+                }
+            ]
+        },
+        "links": {
+            "en": [
+                {
+                    "id": "source-code",
+                    "name": "source code",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/ultisnips-tools"
+                },
+                {
+                    "id": "see",
+                    "name": "see",
+                    "title": "",
+                    "url": "https://ewen-lbh.github.io/ultisnips-tools"
+                },
+                {
+                    "id": "prototype",
+                    "name": "prototype",
+                    "title": "",
+                    "url": "https://www.figma.com/proto/vS1qgbKknEOIoCm8aom7oh/ultisnips.io?node-id=1%3A2&scaling=min-zoom"
+                }
+            ],
+            "fr": [
+                {
+                    "id": "code-source",
+                    "name": "code source",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/ultisnips-tools"
+                },
+                {
+                    "id": "voir",
+                    "name": "voir",
+                    "title": "",
+                    "url": "https://ewen-lbh.github.io/ultisnips-tools"
+                },
+                {
+                    "id": "prototype",
+                    "name": "prototype",
+                    "title": "",
+                    "url": "https://www.figma.com/proto/vS1qgbKknEOIoCm8aom7oh/ultisnips.io?node-id=1%3A2&scaling=min-zoom"
+                }
+            ]
+        },
+        "footnotes": {
+            "en": [],
+            "fr": []
+        }
+    }
+]

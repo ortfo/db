@@ -3,7 +3,7 @@ package main
 // CLIUsage is the entire usage string for the CLI
 const CLIUsage = `
 Usage:
-  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [--minified] [--silent]
+  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
   portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   portfoliodb [options] <database> add <fullname> [<metadata-item>...]
   portfoliodb [options] <database> validate <database>
@@ -12,6 +12,7 @@ Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
+  -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
 
 Examples:
   portfoliodb database build database.json
@@ -54,4 +55,36 @@ Commands:
         e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
+
+Scattered mode:
+  With this mode activated, when building, portfoliodb will go through each folder (non-recursively) of <from-directory>, and, if it finds a .portfoliodb file in the folder, consider the files in that .portfoliodb folder.
+
+  Consider the following directory tree:
+
+  <from-directory>
+    project1
+	  index.html
+	  src
+	  dist
+	  .portfoliodb
+	    file1.png
+		description.md
+	project2
+	  .portfoliodb
+	    file-2.png
+		description.md
+	otherfolder
+	  stuff
+
+  Running portfoliodb build --scattered on this tree is equivalent to builing without --scattered on the following tree:
+
+  <from-directory>
+    project1
+	  file.png
+	  description.md
+	project2
+	  file-2.png
+	  description.md
+
+  Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
 `
