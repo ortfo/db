@@ -46,6 +46,7 @@ type Media struct {
 	Duration    uint // In seconds
 	Online      bool // Whether the media is hosted online (referred to by an URL)
 	Attributes  MediaAttributes
+	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
 }
 
 // GetImageDimensions returns an ``ImageDimensions`` object, given a pointer to a file
@@ -85,8 +86,9 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 	isVideo := strings.HasPrefix(contentType, "video/")
 	isImage := strings.HasPrefix(contentType, "image/")
 
-	dimensions := ImageDimensions{}
+	var dimensions ImageDimensions
 	var duration uint
+	var hasSound bool
 
 	if isImage {
 		dimensions, err = GetImageDimensions(file)
@@ -96,11 +98,12 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 	}
 
 	if isVideo {
-		dimensions, duration, err = GetVideoDimensionsDuration(filename, dimensions, duration)
+		dimensions, duration, hasSound, err = GetVideoDimensionsDurationHasSound(filename)
 	}
 
 	if isAudio {
 		duration = GetAudioDuration(file)
+		hasSound = true
 	}
 
 	return Media{
@@ -112,7 +115,8 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 		Dimensions:  dimensions,
 		Duration:    duration,
 		Size:        uint64(fileInfo.Size()),
-		Attributes: embedDeclaration.Attributes,
+		Attributes:  embedDeclaration.Attributes,
+		HasSound:    hasSound,
 	}, nil
 }
 
@@ -141,11 +145,11 @@ func GetAudioDuration(file *os.File) uint {
 	return duration
 }
 
-// GetVideoDimensionsDuration returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
-func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, duration uint) (ImageDimensions, uint, error) {
+// GetVideoDimensionsDurationHasSound returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
+func GetVideoDimensionsDurationHasSound(filename string) (dimensions ImageDimensions, duration uint, hasSound bool, err error) {
 	video, err := screengen.NewGenerator(filename)
 	if err != nil {
-		return ImageDimensions{}, 0, err
+		return
 	}
 	height := video.Height()
 	width := video.Width()
@@ -155,7 +159,8 @@ func GetVideoDimensionsDuration(filename string, dimensions ImageDimensions, dur
 		AspectRatio: float32(width) / float32(height),
 	}
 	duration = uint(video.Duration) / 1000
-	return dimensions, duration, nil
+	hasSound = video.AudioCodec != ""
+	return
 }
 
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
