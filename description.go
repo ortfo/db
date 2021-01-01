@@ -179,6 +179,7 @@ func splitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 // parseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output)
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps
 func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, []Footnote, []Abbreviation) {
+	markdownRaw = handleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := markdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
 	paragraphs := make([]Paragraph, 0)
@@ -236,6 +237,12 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		processedParagraphs = append(processedParagraphs, processParagraph(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
+}
+
+// handleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...)
+func handleAltMediaEmbedSyntax(markdownRaw string) string {
+	pattern := regexp.MustCompile(`(?m)^>(\[[^\]]+\]\([^)]+\)\s*)$`)
+	return pattern.ReplaceAllString(markdownRaw, "!$1")
 }
 
 func extractTitleFromMediaAlt(altAttribute string) (string, string) {
