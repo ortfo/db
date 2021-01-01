@@ -132,6 +132,10 @@
 										"description": "Whether to add controls to the potential HTML element's attributes (<video>, <audio>)."
 									}
 								}
+							},
+							"has_sound": {
+								"type": "boolean",
+								"description": "Whether the media has sound: for audio filetypes: true; for videos: true when an audio stream is present; else: false"
 							}
 						}
 					}
