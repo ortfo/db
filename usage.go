@@ -58,33 +58,5 @@ Commands:
 
 Scattered mode:
   With this mode activated, when building, portfoliodb will go through each folder (non-recursively) of <from-directory>, and, if it finds a .portfoliodb file in the folder, consider the files in that .portfoliodb folder.
-
-  Consider the following directory tree:
-
-  <from-directory>
-    project1
-	  index.html
-	  src
-	  dist
-	  .portfoliodb
-	    file1.png
-		description.md
-	project2
-	  .portfoliodb
-	    file-2.png
-		description.md
-	otherfolder
-	  stuff
-
-  Running portfoliodb build --scattered on this tree is equivalent to builing without --scattered on the following tree:
-
-  <from-directory>
-    project1
-	  file.png
-	  description.md
-	project2
-	  file-2.png
-	  description.md
-
-  Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
+  Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory. See the documentation for a more complete explanation.
 `
