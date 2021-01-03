@@ -170,7 +170,7 @@ Learn about:
 - [The `media` object](#media-files)
 - [How portfoliodb scans the markdown description file into `links`, `title`, `media`, `paragraphs`, etc.](#the-description-file)
 
-Note: A [JSON schema](./../database.schema.json) is included.
+Note: A [JSON schema](https://raw.githubusercontent.com/ortfo/portfoliodb/master/database.schema.json) is included.
 
 ## Two ways to place your description files
 
