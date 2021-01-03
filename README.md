@@ -150,6 +150,14 @@ Here's what it looks like: _(Don't worry, the How is explained later. I think th
           "url": "https://example.com"
         }
       ]
+    },
+    "footnotes": {
+      "en": [
+        {
+          "name": "the-name-by-which-the-footnote-is-referenced",
+          "content": "The footnote's text"
+        }
+      ]
     }
   }
 ]
@@ -305,6 +313,31 @@ If the description file contains no languages but other description files do, po
 
 However, if you really don't have **any** language markers appearing throughout your whole database, the language of the entire portfolio will be called 'default'. In other words, not putting language markers anywhere is the same as starting each description file with `:: default` (after the metadata section).
 
+In [the output JSON file](#the-output-file), each work's properties that need translation is split into a version for each language: `paragraphs` is not an array of Paragraph objects but an object mapping a language to its array of Paragraph objects:
+
+```json
+{
+  ...
+  "paragraphs": {
+    "language": [
+      {
+        "id": ...,
+        "content": ...
+      }
+    ]
+  },
+  ...
+}
+```
+
+this goes for the following properties:
+
+- paragraphs
+- links
+- media
+- title
+- footnotes
+
 ## Media files
 
 ### The `media` object
@@ -333,13 +366,13 @@ When the media's source points to an online resource (i.e. when [`online`](#attr
 
 When a property doesn't make sense for a file, its value is set to 0.
 
-Property | Unit | Makes sense for file types | Description
----|---|---|---
-`dimensions.height` | pixels | `image`, `video` |
-`dimensions.width` | pixels | `image`, `video` |
-`dimensions.aspect_ratio` | Ø | `image`, `video` | `width / height`
-`duration` | seconds | `video`, `audio`
-`size` | bytes | (all) | Size of the file on disk
+| Property                  | Unit    | Makes sense for file types | Description              |
+| ------------------------- | ------- | -------------------------- | ------------------------ |
+| `dimensions.height`       | pixels  | `image`, `video`           |
+| `dimensions.width`        | pixels  | `image`, `video`           |
+| `dimensions.aspect_ratio` | Ø       | `image`, `video`           | `width / height`         |
+| `duration`                | seconds | `video`, `audio`           |
+| `size`                    | bytes   | (all)                      | Size of the file on disk |
 
 #### Attributes, `online` and `has_sound`
 
@@ -358,11 +391,11 @@ Let's imagine that you made a spinner for somebody that you want in your portfol
 
 You can specify this easily in your markdown without having to restort to HTML, categorizing your media as a paragraph, to portfoliodb's eyes. The idea is that, when special characters are added at the end of a media's alt text, it's interpreted as turning on or off some attributes. Here's a helpful table:
 
-Character | What it does | Why I chose this one | Notes
-----------|--------------|---------------------|--
-`~` | Sets `loop` to `true` | It's the closest ASCII (i.e. typable on any keyboard) approximation of ∞.
-`>` | Sets both `autoplay` and `muted` to `true` | Looks like a play button | [Most browsers will block `autoplay` if the file has sound and no user interaction happened beforehand](https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide#Autoplay_availability), so you cannot set one without setting the other. Either way, autoplaying sound on the web is a dick move. Don't do it. People will get off your beautiful portfolio.
-`=` | Does `playsinline = true` and `controls = false` | Makes me think of 'fullscreen' | [playsinline](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video#attr-playsinline) will play the video inline on mobile. [controls](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video#attr-controls) is `true` by default, this sets it to `false`.
+| Character | What it does                                     | Why I chose this one                                                      | Notes                                                                                                                                                                                                                                                                                                                                                                  |
+| --------- | ------------------------------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `~`       | Sets `loop` to `true`                            | It's the closest ASCII (i.e. typable on any keyboard) approximation of ∞. |
+| `>`       | Sets both `autoplay` and `muted` to `true`       | Looks like a play button                                                  | [Most browsers will block `autoplay` if the file has sound and no user interaction happened beforehand](https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide#Autoplay_availability), so you cannot set one without setting the other. Either way, autoplaying sound on the web is a dick move. Don't do it. People will get off your beautiful portfolio. |
+| `=`       | Does `playsinline = true` and `controls = false` | Makes me think of 'fullscreen'                                            | [playsinline](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video#attr-playsinline) will play the video inline on mobile. [controls](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video#attr-controls) is `true` by default, this sets it to `false`.                                                                                         |
 
 Note that portfoliodb spits out JSON files, so this will not result in any HTML whatsoever. There's a one-to-one mapping with HTML attributes because I believe most will use these to control HTML attributes on their portfolio website. But you could totally do something different.
 
