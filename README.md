@@ -336,9 +336,9 @@ When a property doesn't make sense for a file, its value is set to 0.
 
 Property | Unit | Makes sense for file types | Description
 ---|---|---|---
-`dimensions.aspect_ratio` | pixels | `image`, `video` |
+`dimensions.height` | pixels | `image`, `video` |
 `dimensions.width` | pixels | `image`, `video` |
-`dimensions.height` | Ø | `image`, `video` | `width / height`
+`dimensions.aspect_ratio` | Ø | `image`, `video` | `width / height`
 `duration` | seconds | `video`, `audio`
 `size` | bytes | (all) | Size of the file on disk
 
