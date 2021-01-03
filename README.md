@@ -329,7 +329,7 @@ An `id` is also derived, by [slugifying](https://en.wikipedia.org/wiki/Clean_URL
 
 _Integers_
 
-When the media's source points to an online resource (i.e. when [`online`](#attributes-online-and-has_sound) is `true`), all properties are set to 0. Portofliodb could work them out, but [this is not the case yet](#20)
+When the media's source points to an online resource (i.e. when [`online`](#attributes-online-and-has_sound) is `true`), all properties are set to 0. Portofliodb could work them out, but [this is not the case yet](https://github.com/ortfo/portfoliodb/issues/20)
 
 When a property doesn't make sense for a file, its value is set to 0.
 
@@ -349,7 +349,7 @@ _Booleans_
 - `has_sound` is set to `true` if and only if the media is either:
   - an audio file
   - a video file that has at least one audio stream.<br>
-    ⚠ _This means that if the video file has an audio stream that is complete silence, `has_sound` will be still `true`! See #21_
+    ⚠ _This means that if the video file has an audio stream that is complete silence, `has_sound` will be still `true`! See https://github.com/ortfo/portfoliodb/issues/21_
 - `attributes` is an object of booleans that provide various indications on how the media should be played. See [Media attributes](#media-attributes) for more information
 
 ### Media attributes
