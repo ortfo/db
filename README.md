@@ -9,8 +9,9 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
   - [Installation](#installation)
   - [An introduction](#an-introduction)
     - [What's a portfolio anyway?](#whats-a-portfolio-anyway)
-    - [The data you store](#the-data-you-store)
   - [What problem portfoliodb solves](#what-problem-portfoliodb-solves)
+    - [The data you store](#the-data-you-store)
+  - [The output file](#the-output-file)
   - [Two ways to place your description files](#two-ways-to-place-your-description-files)
     - [Scattered mode](#scattered-mode)
     - [Centralized mode](#centralized-mode)
@@ -19,7 +20,12 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
     - [But... with some more liberties](#but-with-some-more-liberties)
     - [Okay, but what does it look like?](#okay-but-what-does-it-look-like)
   - [Internationalisation](#internationalisation)
-  - [Media attributes](#media-attributes)
+  - [Media files](#media-files)
+    - [The `media` object](#the-media-object)
+      - [Textual properties](#textual-properties)
+      - [Size, dimensions and duration](#size-dimensions-and-duration)
+      - [Attributes, `online` and `has_sound`](#attributes-online-and-has_sound)
+    - [Media attributes](#media-attributes)
   - [Let's get technical](#lets-get-technical)
     - [Usage](#usage)
     - [Compiling it yourself](#compiling-it-yourself)
@@ -45,21 +51,6 @@ We'll call them 'works' throughout the documentation.
 
 Thus, a portfolio's database is a simple array of Work objects that contain various information, such as metadata, a title, and the bulk of the article where you describe and talk about your Work, how you created it, etc.
 
-### The data you store
-
-A Work object has the following information stored:
-
-- metadata: an arbitrary object of data, useful for storing auxiliary data like tags, creation date, etc.
-- title: The work's title, as displayed to the visitor of your portfolio
-- ID: A URL-safe version of the title, useful to construct URLs pointing to your works
-- the article itself: it contains different kinds of sections:
-  - paragraphs (markdown text)
-  - media (images, videos, audio files, PDFs,…)
-  - footnotes
-  - _isolated_ links: links that are separated from paragraphs, that can point to other sites related to the Work. Use cases are aplenty, here are some:
-    - Your Work is a beautiful T-Shirt, and you have a link to the marketplace where it is sold. You want that link to stand out and not get lost in the paragraphs
-    - Your Work is a website, and you obviously want people to be able to visit the website itself easily.
-
 ## What problem portfoliodb solves
 
 The problem is, you want:
@@ -73,6 +64,106 @@ With portfoliodb, you get both at the same time:
 2. You give those folders to portfoliodb, it gives you back a single JSON file, easily parsable by your frontend.
 
 Check out the [example/ directory](./example/) to get a taste of what it looks like.
+
+### The data you store
+
+A Work object has the following information stored:
+
+- `metadata`: an arbitrary object of data, useful for storing auxiliary data like tags, creation date, etc.
+- `title`: The work's title, as displayed to the visitor of your portfolio
+- `id`: A URL-safe version of the title, useful to construct URLs pointing to your works
+- the article itself: it contains different kinds of sections:
+  - `paragraphs` (markdown text)
+  - `media` (images, videos, audio files, PDFs,…)
+  - `footnotes`
+  - _isolated_ `links`: links that are separated from paragraphs, that can point to other sites related to the Work. Use cases are aplenty, here are some:
+    - Your Work is a beautiful T-Shirt, and you have a link to the marketplace where it is sold. You want that link to stand out and not get lost in the paragraphs
+    - Your Work is a website, and you obviously want people to be able to visit the website itself easily.
+
+## The output file
+
+portfoliodb will give you back a single JSON file containing all of your works.
+Here's what it looks like: _(Don't worry, the How is explained later. I think that having the output format in your head before reading the documentation helps)_
+
+```json
+[
+  {
+    "id": "your-works-id-is-its-folder-name",
+    "metadata": {
+      "any": "metadata",
+      "you": "store",
+      "in": "the YAML header of the description file"
+    },
+    "title": {
+      "en": "The english title",
+      "fr": "The french title"
+    },
+    "paragraphs": {
+      "en": [
+        {
+          "id": "optional-anchor-for-this-paragraph",
+          "content": "This paragraph, converted to HTML"
+        }
+      ],
+      "fr": [
+        {
+          "id": "",
+          "content": "The first paragraph after a :: fr marker"
+        }
+      ]
+    },
+    "media": {
+      "en": [
+        {
+          "id": "generated-from-the-alt-text-if-non-empty-else-basename-of-the-source",
+          "alt": "alt text",
+          "title": "a title",
+          "source": "/absolute/path/to/the/file/or/a/URL",
+          "content_type": "type/subtype (a MIME type)",
+          "size": 7048,
+          "dimensions": {
+              "width": 500,
+              "height": 281,
+              "aspect_ratio": 1.779359
+          },
+          "duration": 344,
+          "online": false,
+          "attributes": {
+            "loop": false,
+            "controls": true,
+            "playsinline": false,
+            "autoplay": false,
+            "muted": false
+          },
+          "has_sound": true
+        }
+      ],
+      "fr": [
+        ...
+      ]
+    },
+    "links": {
+      "en": [
+        {
+          "id": "generated-from-the-alt-text",
+          "alt": "the alt text",
+          "title": "the title",
+          "url": "https://example.com"
+        }
+      ]
+    }
+  }
+]
+```
+
+Learn about:
+
+- [Why there's a `"en": {` and `"fr": {` everywhere or what the hell `:: fr marker` means](#internationalisation)
+- [How the `id` is computed](#two-ways-to-place-your-description-files)
+- [The `media` object](#media-files)
+- [How portfoliodb scans the markdown description file into `links`, `title`, `media`, `paragraphs`, etc.](#the-description-file)
+
+Note: A [JSON schema](./../database.schema.json) is included.
 
 ## Two ways to place your description files
 
@@ -215,7 +306,54 @@ If the description file contains no languages but other description files do, po
 
 However, if you really don't have **any** language markers appearing throughout your whole database, the language of the entire portfolio will be called 'default'. In other words, not putting language markers anywhere is the same as starting each description file with `:: default` (after the metadata section).
 
-## Media attributes
+## Media files
+
+### The `media` object
+
+Just like paragraphs, links or titles, media embeds deserve [internationlization](#internationalisation) too: even if you serve exactly the same files on every language, alt texts and titles still need translation. Therefore, the `media` object maps a language code to an array of Mediæ. Let's see what properties portfoliodb gives you for each media embed:
+
+#### Textual properties
+
+_Strings_
+
+The three pieces of data you declare in your description file are available to you:
+
+```markdown
+>[alt "title"](source)
+```
+
+are stored respectiveely in `alt`, `title` and `source`. Of course, `alt` and `title` can be omitted, which results in their properties being empty (`""`), _not `null`_.
+
+An `id` is also derived, by [slugifying](https://en.wikipedia.org/wiki/Clean_URL#Slug) the alt text or, if this one is empty, by taking the [basename](https://en.wikipedia.org/wiki/Basename) of the `souce` and removing the extension.
+
+#### Size, dimensions and duration
+
+_Integers_
+
+When the media's source points to an online resource (i.e. when [`online`](#attributes-online-and-has_sound) is `true`), all properties are set to 0. Portofliodb could work them out, but [this is not the case yet](#)
+
+When a property doesn't make sense for a file, its value is set to 0.
+
+Property | Unit | Makes sense for file types | Description
+---|---|---|---
+`dimensions.aspect_ratio` | pixels | `image`, `video` |
+`dimensions.width` | pixels | `image`, `video` |
+`dimensions.height` | Ø | `image`, `video` | `width / height`
+`duration` | seconds | `video`, `audio`
+`size` | bytes | (all) | Size of the file on disk
+
+#### Attributes, `online` and `has_sound`
+
+_Booleans_
+
+-  `online` indicates whether `souce` points to an online resource (i.e. if it's a URL) or to a local file.
+- `has_sound` is set to `true` if and only if the media is either:
+  - an audio file
+  - a video file that has at least one audio stream.<br>
+    ⚠ _This means that if the video file has an audio stream that is complete silence, `has_sound` will be still `true`! See #_
+- `attributes` is an object of booleans that provide various indications on how the media should be played. See [Media attributes](#media-attributes) for more information
+
+### Media attributes
 
 Let's imagine that you made a spinner for somebody that you want in your portfolio. The animation lasts for 5 seconds, has no sound and you probably want it to loop. Here, it's reasonable to want your video to autoplay and loop on your website. Here's [a concrete example of what I'm talking about](https://en.ewen.works/legmask-spinner).
 
