@@ -1,4 +1,4 @@
-module github.com/ewen-lbh/portfoliodb
+module github.com/ortfo/portfoliodb
 
 go 1.14
 
