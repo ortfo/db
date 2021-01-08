@@ -1,4 +1,4 @@
-package main
+package portfoliodb
 
 // ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
 const ConfigurationJSONSchema = `{

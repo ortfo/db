@@ -1,4 +1,4 @@
-package main
+package portfoliodb
 
 import (
 	"regexp"
@@ -278,7 +278,7 @@ func extractAttributesFromAlt(alt string) (string, MediaAttributes) {
 	// We iterate backwards:
 	// if there are attributes, they'll be at the end of the alt text separated by a space
 	inAttributesZone := true
-	for i := len([]rune(alt))-1; i >= 0; i-- {
+	for i := len([]rune(alt)) - 1; i >= 0; i-- {
 		revChar := []rune(alt)[i]
 		if revChar == ' ' && inAttributesZone {
 			inAttributesZone = false

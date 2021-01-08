@@ -1,4 +1,4 @@
-package main
+package portfoliodb
 
 import (
 	"io/ioutil"
@@ -26,7 +26,8 @@ func (p *ProjectTreeElement) GetProjectPath(databaseDirectory string) string {
 func (p *ProjectTreeElement) MediaAbsoluteFilepaths(databaseDirectory string) []string {
 	absoluted := make([]string, len(p.MediaFilepaths))
 	for _, item := range p.MediaFilepaths {
-		absoluted = append(absoluted, path.Join(p.GetProjectPath(databaseDirectory), item))	}
+		absoluted = append(absoluted, path.Join(p.GetProjectPath(databaseDirectory), item))
+	}
 	return absoluted
 }
 

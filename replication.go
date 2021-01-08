@@ -1,4 +1,4 @@
-package main
+package portfoliodb
 
 import (
 	"os"
@@ -118,7 +118,7 @@ func transformFootnoteReferences(markdown string) string {
 	for _, line := range lines {
 		if pattern.MatchString(line) {
 			for _, groups := range pattern.FindAllStringSubmatch(line, -1) {
-				transformedMarkdown = strings.ReplaceAll(transformedMarkdown, groups[0], "[^" + groups[2] + "]")
+				transformedMarkdown = strings.ReplaceAll(transformedMarkdown, groups[0], "[^"+groups[2]+"]")
 			}
 		}
 	}

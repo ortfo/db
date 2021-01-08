@@ -1,4 +1,4 @@
-package main
+package portfoliodb
 
 import (
 	"path"
@@ -10,7 +10,6 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
-
 
 type configurationBuildStepsExtractColors struct {
 	Enabled         bool
@@ -58,13 +57,13 @@ type checks struct {
 
 type replaceMediaSource struct {
 	Replace string `yaml:"replace"`
-	With string `yaml:"with"`
+	With    string `yaml:"with"`
 }
 
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
 	configurationBuildSteps
-	Checks checks `yaml:"checks"`
+	Checks              checks               `yaml:"checks"`
 	ReplaceMediaSources []replaceMediaSource `yaml:"replace media sources"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
@@ -78,7 +77,6 @@ type Configuration struct {
 	// 	CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
 	// }
 }
-
 
 // LoadConfiguration loads the .portfoliodb.yml file in ``databaseFolderPath`` and puts it contents into ``loadInto``.
 func LoadConfiguration(filepath string, loadInto *Configuration) error {
