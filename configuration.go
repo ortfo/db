@@ -24,7 +24,7 @@ type configurationBuildStepsMakeGifs struct {
 
 type configurationBuildStepsMakeThumbnails struct {
 	Enabled          bool
-	Widths           []int
+	Sizes            []uint16
 	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
 }
@@ -62,9 +62,11 @@ type replaceMediaSource struct {
 
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
-	configurationBuildSteps
-	Checks              checks               `yaml:"checks"`
-	ReplaceMediaSources []replaceMediaSource `yaml:"replace media sources"`
+	ExtractColors       configurationBuildStepsExtractColors  `yaml:"extract colors"`
+	MakeGifs            configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
+	MakeThumbnails      configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
+	Checks              checks                                `yaml:"checks"`
+	ReplaceMediaSources []replaceMediaSource                  `yaml:"replace media sources"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`

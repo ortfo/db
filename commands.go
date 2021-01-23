@@ -81,6 +81,13 @@ func RunCommandBuild(args docopt.Opts) error {
 			ctx.Status("Extracting colors")
 			metadata = StepExtractColors(metadata, project, databaseDirectory, config)
 		}
+		if config.MakeThumbnails.Enabled {
+			ctx.Status("Making thumbnails")
+			metadata, err = StepMakeThumbnails(metadata, project, databaseDirectory, analyzedMediae, config)
+			if err != nil {
+				return err
+			}
+		}
 		work := Work{
 			ID:         project.ID,
 			Metadata:   metadata,
