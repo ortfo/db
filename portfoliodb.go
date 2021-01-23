@@ -1,4 +1,4 @@
-package portfoliodb
+package main
 
 import (
 	"github.com/docopt/docopt-go"

@@ -7,7 +7,7 @@ with open("database.schema.json", encoding="utf-8") as file:
 
 
 with open("json_schemas.go", mode="w", encoding="utf-8") as file:
-    file.write(f"""package portfoliodb
+    file.write(f"""package main
 
 // ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
 const ConfigurationJSONSchema = `{config_schema}`

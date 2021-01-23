@@ -1,4 +1,4 @@
-package portfoliodb
+package main
 
 import (
 	"io/ioutil"

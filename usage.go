@@ -1,4 +1,4 @@
-package portfoliodb
+package main
 
 // CLIUsage is the entire usage string for the CLI
 const CLIUsage = `

@@ -1,4 +1,4 @@
-package portfoliodb
+package main
 
 // Functions to analyze media files.
 // Used to go from a ParsedDescription struct to a Work struct.
