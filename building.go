@@ -96,7 +96,7 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 			// }
 			madeThumbnails[transformSource(media.Source, config)] = make(map[uint16]string)
 			for _, size := range config.MakeThumbnails.Sizes {
-				saveTo := ComputeOutputThumbnailFilename(config, media, project, size, lang)
+				saveTo := path.Join(databaseDirectory, ComputeOutputThumbnailFilename(config, media, project, size, lang))
 				if StringInSlice(alreadyMadeOnes, saveTo) {
 					continue
 				}
