@@ -10,7 +10,7 @@ import (
 
 	"github.com/EdlinOrg/prominentcolor"
 	"github.com/gabriel-vasile/mimetype"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 // kmeans extracts colors from img

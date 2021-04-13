@@ -20,5 +20,6 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gitlab.com/opennota/screengen v0.0.0-20191122132138-74a8d677a1a5
 	gopkg.in/gographics/imagick.v2 v2.6.0
+	gopkg.in/gographics/imagick.v3 v3.3.0
 	gopkg.in/yaml.v2 v2.3.0
 )
