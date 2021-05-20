@@ -11,6 +11,7 @@ import (
 	"github.com/EdlinOrg/prominentcolor"
 	"github.com/gabriel-vasile/mimetype"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"gopkg.in/yaml.v2"
 )
 
 // kmeans extracts colors from img
@@ -82,6 +83,29 @@ func StepExtractColors(metadata map[string]interface{}, project ProjectTreeEleme
 	return metadata
 }
 
+func GetBuildMetadata(config Configuration) (metadata BuildMetadata, err error) {
+	raw, err := ReadFileBytes(config.BuildMetadataFilepath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(raw, &metadata)
+	return
+}
+
+// NeedsRebuiling returns `true` if the given path has its modified date sooner than the last build's date.
+// If any error occurs, the result is true (ie 'this file needs to be rebuilt')
+func NeedsRebuiling(absolutePath string, config Configuration) bool {
+	metadata, err := GetBuildMetadata(config)
+	if err != nil {
+		return true
+	}
+	fileMeta, err := os.Stat(absolutePath)
+	if err != nil {
+		return true
+	}
+	return fileMeta.ModTime().After(metadata.PreviousBuildDate)
+}
+
 //TODO: convert GIFs from `online: True` sources (YouTube, Dailymotion, Vimeo, you name it.). Might want to look at <https://github.com/hunterlong/gifs>
 
 // StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new `thumbnails` entry mapping a file to a map mapping a size to a thumbnail filepath
@@ -101,6 +125,10 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 					continue
 				}
 				if media.Dimensions.AspectRatio == 0.0 {
+					continue
+				}
+				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
+				if !NeedsRebuiling(saveTo, config) {
 					continue
 				}
 				err := makeThumbImage(media, size, saveTo, databaseDirectory)

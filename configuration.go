@@ -3,6 +3,7 @@ package main
 import (
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/docopt/docopt-go"
 	"github.com/imdatngo/mergo"
@@ -60,13 +61,18 @@ type replaceMediaSource struct {
 	With    string `yaml:"with"`
 }
 
+type BuildMetadata struct {
+	PreviousBuildDate time.Time
+}
+
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
-	ExtractColors       configurationBuildStepsExtractColors  `yaml:"extract colors"`
-	MakeGifs            configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
-	MakeThumbnails      configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
-	Checks              checks                                `yaml:"checks"`
-	ReplaceMediaSources []replaceMediaSource                  `yaml:"replace media sources"`
+	ExtractColors         configurationBuildStepsExtractColors  `yaml:"extract colors"`
+	MakeGifs              configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
+	MakeThumbnails        configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
+	Checks                checks                                `yaml:"checks"`
+	ReplaceMediaSources   []replaceMediaSource                  `yaml:"replace media sources"`
+	BuildMetadataFilepath string                                `yaml:"build metadata file"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"path"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v2"
 
 	"github.com/docopt/docopt-go"
 )
@@ -23,6 +27,28 @@ type RunContext struct {
 func (ctx *RunContext) Status(text string) {
 	fmt.Print("\033[2K\r")
 	fmt.Printf("[%v/%v] %v: %v", ctx.progress.current, ctx.progress.total, ctx.currentProject.ID, text)
+}
+
+// UpdateBuildMetadata updates metadata about the latest build in config.BuildMetadataFilepath.
+// If the file does not exist, it creates it.
+func UpdateBuildMetadata(config Configuration) (err error) {
+	var metadata BuildMetadata
+	if _, err = os.Stat(config.BuildMetadataFilepath); errors.Is(err, os.ErrNotExist) {
+		os.MkdirAll(path.Dir(config.BuildMetadataFilepath), os.ModePerm)
+		metadata = BuildMetadata{}
+	} else {
+		metadata, err = GetBuildMetadata(config)
+		if err != nil {
+			return
+		}
+	}
+	metadata.PreviousBuildDate = time.Now()
+	raw, err := yaml.Marshal(&metadata)
+	if err != nil {
+		return
+	}
+	err = WriteFile(config.BuildMetadataFilepath, raw)
+	return
 }
 
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt
@@ -51,7 +77,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	defer fmt.Print("\033[2K\r\n")
+	// defer fmt.Print("\033[2K\r\n")
 	ctx := RunContext{
 		config: &config,
 		progress: struct {
@@ -110,6 +136,10 @@ func RunCommandBuild(args docopt.Opts) error {
 		fmt.Print("\033[2K\r\n")
 		println(string(worksJSON))
 	}
+	if err != nil {
+		println(err.Error())
+	}
+	err = UpdateBuildMetadata(config)
 	if err != nil {
 		println(err.Error())
 	}
