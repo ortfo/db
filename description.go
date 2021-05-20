@@ -188,7 +188,7 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	footnotes := make([]Footnote, 0)
 	abbreviations := make([]Abbreviation, 0)
 	paragraphLike := make([]soup.Root, 0)
-	paragraphLikeTagNames := "ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
+	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
 	for _, element := range htmlTree.Find("body").Children() {
 		// Check if it's a paragraph-like tag
 		if strings.Contains(paragraphLikeTagNames, element.NodeValue) {
@@ -231,17 +231,9 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 			continue
 		} else {
 			// A paragraph (anything else)
-			var content string
-			if paragraph.NodeValue == "p" {
-				// Don't include surrounding element in the content if it's a <p>
-				content = innerHTML(paragraph)
-			} else {
-				// Include it otherwise (<h#>, <ul>, <ol>, ...)
-				content = paragraph.HTML()
-			}
 			paragraphs = append(paragraphs, Paragraph{
 				ID:      paragraph.Attrs()["id"],
-				Content: content,
+				Content: paragraph.HTML(),
 			})
 		}
 	}
