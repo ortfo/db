@@ -187,10 +187,22 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	links := make([]Link, 0)
 	footnotes := make([]Footnote, 0)
 	abbreviations := make([]Abbreviation, 0)
-	for _, paragraph := range htmlTree.FindAll("p") {
+	paragraphLike := make([]soup.Root, 0)
+	paragraphLikeTagNames := "ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
+	for _, element := range htmlTree.Find("body").Children() {
+		// Check if it's a paragraph-like tag
+		if strings.Contains(paragraphLikeTagNames, element.NodeValue) {
+			paragraphLike = append(paragraphLike, element)
+		}
+	}
+	for _, paragraph := range paragraphLike {
 		childrenCount := len(paragraph.Children())
-		firstChild := paragraph.Children()[0]
+		firstChild := soup.Root{}
+		if childrenCount >= 1 {
+			firstChild = paragraph.Children()[0]
+		}
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
+			// A media embed
 			alt, title := extractTitleFromMediaAlt(firstChild.Attrs()["alt"])
 			alt, attributes := extractAttributesFromAlt(alt)
 			mediae = append(mediae, MediaEmbedDeclaration{
@@ -200,6 +212,7 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 				Attributes: attributes,
 			})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
+			// An isolated link
 			links = append(links, Link{
 				ID:    slugify.Marshal(firstChild.FullText()),
 				Name:  innerHTML(firstChild),
@@ -207,17 +220,28 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 				URL:   firstChild.Attrs()["href"],
 			})
 		} else if RegexpMatches(patternAbbreviationDefinition, innerHTML(paragraph)) {
+			// An abbreviation definition
 			groups := RegexpGroups(patternAbbreviationDefinition, innerHTML(paragraph))
 			abbreviations = append(abbreviations, Abbreviation{
 				Name:       groups[1],
 				Definition: groups[2],
 			})
 		} else if RegexpMatches(patternLanguageMarker, innerHTML(paragraph)) {
+			// A language marker (ignored)
 			continue
 		} else {
+			// A paragraph (anything else)
+			var content string
+			if paragraph.NodeValue == "p" {
+				// Don't include surrounding element in the content if it's a <p>
+				content = innerHTML(paragraph)
+			} else {
+				// Include it otherwise (<h#>, <ul>, <ol>, ...)
+				content = paragraph.HTML()
+			}
 			paragraphs = append(paragraphs, Paragraph{
 				ID:      paragraph.Attrs()["id"],
-				Content: innerHTML(paragraph),
+				Content: content,
 			})
 		}
 	}
@@ -234,7 +258,8 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	}
 	processedParagraphs := make([]Paragraph, 0, len(paragraphs))
 	for _, paragraph := range paragraphs {
-		processedParagraphs = append(processedParagraphs, processParagraph(paragraph, abbreviations))
+		// FIXME: <abbr>s will get inserted in <pre> text!
+		processedParagraphs = append(processedParagraphs, replaceAbbreviations(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
 }
@@ -312,18 +337,29 @@ func innerHTML(element soup.Root) string {
 	for _, child := range element.Children() {
 		innerHTML += child.HTML()
 	}
+	if innerHTML == "" {
+		innerHTML = element.HTML()
+	}
 	return innerHTML
 }
 
 // markdownToHTML converts markdown markdownRaw into an HTML string
 func markdownToHTML(markdownRaw string) string {
 	//TODO: handle markdown extensions (need to take in a "config Configuration" parameter)
-	extensions := parser.CommonExtensions | parser.Footnotes | parser.AutoHeadingIDs | parser.Attributes | parser.HardLineBreak
+	extensions := parser.CommonExtensions | // Common stuff
+		parser.Footnotes | // [^1]: footnotes
+		parser.AutoHeadingIDs | // Auto-add [id] to headings
+		parser.Attributes | // Specify attributes manually with {} above block
+		parser.HardLineBreak | // \n becomes <br>
+		parser.OrderedListStart | // Starting an <ol> with 5. will make them start at 5 in the output HTML
+		parser.EmptyLinesBreakList  // 2 empty lines break out of list
+		// TODO: smart fractions, LaTeX-style dash parsing, smart quotes (see https://pkg.go.dev/github.com/gomarkdown/markdown@v0.0.0-20210514010506-3b9f47219fe7#readme-extensions)
+
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
 }
 
-// processParagraph processes the given Paragraph to replace abbreviations
-func processParagraph(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
+// replaceAbbreviations processes the given Paragraph to replace abbreviations
+func replaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
 	processed := paragraph.Content
 	for _, abbreviation := range currentLanguageAbbreviations {
 		var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
