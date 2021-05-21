@@ -71,31 +71,19 @@ func (ctx *RunContext) makeThumbImage(media Media, targetSize uint16, saveTo str
 	}
 
 	if media.ContentType == "application/pdf" {
-		supportedExtensions := "png jpeg tiff"
-		targetExtension := filepath.Ext(saveTo)
-		if targetExtension == "jpg" {
-			// jpg is jpeg
-			targetExtension = "jpeg"
+		// If the target extension was not supported, convert from png to the actual target extension
+		temporaryPng, err := ioutil.TempFile("", "*.png")
+		defer os.Remove(temporaryPng.Name())
+		if err != nil {
+			return err
 		}
-		if !strings.Contains(supportedExtensions, targetExtension) {
-			// If the target extension was not supported, convert from png to the actual target extension
-			temporaryPng, err := ioutil.TempFile("", "*.png")
-			defer os.Remove(temporaryPng.Name())
-			if err != nil {
-				return err
-			}
-			// TODO: (maybe) update media.Dimensions now that we have an image of the PDF though this will only be representative when all pages of the PDF have the same dimensions.
-			// FIXME: PDF thumbnails are squares instead of respecting the page's aspect ratio.
-			// pdftoppm *adds* the extension to the end of the filename even if it already has it... smh.
-			err = run("pdftoppm", "-singlefile", "-scale-to", fmt.Sprint(targetSize), "-sz", fmt.Sprint(targetSize), "-png", media.AbsolutePath, strings.TrimSuffix(temporaryPng.Name(), ".png"))
-			if err != nil {
-				return err
-			}
-			return run("convert", temporaryPng.Name(), saveTo)
-		} else {
-			// Else, just use the right flag “-{targetExtension}”
-			return run("pdftoppm", "-singlefile", "-scale-to", fmt.Sprint(targetSize), "-sz", fmt.Sprint(targetSize), "-"+targetExtension, saveTo)
+		// TODO: (maybe) update media.Dimensions now that we have an image of the PDF though this will only be representative when all pages of the PDF have the same dimensions.
+		// pdftoppm *adds* the extension to the end of the filename even if it already has it... smh.
+		err = run("pdftoppm", "-singlefile", "-png", media.AbsolutePath, strings.TrimSuffix(temporaryPng.Name(), ".png"))
+		if err != nil {
+			return err
 		}
+		return run("convert", "-thumbnail", fmt.Sprint(targetSize), temporaryPng.Name(), saveTo)
 	}
 
 	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.Source, media.ContentType)
