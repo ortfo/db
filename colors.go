@@ -17,16 +17,16 @@ type ExtractedColors struct {
 }
 
 // StepExtractColors executes the step "extract colors" and returns a metadata object with the `colors` entry modified accordingly.
-func StepExtractColors(metadata map[string]interface{}, project ProjectTreeElement, databaseDirectory string, config Configuration) map[string]interface{} {
+func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaPaths []string) map[string]interface{} {
 	// Do not overwrite manually-set `colors` metadata entry
 	if _, ok := metadata["colors"]; !ok {
 		// Get only image filepaths
-		imageFilepaths := FilterSlice(project.MediaAbsoluteFilepaths(databaseDirectory), func(item string) bool {
+		imageFilepaths := FilterSlice(mediaPaths, func(item string) bool {
 			contentType, err := mimetype.DetectFile(item)
 			return err == nil && strings.HasPrefix(contentType.String(), "image/")
 		})
 		// Extract colors from them
-		extractedColors, err := extractColorsFromFiles(imageFilepaths, config)
+		extractedColors, err := extractColorsFromFiles(imageFilepaths, ctx.Config.ExtractColors.DefaultFiles)
 		if err == nil {
 			metadata["colors"] = extractedColors
 		}
@@ -34,7 +34,7 @@ func StepExtractColors(metadata map[string]interface{}, project ProjectTreeEleme
 	return metadata
 }
 
-func extractColorsFromFiles(files []string, config Configuration) (ExtractedColors, error) {
+func extractColorsFromFiles(files []string, defaultFiles []string) (ExtractedColors, error) {
 	if len(files) == 0 {
 		return ExtractedColors{}, nil
 	}
@@ -42,7 +42,7 @@ func extractColorsFromFiles(files []string, config Configuration) (ExtractedColo
 		return extractColors(files[0])
 	}
 	for _, filename := range files {
-		if StringInSlice(config.ExtractColors.DefaultFileName, filename) {
+		if StringInSlice(defaultFiles, filename) {
 			return extractColors(filename)
 		}
 	}
@@ -67,7 +67,7 @@ func kmeans(img image.Image) (ExtractedColors, error) {
 	if err != nil {
 		return ExtractedColors{}, err
 	}
-	colors := make([]string, 3, 3)
+	colors := make([]string, 3)
 	for _, centroid := range centroids {
 		colors = append(colors, centroid.AsString())
 	}

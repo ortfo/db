@@ -36,10 +36,16 @@ type Thumbnail struct {
 
 // Media represents a media object inserted in the work object's ``media`` array.
 type Media struct {
-	ID          string
-	Alt         string
-	Title       string
-	Source      string
+	ID    string
+	Alt   string
+	Title string
+	// Source is the media's path, verbatim from the embed declaration (what's actually written in the description file)
+	Source string
+	// AbsolutePath is the actual location of the file as an absolute path
+	AbsolutePath string
+	// Path is AbsolutePath with transformations applied, following the configuration.
+	// See Configuration.ReplaceMediaSources
+	Path        string
 	ContentType string
 	Size        uint64 // In bytes
 	Dimensions  ImageDimensions
@@ -63,8 +69,8 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	return ImageDimensions{width, height, ratio}, nil
 }
 
-// AnalyzeMediaFile analyzes the file at filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
-func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, config Configuration) (Media, error) {
+// AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
+func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return Media{}, err
@@ -99,6 +105,9 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 
 	if isVideo {
 		dimensions, duration, hasSound, err = GetVideoDimensionsDurationHasSound(filename)
+		if err != nil {
+			return Media{}, err
+		}
 	}
 
 	if isAudio {
@@ -107,22 +116,24 @@ func AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration, c
 	}
 
 	return Media{
-		ID:          slugify.Marshal(FilepathBaseNoExt(filename)),
-		Alt:         embedDeclaration.Alt,
-		Title:       embedDeclaration.Title,
-		Source:      transformSource(filename, config),
-		ContentType: contentType,
-		Dimensions:  dimensions,
-		Duration:    duration,
-		Size:        uint64(fileInfo.Size()),
-		Attributes:  embedDeclaration.Attributes,
-		HasSound:    hasSound,
+		ID:           slugify.Marshal(FilepathBaseNoExt(filename)),
+		Alt:          embedDeclaration.Alt,
+		Title:        embedDeclaration.Title,
+		Source:       embedDeclaration.Source,
+		AbsolutePath: filename,
+		Path:         ctx.transformSource(filename),
+		ContentType:  contentType,
+		Dimensions:   dimensions,
+		Duration:     duration,
+		Size:         uint64(fileInfo.Size()),
+		Attributes:   embedDeclaration.Attributes,
+		HasSound:     hasSound,
 	}, nil
 }
 
 // transformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration
-func transformSource(source string, config Configuration) string {
-	for _, replacement := range config.ReplaceMediaSources {
+func (ctx *RunContext) transformSource(source string) string {
+	for _, replacement := range ctx.Config.ReplaceMediaSources {
 		source = strings.ReplaceAll(source, replacement.Replace, replacement.With)
 	}
 	return source
@@ -164,18 +175,16 @@ func GetVideoDimensionsDurationHasSound(filename string) (dimensions ImageDimens
 }
 
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
-func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
-	analyzedMediae := make(map[string][]Media, 0)
-	analyzedMediaeBySource := make(map[string]Media, 0)
+func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
+	if ctx.ScatteredMode {
+		currentDirectory = path.Join(currentDirectory, ".portfoliodb")
+	}
+	analyzedMediae := make(map[string][]Media)
+	analyzedMediaeBySource := make(map[string]Media)
 	for language, mediae := range embedDeclarations {
 		analyzedMediae[language] = make([]Media, 0)
 		for _, media := range mediae {
-			var filename string
-			if !filepath.IsAbs(media.Source) {
-				filename, _ = filepath.Abs(path.Join(currentDirectory, media.Source))
-			} else {
-				filename = media.Source
-			}
+			// Handle sources which are URLs
 			if IsValidURL(media.Source) {
 				analyzedMedia := Media{
 					Alt:        media.Alt,
@@ -185,21 +194,34 @@ func AnalyzeAllMediae(ctx RunContext, embedDeclarations map[string][]MediaEmbedD
 					Attributes: media.Attributes,
 				}
 				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-			} else if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
+				continue
+			}
+
+			// Compute absolute filepath to media
+			var filename string
+			if !filepath.IsAbs(media.Source) {
+				filename, _ = filepath.Abs(path.Join(currentDirectory, media.Source))
+			} else {
+				filename = media.Source
+			}
+
+			// Skip already-analyzed
+			if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
 				// Update fields independent of media.Source
 				alreadyAnalyzedMedia.Alt = media.Alt
 				alreadyAnalyzedMedia.Attributes = media.Attributes
 				alreadyAnalyzedMedia.Title = media.Title
 				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
-			} else {
-				ctx.Status("Analyzing " + path.Base(filename))
-				analyzedMedia, err := AnalyzeMediaFile(filename, media, *ctx.config)
-				if err != nil {
-					return map[string][]Media{}, err
-				}
-				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-				analyzedMediaeBySource[filename] = analyzedMedia
+				continue
 			}
+
+			ctx.Status("Analyzing " + path.Base(filename))
+			analyzedMedia, err := ctx.AnalyzeMediaFile(filename, media)
+			if err != nil {
+				return map[string][]Media{}, err
+			}
+			analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
+			analyzedMediaeBySource[filename] = analyzedMedia
 		}
 	}
 	return analyzedMediae, nil

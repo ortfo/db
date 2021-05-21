@@ -42,11 +42,11 @@ func RunCommandReplicate(args docopt.Opts) error {
 		return err
 	}
 	ctx := RunContext{
-		config: &Configuration{},
-		progress: struct {
-			current int
-			total   int
-		}{total: len(parsedDatabase)},
+		Config: &Configuration{},
+		Progress: struct {
+			Current int
+			Total   int
+		}{Total: len(parsedDatabase)},
 	}
 	defer fmt.Print("\033[2K\r\n")
 	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)
@@ -59,13 +59,13 @@ func RunCommandReplicate(args docopt.Opts) error {
 // ReplicateAll recreates a database inside targetDatabase containing all the works in `works`
 func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	for _, work := range works {
-		ctx.currentProject = &ProjectTreeElement{ID: work.ID}
+		ctx.CurrentProject = work.ID
 		ctx.Status("Replicating")
 		err := ReplicateOne(targetDatabase, work)
 		if err != nil {
 			return err
 		}
-		ctx.progress.current++
+		ctx.Progress.Current++
 	}
 	return nil
 }

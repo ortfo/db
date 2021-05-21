@@ -126,10 +126,12 @@ func dispatchCommand(args docopt.Opts) error {
 
 // RunContext holds several "global" references used throughout all the functions of a command
 type RunContext struct {
-	config         *Configuration
-	currentProject *ProjectTreeElement
-	progress       struct {
-		current int
-		total   int
+	Config            *Configuration
+	CurrentProject    string
+	DatabaseDirectory string
+	ScatteredMode     bool
+	Progress          struct {
+		Current int
+		Total   int
 	}
 }

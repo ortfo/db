@@ -15,9 +15,9 @@ import (
 )
 
 type configurationBuildStepsExtractColors struct {
-	Enabled         bool
-	Extract         []string
-	DefaultFileName []string `yaml:"default file name"`
+	Enabled      bool
+	Extract      []string
+	DefaultFiles []string `yaml:"default files"`
 }
 
 type configurationBuildStepsMakeGifs struct {
@@ -48,6 +48,10 @@ type configurationMarkdownCustomSyntax struct {
 	To   string
 }
 
+type configurationCopyMedia struct {
+	To string
+}
+
 type checks struct {
 	SchemaCompliance     string `yaml:"schema compliance"`
 	WorkFolderUniqueness string `yaml:"work folder uniqueness"`
@@ -75,6 +79,7 @@ type Configuration struct {
 	Checks                checks                                `yaml:"checks"`
 	ReplaceMediaSources   []replaceMediaSource                  `yaml:"replace media sources"`
 	BuildMetadataFilepath string                                `yaml:"build metadata file"`
+	CopyMedia             configurationCopyMedia                `yaml:"copy media"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`

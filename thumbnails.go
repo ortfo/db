@@ -20,19 +20,16 @@ import (
 
 //TODO: convert GIFs from `online: True` sources (YouTube, Dailymotion, Vimeo, you name it.). Might want to look at <https://github.com/hunterlong/gifs>
 
-// StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new `thumbnails` entry mapping a file to a map mapping a size to a thumbnail filepath
-func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElement, databaseDirectory string, mediae map[string][]Media, config Configuration) (map[string]interface{}, error) {
+// StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new `thumbnails` entry mapping a file's path relative to the database directory to a map mapping a size to a absolute thumbnail filepath
+func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, projectID string, mediae map[string][]Media) (map[string]interface{}, error) {
 	alreadyMadeOnes := make([]string, 0)
 	madeThumbnails := make(map[string]map[uint16]string)
 	for lang, mediae := range mediae {
 		for _, media := range mediae {
-			// matches, err := filepath.Match(config.MakeThumbnails.InputFile, media.Source)
-			// if err != nil || !matches || config.MakeThumbnails.InputFile == "" {
-			// 	continue
-			// }
-			madeThumbnails[transformSource(media.Source, config)] = make(map[uint16]string)
-			for _, size := range config.MakeThumbnails.Sizes {
-				saveTo := path.Join(databaseDirectory, ComputeOutputThumbnailFilename(config, media, project, size, lang))
+			madeThumbnails[media.Path] = make(map[uint16]string)
+			for _, size := range ctx.Config.MakeThumbnails.Sizes {
+				saveTo := path.Join(ctx.DatabaseDirectory, ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang))
+				// Don't re-build already-built thumbs
 				if StringInSlice(alreadyMadeOnes, saveTo) {
 					continue
 				}
@@ -40,12 +37,15 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 					continue
 				}
 				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
-				if !NeedsRebuiling(saveTo, config) {
+				if !ctx.NeedsRebuiling(saveTo) {
 					continue
 				}
-				err := makeThumbImage(media, size, saveTo, databaseDirectory)
 				// Create potentially missing directories
 				os.MkdirAll(filepath.Dir(saveTo), 0777)
+
+				// Make the thumbnail
+				err := ctx.makeThumbImage(media, size, saveTo)
+
 				if err != nil {
 					return nil, err
 				}
@@ -59,15 +59,14 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 
 // makeThumbImage creates a thumbnail on disk of the given media (it is assumed that the given media is an image),
 // a target size & the file to save the thumbnail to. Returns the path where the thumbnail has been written.
-func makeThumbImage(media Media, targetSize uint16, saveTo string, databaseDirectory string) error {
-	mediaAbsoluteSource := path.Join(databaseDirectory, media.Source)
-
+func (ctx *RunContext) makeThumbImage(media Media, targetSize uint16, saveTo string) error {
+	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
 	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("convert", "-thumbnail", fmt.Sprint(targetSize), mediaAbsoluteSource, saveTo)
+		return run("convert", "-thumbnail", fmt.Sprint(targetSize), media.AbsolutePath, saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "video/") {
-		return run("ffmpegthumbnailer", "-i"+mediaAbsoluteSource, "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
+		return run("ffmpegthumbnailer", "-i"+media.AbsolutePath, "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
 	}
 
 	if media.ContentType == "application/pdf" {
@@ -84,14 +83,17 @@ func makeThumbImage(media Media, targetSize uint16, saveTo string, databaseDirec
 			if err != nil {
 				return err
 			}
-			err = run("pdftoppm", "-singlefile", "-scale-to-x", fmt.Sprint(targetSize), "-png", temporaryPng.Name())
+			// TODO: (maybe) update media.Dimensions now that we have an image of the PDF though this will only be representative when all pages of the PDF have the same dimensions.
+			// FIXME: PDF thumbnails are squares instead of respecting the page's aspect ratio.
+			// pdftoppm *adds* the extension to the end of the filename even if it already has it... smh.
+			err = run("pdftoppm", "-singlefile", "-scale-to", fmt.Sprint(targetSize), "-sz", fmt.Sprint(targetSize), "-png", media.AbsolutePath, strings.TrimSuffix(temporaryPng.Name(), ".png"))
 			if err != nil {
 				return err
 			}
 			return run("convert", temporaryPng.Name(), saveTo)
 		} else {
 			// Else, just use the right flag “-{targetExtension}”
-			return run("pdftoppm", "-singlefile", "-scale-to-x", fmt.Sprint(targetSize), "-"+targetExtension, saveTo)
+			return run("pdftoppm", "-singlefile", "-scale-to", fmt.Sprint(targetSize), "-sz", fmt.Sprint(targetSize), "-"+targetExtension, saveTo)
 		}
 	}
 
@@ -129,6 +131,7 @@ func run(command string, args ...string) error {
 // ComputeOutputThumbnailFilename returns the filename where to save a thumbnail
 // according to the configuration and the given information.
 // file name templates are relative to the output database directory.
+// It uses media.Source because we might want to compute thumbnails of online media in the future
 // Placeholders that will be replaced in the file name template:
 //
 // * <project id> - the project's id
@@ -138,14 +141,14 @@ func run(command string, args ...string) error {
 // * <size> - the current thumbnail size
 // * <extension> - the media's extension
 // * <lang> - the current language
-func ComputeOutputThumbnailFilename(config Configuration, media Media, project ProjectTreeElement, targetSize uint16, lang string) string {
-	computed := config.MakeThumbnails.FileNameTemplate
-	computed = strings.ReplaceAll(computed, "<project id>", project.ID)
-	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Source))
-	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.Source))
-	computed = strings.ReplaceAll(computed, "<media id>", FilepathBaseNoExt(media.Source))
+func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
+	computed := ctx.Config.MakeThumbnails.FileNameTemplate
+	computed = strings.ReplaceAll(computed, "<project id>", projectID)
+	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Path)) // FIXME: depends on `replace media sources` removing the /home/ewen/projects/portfolio
+	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.AbsolutePath))
+	computed = strings.ReplaceAll(computed, "<media id>", FilepathBaseNoExt(media.AbsolutePath))
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
-	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.Source), ".", "", 1))
+	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.AbsolutePath), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)
 	return computed
 }
