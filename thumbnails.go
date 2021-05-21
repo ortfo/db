@@ -1,12 +1,21 @@
+// thumbnails provides the StepMakeThumbnails step.
+// It assumes that several commands are available to the shell:
+// magick (tried using a library but it made my computer freeze while high on RAM),
+// ffmpegthumbnailer,
+// pdftoppm
+
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 //TODO: convert GIFs from `online: True` sources (YouTube, Dailymotion, Vimeo, you name it.). Might want to look at <https://github.com/hunterlong/gifs>
@@ -35,6 +44,8 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 					continue
 				}
 				err := makeThumbImage(media, size, saveTo, databaseDirectory)
+				// Create potentially missing directories
+				os.MkdirAll(filepath.Dir(saveTo), 0777)
 				if err != nil {
 					return nil, err
 				}
@@ -49,35 +60,69 @@ func StepMakeThumbnails(metadata map[string]interface{}, project ProjectTreeElem
 // makeThumbImage creates a thumbnail on disk of the given media (it is assumed that the given media is an image),
 // a target size & the file to save the thumbnail to. Returns the path where the thumbnail has been written.
 func makeThumbImage(media Media, targetSize uint16, saveTo string, databaseDirectory string) error {
-	imagick.Initialize()
-	defer imagick.Terminate()
 	mediaAbsoluteSource := path.Join(databaseDirectory, media.Source)
 
-	wand := imagick.NewMagickWand()
-	err := wand.ReadImage(mediaAbsoluteSource)
-	if err != nil {
-		return err
+	if strings.HasPrefix(media.ContentType, "image/") {
+		return run("convert", "-thumbnail", fmt.Sprint(targetSize), mediaAbsoluteSource, saveTo)
 	}
 
-	// Two cases depending on the orientation of the image
-	var scaledWidth, scaledHeight uint
-	if media.Dimensions.AspectRatio >= 1 {
-		scaledWidth = uint(targetSize)
-		scaledHeight = uint(1 / float32(media.Dimensions.AspectRatio) * float32(scaledWidth))
-	} else {
-		scaledHeight = uint(targetSize)
-		scaledWidth = uint(float32(media.Dimensions.AspectRatio) * float32(scaledHeight))
+	if strings.HasPrefix(media.ContentType, "video/") {
+		return run("ffmpegthumbnailer", "-i"+mediaAbsoluteSource, "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
 	}
 
-	err = wand.AdaptiveResizeImage(scaledWidth, scaledHeight)
-	if err != nil {
-		return err
+	if media.ContentType == "application/pdf" {
+		supportedExtensions := "png jpeg tiff"
+		targetExtension := filepath.Ext(saveTo)
+		if targetExtension == "jpg" {
+			// jpg is jpeg
+			targetExtension = "jpeg"
+		}
+		if !strings.Contains(supportedExtensions, targetExtension) {
+			// If the target extension was not supported, convert from png to the actual target extension
+			temporaryPng, err := ioutil.TempFile("", "*.png")
+			defer os.Remove(temporaryPng.Name())
+			if err != nil {
+				return err
+			}
+			err = run("pdftoppm", "-singlefile", "-scale-to-x", fmt.Sprint(targetSize), "-png", temporaryPng.Name())
+			if err != nil {
+				return err
+			}
+			return run("convert", temporaryPng.Name(), saveTo)
+		} else {
+			// Else, just use the right flag “-{targetExtension}”
+			return run("pdftoppm", "-singlefile", "-scale-to-x", fmt.Sprint(targetSize), "-"+targetExtension, saveTo)
+		}
 	}
-	err = wand.SetImageCompressionQuality(65)
+
+	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.Source, media.ContentType)
+
+}
+
+// run is like exec.Command(...).Run(...) but the error's message is actually useful (it's not just "exit status n")
+func run(command string, args ...string) error {
+	// Create the proc
+	proc := exec.Command(command, args...)
+
+	// Hook up stderr/out to a writer so that we can capture the output
+	var stdBuffer bytes.Buffer
+	stdWriter := io.MultiWriter(os.Stdout, &stdBuffer)
+	proc.Stdout = stdWriter
+	proc.Stderr = stdWriter
+
+	// Run the proc
+	err := proc.Run()
+
+	// Handle errors
 	if err != nil {
-		return err
+		switch e := err.(type) {
+		case *exec.ExitError:
+			return fmt.Errorf("while running %s: exited with %d: %s", strings.Join(proc.Args, " "), e.ExitCode(), stdBuffer.String())
+
+		default:
+			return fmt.Errorf("while running %s: %s", strings.Join(proc.Args, " "), err.Error())
+		}
 	}
-	err = wand.WriteImage(saveTo)
 	return nil
 }
 
