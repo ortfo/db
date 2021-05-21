@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"regexp"
@@ -8,8 +9,52 @@ import (
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/anaskhan96/soup"
+	"github.com/docopt/docopt-go"
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
 )
+
+// RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt
+func RunCommandReplicate(args docopt.Opts) error {
+	// TODO: validate database.json with a JSON schema
+	var parsedDatabase []Work
+	json := jsoniter.ConfigFastest
+	SetJSONNamingStrategy(LowerCaseWithUnderscores)
+	databaseFilepath, err := args.String("<from-filepath>")
+	targetDatabasePath, err := args.String("<to-directory>")
+	if err != nil {
+		return err
+	}
+	content, err := ReadFileBytes(databaseFilepath)
+	if err != nil {
+		return err
+	}
+	validated, validationErrors, err := ValidateWithJSONSchema(string(content), DatabaseJSONSchema)
+	if err != nil {
+		return err
+	}
+	if !validated {
+		DisplayValidationErrors(validationErrors, "database JSON")
+		return nil
+	}
+	err = json.Unmarshal(content, &parsedDatabase)
+	if err != nil {
+		return err
+	}
+	ctx := RunContext{
+		config: &Configuration{},
+		progress: struct {
+			current int
+			total   int
+		}{total: len(parsedDatabase)},
+	}
+	defer fmt.Print("\033[2K\r\n")
+	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // ReplicateAll recreates a database inside targetDatabase containing all the works in `works`
 func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {

@@ -1,6 +1,12 @@
 package main
 
-// CLIUsage is the entire usage string for the CLI
+import (
+	"errors"
+
+	"github.com/docopt/docopt-go"
+	"github.com/mitchellh/colorstring"
+)
+
 const CLIUsage = `
 Usage:
   portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
@@ -63,28 +69,67 @@ Scattered mode:
 
   <from-directory>
     project1
-	  index.html
-	  src
-	  dist
-	  .portfoliodb
-	    file1.png
-		description.md
-	project2
-	  .portfoliodb
-	    file-2.png
-		description.md
-	otherfolder
-	  stuff
+      index.html
+      src
+      dist
+      .portfoliodb
+        file.png
+        description.md
+    project2
+      .portfoliodb
+        file-2.png
+      description.md
+    otherfolder
+      stuff
 
   Running portfoliodb build --scattered on this tree is equivalent to builing without --scattered on the following tree:
 
   <from-directory>
     project1
-	  file.png
-	  description.md
-	project2
-	  file-2.png
-	  description.md
+      file.png
+      description.md
+    project2
+      file-2.png
+      description.md
 
   Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
 `
+
+func main() {
+	usage := CLIUsage
+	args, _ := docopt.ParseDoc(usage)
+
+	if err := dispatchCommand(args); err != nil {
+		// Leading \n because previous lines will have \r\033[K in front
+		colorstring.Println("\n[red][bold]An error occured[reset]")
+		colorstring.Println("\t[red]" + err.Error())
+	}
+}
+
+func dispatchCommand(args docopt.Opts) error {
+	if val, _ := args.Bool("build"); val {
+		err := RunCommandBuild(args)
+		return err
+	}
+	if val, _ := args.Bool("replicate"); val {
+		err := RunCommandReplicate(args)
+		return err
+	}
+	if val, _ := args.Bool("add"); val {
+		return errors.New("command “add” is not implemented yet")
+	}
+	if val, _ := args.Bool("validate"); val {
+		return errors.New("command “validate” is not implemented yet")
+	}
+	return nil
+}
+
+// RunContext holds several "global" references used throughout all the functions of a command
+type RunContext struct {
+	config         *Configuration
+	currentProject *ProjectTreeElement
+	progress       struct {
+		current int
+		total   int
+	}
+}

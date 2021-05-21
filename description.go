@@ -344,7 +344,7 @@ func markdownToHTML(markdownRaw string) string {
 		parser.Attributes | // Specify attributes manually with {} above block
 		parser.HardLineBreak | // \n becomes <br>
 		parser.OrderedListStart | // Starting an <ol> with 5. will make them start at 5 in the output HTML
-		parser.EmptyLinesBreakList  // 2 empty lines break out of list
+		parser.EmptyLinesBreakList // 2 empty lines break out of list
 		// TODO: smart fractions, LaTeX-style dash parsing, smart quotes (see https://pkg.go.dev/github.com/gomarkdown/markdown@v0.0.0-20210514010506-3b9f47219fe7#readme-extensions)
 
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
