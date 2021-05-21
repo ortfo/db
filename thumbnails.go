@@ -46,10 +46,14 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 				// Make the thumbnail
 				err := ctx.makeThumbImage(media, size, saveTo)
 
+				// Handle errors by showing them and setting this source to the empty string
+				// Don't return the error, because ending the whole build for one failed thumb would be too much.
 				if err != nil {
-					return nil, err
+					fmt.Printf("\n%s\n", err)
+					madeThumbnails[media.Path][size] = ""
+				} else {
+					madeThumbnails[media.Path][size] = ctx.transformSource(saveTo)
 				}
-				madeThumbnails[transformSource(media.Source, config)][size] = transformSource(saveTo, config)
 			}
 		}
 	}
