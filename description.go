@@ -250,7 +250,10 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	}
 	processedParagraphs := make([]Paragraph, 0, len(paragraphs))
 	for _, paragraph := range paragraphs {
-		// FIXME: <abbr>s will get inserted in <pre> text!
+		if strings.HasPrefix(paragraph.Content, "<pre>") && strings.HasSuffix(paragraph.Content, "</pre>") {
+			// Dont insert <abbr>s while in <pre> text
+			continue
+		}
 		processedParagraphs = append(processedParagraphs, replaceAbbreviations(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
