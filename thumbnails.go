@@ -33,9 +33,6 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 				if StringInSlice(alreadyMadeOnes, saveTo) {
 					continue
 				}
-				if media.Dimensions.AspectRatio == 0.0 {
-					continue
-				}
 				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
 				if !ctx.NeedsRebuiling(saveTo) {
 					continue
