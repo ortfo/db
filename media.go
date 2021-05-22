@@ -31,7 +31,7 @@ type Thumbnail struct {
 	ContentType string
 	Format      string
 	Source      string
-	dimensions  ImageDimensions
+	Dimensions  ImageDimensions
 }
 
 // Media represents a media object inserted in the work object's ``media`` array.
