@@ -9,8 +9,8 @@ import (
 )
 
 // DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal
-func DisplayValidationErrors(errors []gojsonschema.ResultError, name string) {
-	println("Your " + name + " file is invalid. Here are the validation errors:\n")
+func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string) {
+	println("Your " + filename + " file is invalid. Here are the validation errors:\n")
 	for _, err := range errors {
 		/* FIXME: having a "." in the field name fucks up the display: eg:
 

@@ -12,9 +12,9 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// ReadFileBytes reads the content of ``filepath`` and returns the contents as a byte array
-func ReadFileBytes(filepath string) ([]byte, error) {
-	file, err := os.Open(filepath)
+// ReadFileBytes reads the content of ``filename`` and returns the contents as a byte array
+func ReadFileBytes(filename string) ([]byte, error) {
+	file, err := os.Open(filename)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -26,9 +26,9 @@ func ReadFileBytes(filepath string) ([]byte, error) {
 	return b, nil
 }
 
-// ReadFile reads the content of ``filepath`` and returns the contents as a string
-func ReadFile(filepath string) (string, error) {
-	content, err := ReadFileBytes(filepath)
+// ReadFile reads the content of ``filename`` and returns the contents as a string
+func ReadFile(filename string) (string, error) {
+	content, err := ReadFileBytes(filename)
 	if err != nil {
 		return "", err
 	}
@@ -69,16 +69,12 @@ func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschem
 	if result.Valid() {
 		return true, nil, nil
 	}
-	var errorMessages []gojsonschema.ResultError
-	for _, desc := range result.Errors() {
-		errorMessages = append(errorMessages, desc)
-	}
-	return false, errorMessages, nil
+	return false, result.Errors(), nil
 }
 
-// FileExists checks if the file at ``filepath`` exists, and returns ``true`` if it exists or ``false`` otherwise
-func FileExists(filepath string) bool {
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+// FileExists checks if the given file exists, and returns ``true`` if it exists or ``false`` otherwise
+func FileExists(filename string) bool {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return false
 	}
 	return true
