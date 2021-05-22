@@ -16,7 +16,7 @@ import (
 
 // RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt
 func RunCommandReplicate(args docopt.Opts) error {
-	// TODO: validate database.json with a JSON schema
+	// TODO: validate database.json
 	var parsedDatabase []Work
 	json := jsoniter.ConfigFastest
 	SetJSONNamingStrategy(LowerCaseWithUnderscores)

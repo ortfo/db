@@ -111,6 +111,7 @@ func RunCommandBuild(args docopt.Opts) error {
 		}
 
 		// Make thumbnails
+		// TODO: do only one loop for media, and do color extraction, thumb creation and copy at once, instead of iterating separately three times
 		// TODO: Color extraction comes after since it could take advantage of built thumbs to sample the color:
 		// - faster (it takes the smallest image)
 		// - for more content types (PDFs and videos cannot be used directly, but thumbnails of them can)

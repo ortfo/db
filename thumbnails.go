@@ -133,7 +133,7 @@ func run(command string, args ...string) error {
 func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
-	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Path)) // FIXME: depends on `replace media sources` removing the /home/ewen/projects/portfolio
+	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Path)) // FIXME: depends on `replace media sources` removing the /home/ewen/projects/portfolio (see #28)
 	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.AbsolutePath))
 	computed = strings.ReplaceAll(computed, "<media id>", FilepathBaseNoExt(media.AbsolutePath))
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
