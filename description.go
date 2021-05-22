@@ -64,12 +64,12 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 		allLanguages = make([]string, 1)
 		allLanguages[0] = "default" // TODO: make this configurable
 	}
-	paragraphs := make(map[string][]Paragraph, 0)
-	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration, 0)
-	links := make(map[string][]Link, 0)
-	title := make(map[string]string, 0)
-	footnotes := make(map[string][]Footnote, 0)
-	abbreviations := make(map[string][]Abbreviation, 0)
+	paragraphs := make(map[string][]Paragraph)
+	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
+	links := make(map[string][]Link)
+	title := make(map[string]string)
+	footnotes := make(map[string][]Footnote)
+	abbreviations := make(map[string][]Abbreviation)
 	for _, language := range allLanguages {
 		// Unlocalized stuff appears the same in every language.
 		raw := notLocalizedRaw
