@@ -14,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt
+// RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt.
 func RunCommandReplicate(args docopt.Opts) error {
 	// TODO: validate database.json
 	var parsedDatabase []Work
@@ -59,7 +59,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 	return nil
 }
 
-// ReplicateAll recreates a database inside targetDatabase containing all the works in `works`
+// ReplicateAll recreates a database inside targetDatabase containing all the works in works.
 func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	for _, work := range works {
 		ctx.CurrentProject = work.ID
@@ -73,7 +73,7 @@ func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	return nil
 }
 
-// ReplicateOne creates a description.md file in targetDatabase in the correct folder in order to replicate Work
+// ReplicateOne creates a description.md file in targetDatabase in the correct folder in order to replicate Work.
 func ReplicateOne(targetDatabase string, work Work) error {
 	//TODO: make file mode configurable
 	workDirectory := path.Join(targetDatabase, work.ID)
@@ -93,7 +93,7 @@ func ReplicateOne(targetDatabase string, work Work) error {
 	return nil
 }
 
-// ReplicateDescription reconstructs the contents of a description.md file from a Work struct
+// ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
 func ReplicateDescription(work Work) (string, error) {
 	var result string
 	// Start with the YAML header, this one is never localized
@@ -158,7 +158,7 @@ func replicateLanguageMarker(language string) string {
 	return ":: " + language
 }
 
-// transformFootnoteReferences turns HTML references to footnotes into markdown ones
+// transformFootnoteReferences turns HTML references to footnotes into markdown ones.
 func transformFootnoteReferences(markdown string) string {
 	pattern := regexp.MustCompile(`\[(\d+)\]\(#fn:([^)]+)\)`)
 	lines := strings.Split(markdown, "\n")
@@ -173,7 +173,7 @@ func transformFootnoteReferences(markdown string) string {
 	return transformedMarkdown
 }
 
-// Remove markup from abbreviations
+// Remove markup from abbreviations.
 func transformAbbreviations(htmlSoup soup.Root, markdown string) string {
 	transformedMarkdown := markdown
 	for _, abbr := range htmlSoup.FindAll("abbr") {
@@ -193,7 +193,7 @@ func collectAbbreviations(htmlSoup soup.Root) []Abbreviation {
 	return abbreviations
 }
 
-// We replicate all abbreviations in one function to avoid duplicates
+// We replicate all abbreviations in one function to avoid duplicates.
 func replicateAbbreviations(abbreviations []Abbreviation) string {
 	var result string
 	// Stores all the alread-replicated abbreviations' names (to handle duplicates)

@@ -12,7 +12,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// readFileBytes reads the content of ``filename`` and returns the contents as a byte array
+// readFileBytes reads the content of filename and returns the contents as a byte array.
 func readFileBytes(filename string) ([]byte, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -26,7 +26,7 @@ func readFileBytes(filename string) ([]byte, error) {
 	return b, nil
 }
 
-// readFile reads the content of ``filename`` and returns the contents as a string
+// readFile reads the content of filename and returns the contents as a string.
 func readFile(filename string) (string, error) {
 	content, err := readFileBytes(filename)
 	if err != nil {
@@ -35,7 +35,7 @@ func readFile(filename string) (string, error) {
 	return string(content), nil
 }
 
-// writeFile writes content to file filepath
+// writeFile writes content to file filepath.
 func writeFile(filename string, content []byte) error {
 	absfilepath, err := filepath.Abs(filename)
 	if err != nil {
@@ -57,7 +57,7 @@ func writeFile(filename string, content []byte) error {
 	return nil
 }
 
-// validateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema ``schema``
+// validateWithJSONSchema checks if the JSON document document conforms to the JSON schema schema.
 func validateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError, error) {
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewStringLoader(document)
@@ -72,7 +72,7 @@ func validateWithJSONSchema(document string, schema string) (bool, []gojsonschem
 	return false, result.Errors(), nil
 }
 
-// fileExists checks if the given file exists, and returns ``true`` if it exists or ``false`` otherwise
+// fileExists checks if the given file exists, and returns true if it exists or false otherwise.
 func fileExists(filename string) bool {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return false
@@ -80,7 +80,7 @@ func fileExists(filename string) bool {
 	return true
 }
 
-// regexpMatches checks if s matches the regex regex at least once
+// regexpMatches checks if s matches the regex regex at least once.
 func regexpMatches(regex string, s string) bool {
 	p := regexp.MustCompile(regex)
 	return p.MatchString(s)
@@ -107,7 +107,7 @@ func isValidURL(URL string) bool {
 	return true
 }
 
-// stringInSlice checks if needle is in haystack
+// stringInSlice checks if needle is in haystack.
 func stringInSlice(haystack []string, needle string) bool {
 	for _, v := range haystack {
 		if v == needle {
@@ -128,7 +128,7 @@ func filterSlice(s []string, cond func(string) bool) []string {
 	return filtered
 }
 
-// mapKeys returns a slice of strings containing the map's keys
+// mapKeys returns a slice of strings containing the map's keys.
 func mapKeys(m map[string]string) []string {
 	keys := make([]string, 0)
 	for k := range m {
@@ -137,7 +137,7 @@ func mapKeys(m map[string]string) []string {
 	return keys
 }
 
-// filepathBaseNoExt returns the basename of pth with the extension removed
+// filepathBaseNoExt returns the basename of pth with the extension removed.
 func filepathBaseNoExt(pth string) string {
 	return strings.TrimSuffix(filepath.Base(pth), path.Ext(pth))
 }

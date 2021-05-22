@@ -40,7 +40,7 @@ type BuildMetadata struct {
 	PreviousBuildDate time.Time
 }
 
-// Configuration represents what the .portfoliodb.yml configuration file describes
+// Configuration represents what the .portfoliodb.yml configuration file describes.
 type Configuration struct {
 	ExtractColors       ExtractColorsConfiguration  `yaml:"extract colors"`
 	MakeGifs            MakeGIFsConfiguration       `yaml:"make GIFs"`
@@ -64,7 +64,7 @@ type Configuration struct {
 	// }
 }
 
-// LoadConfiguration loads the given configuration YAML file and puts it contents into ``loadInto``.
+// LoadConfiguration loads the given configuration YAML file and puts it contents into loadInto.
 func LoadConfiguration(filename string, loadInto *Configuration) error {
 	raw, err := readFileBytes(filename)
 	if err != nil {
@@ -94,7 +94,7 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 	return config, err
 }
 
-// ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath
+// ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath.
 // The third return value (of type error) is not nil when the validation process itself fails, not if the validation ran succesfully with a result of "not validated".
 func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError, error) {
 	// read file → unmarshal YAML → marshal JSON
@@ -109,7 +109,7 @@ func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultEr
 	return validateWithJSONSchema(string(configurationDocument), configurationJSONSchema)
 }
 
-// setJSONNamingStrategy rename struct fields uniformly
+// setJSONNamingStrategy rename struct fields uniformly.
 func setJSONNamingStrategy(translate func(string) string) {
 	jsoniter.RegisterExtension(&namingStrategyExtension{jsoniter.DummyExtension{}, translate})
 }

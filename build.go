@@ -1,3 +1,6 @@
+// Package ortfodb exposes the various functions used by the ortfodb portfolio database creation command-line tool.
+// It is notably used by ortfomk to share some common data between the too complementing programs.
+// See https://ewen.works/ortfodb for more information.
 package ortfodb
 
 import (
@@ -13,7 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// RunContext holds several "global" references used throughout all the functions of a command
+// RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
 	Config            *Configuration
 	CurrentProject    string
@@ -32,7 +35,7 @@ type Flags struct {
 	Config    string
 }
 
-// Project represents a project
+// Project represents a project.
 type Project struct {
 	ID             string
 	DescriptionRaw string
@@ -41,7 +44,7 @@ type Project struct {
 }
 
 // Build builds the database at outputFilename from databaseDirectory.
-// Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration
+// Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration.
 func Build(databaseDirectory string, outputFilename string, flags Flags, config Configuration) error {
 	// defer fmt.Print("\033[2K\r\n")
 	ctx := RunContext{
@@ -183,8 +186,8 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	return nil
 }
 
-// GetProjectPath returns the project's folder path with regard to databaseDirectory
-func (p *Project) GetProjectPath() string {
+// GetProjectPath returns the project's folder path with regard to databaseDirectory.
+func (p *Project) ProjectPath() string {
 	if p.Ctx.Flags.Scattered {
 		return path.Join(p.Ctx.DatabaseDirectory, p.ID, ".portfoliodb")
 	}
@@ -216,7 +219,7 @@ func (config Configuration) UpdateBuildMetadata() (err error) {
 		os.MkdirAll(path.Dir(config.BuildMetadataFilepath), os.ModePerm)
 		metadata = BuildMetadata{}
 	} else {
-		metadata, err = config.GetBuildMetadata()
+		metadata, err = config.BuildMetadata()
 		if err != nil {
 			return
 		}
@@ -230,7 +233,7 @@ func (config Configuration) UpdateBuildMetadata() (err error) {
 	return
 }
 
-func (config Configuration) GetBuildMetadata() (metadata BuildMetadata, err error) {
+func (config Configuration) BuildMetadata() (metadata BuildMetadata, err error) {
 	raw, err := readFileBytes(config.BuildMetadataFilepath)
 	if err != nil {
 		return
@@ -239,10 +242,10 @@ func (config Configuration) GetBuildMetadata() (metadata BuildMetadata, err erro
 	return
 }
 
-// NeedsRebuiling returns `true` if the given path has its modified date sooner than the last build's date.
-// If any error occurs, the result is true (ie 'this file needs to be rebuilt')
+// NeedsRebuiling returns true if the given path has its modified date sooner than the last build's date.
+// If any error occurs, the result is true (ie 'this file needs to be rebuilt').
 func (ctx *RunContext) NeedsRebuiling(absolutePath string) bool {
-	metadata, err := ctx.Config.GetBuildMetadata()
+	metadata, err := ctx.Config.BuildMetadata()
 	if err != nil {
 		return true
 	}

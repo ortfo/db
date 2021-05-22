@@ -9,16 +9,16 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-// ExtractedColors reprensents the object in a Work's metadata.colors
+// ExtractedColors reprensents the object in a Work's metadata.colors.
 type ExtractedColors struct {
 	Primary   string
 	Secondary string
 	Tertiary  string
 }
 
-// StepExtractColors executes the step "extract colors" and returns a metadata object with the `colors` entry modified accordingly.
+// StepExtractColors executes the step "extract colors" and returns a metadata object with the colors entry modified accordingly.
 func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaPaths []string) map[string]interface{} {
-	// Do not overwrite manually-set `colors` metadata entry
+	// Do not overwrite manually-set colors metadata entry
 	if _, ok := metadata["colors"]; !ok {
 		// Get only image filepaths
 		imageFilepaths := filterSlice(mediaPaths, func(item string) bool {
@@ -49,7 +49,7 @@ func extractColorsFromFiles(files []string, defaultFiles []string) (ExtractedCol
 	return ExtractColors(files[0])
 }
 
-// ExtractColors extracts the 3 most proeminent colors from the given image-decodable file
+// ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.
 // See https://pkg.go.dev/image#Decode for what formats are decodable.
 func ExtractColors(filename string) (ExtractedColors, error) {
 	file, err := os.Open(filename)
@@ -63,7 +63,7 @@ func ExtractColors(filename string) (ExtractedColors, error) {
 	return kmeans(img)
 }
 
-// kmeans extracts colors from img
+// kmeans extracts colors from img.
 func kmeans(img image.Image) (ExtractedColors, error) {
 	centroids, err := prominentcolor.Kmeans(img)
 	if err != nil {

@@ -22,8 +22,7 @@ const (
 	RuneHideControls              rune   = '='
 )
 
-// ParseYAMLHeader parses the YAML header of a description markdown file and returns
-// the rest of the content (all except the YAML header)
+// ParseYAMLHeader parses the YAML header of a description markdown file and returns the rest of the content (all except the YAML header).
 func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 	var inYAMLHeader bool
 	var rawYAMLPart string
@@ -50,7 +49,7 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 	return parsedYAMLPart, markdownPart
 }
 
-// ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription
+// ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription.
 func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 	ctx.Status("Parsing description.md")
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
@@ -88,25 +87,25 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 	}
 }
 
-// Abbreviation represents an abbreviation declaration in a description.md file
+// Abbreviation represents an abbreviation declaration in a description.md file.
 type Abbreviation struct {
 	Name       string
 	Definition string
 }
 
-// Footnote represents a footnote declaration in a description.md file
+// Footnote represents a footnote declaration in a description.md file.
 type Footnote struct {
 	Name    string
 	Content string
 }
 
-// Paragraph represents a paragraph declaration in a description.md file
+// Paragraph represents a paragraph declaration in a description.md file.
 type Paragraph struct {
 	ID      string
 	Content string
 }
 
-// Link represents an (isolated) link declaration in a description.md file
+// Link represents an (isolated) link declaration in a description.md file.
 type Link struct {
 	ID    string
 	Name  string
@@ -114,7 +113,7 @@ type Link struct {
 	URL   string
 }
 
-// Work represents a complete work, with analyzed mediae
+// Work represents a complete work, with analyzed mediae.
 type Work struct {
 	ID         string
 	Metadata   map[string]interface{}
@@ -125,7 +124,7 @@ type Work struct {
 	Footnotes  map[string][]Footnote
 }
 
-// MediaEmbedDeclaration represents media embeds. (abusing the ![]() syntax to extend it to any file)
+// MediaEmbedDeclaration represents media embeds. (abusing the ![]() syntax to extend it to any file).
 // Only stores the info extracted from the syntax, no filesystem interactions.
 type MediaEmbedDeclaration struct {
 	Alt        string
@@ -134,7 +133,7 @@ type MediaEmbedDeclaration struct {
 	Attributes MediaAttributes
 }
 
-// MediaAttributes stores which HTML attributes should be added to the media
+// MediaAttributes stores which HTML attributes should be added to the media.
 type MediaAttributes struct {
 	Looped      bool // Controlled with attribute character ~ (adds)
 	Autoplay    bool // Controlled with attribute character > (adds)
@@ -143,7 +142,7 @@ type MediaAttributes struct {
 	Controls    bool // Controlled with attribute character = (removes)
 }
 
-// ParsedDescription represents a work, but without analyzed media. All it contains is information from the description.md file
+// ParsedDescription represents a work, but without analyzed media. All it contains is information from the description.md file.
 type ParsedDescription struct {
 	Metadata               map[string]interface{}
 	Title                  map[string]string
@@ -154,8 +153,8 @@ type ParsedDescription struct {
 }
 
 // SplitOnLanguageMarkers returns two values:
-// 1. the text before any language markers
-// 2. a map with language codes as keys and the content as values
+// 		1. the text before any language markers
+// 		2. a map with language codes as keys and the content as values.
 func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	lines := strings.Split(markdownRaw, "\n")
 	pattern := regexp.MustCompile(PatternLanguageMarker)
@@ -176,8 +175,8 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	return before, markdownRawPerLanguage
 }
 
-// ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output)
-// and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps
+// ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
+// and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
 func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, []Footnote, []Abbreviation) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := MarkdownToHTML(markdownRaw)
@@ -259,13 +258,13 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
 }
 
-// HandleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...)
+// HandleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...).
 func HandleAltMediaEmbedSyntax(markdownRaw string) string {
 	pattern := regexp.MustCompile(`(?m)^>(\[[^\]]+\]\([^)]+\)\s*)$`)
 	return pattern.ReplaceAllString(markdownRaw, "!$1")
 }
 
-// ExtractTitleFromMediaAlt extracts the title from the alt attribute's value by considering that a string starting with “ and ending with ” at the end of the alt is the title
+// ExtractTitleFromMediaAlt extracts the title from the alt attribute's value by considering that a string starting with “ and ending with ” at the end of the alt is the title.
 func ExtractTitleFromMediaAlt(altAttribute string) (string, string) {
 	alt, title := "", ""
 	var inTitleDecl bool
@@ -328,7 +327,7 @@ func isMediaEmbedAttribute(char rune) bool {
 	return char == RuneAutoplay || char == RuneLooped || char == RuneHideControls
 }
 
-// innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
+// innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`.
 func innerHTML(element soup.Root) string {
 	var innerHTML string
 	for _, child := range element.Children() {
@@ -340,7 +339,7 @@ func innerHTML(element soup.Root) string {
 	return innerHTML
 }
 
-// MarkdownToHTML converts markdown markdownRaw into an HTML string
+// MarkdownToHTML converts markdown markdownRaw into an HTML string.
 func MarkdownToHTML(markdownRaw string) string {
 	// TODO: add (ctx *RunContext) receiver, take markdown configuration into account when activating extensions
 	extensions := parser.CommonExtensions | // Common stuff
@@ -355,7 +354,7 @@ func MarkdownToHTML(markdownRaw string) string {
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
 }
 
-// ReplaceAbbreviations processes the given Paragraph to replace abbreviations
+// ReplaceAbbreviations processes the given Paragraph to replace abbreviations.
 func ReplaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
 	processed := paragraph.Content
 	for _, abbreviation := range currentLanguageAbbreviations {

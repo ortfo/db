@@ -1,9 +1,3 @@
-// thumbnails provides the StepMakeThumbnails step.
-// It assumes that several commands are available to the shell:
-// magick (tried using a library but it made my computer freeze while high on RAM),
-// ffmpegthumbnailer,
-// pdftoppm
-
 package ortfodb
 
 import (
@@ -20,7 +14,11 @@ import (
 
 //TODO: convert GIFs from `online: True` sources (YouTube, Dailymotion, Vimeo, you name it.). Might want to look at <https://github.com/hunterlong/gifs>
 
-// StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new `thumbnails` entry mapping a file's path relative to the database directory to a map mapping a size to a absolute thumbnail filepath
+// StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new thumbnails entry mapping a file's path relative to the database directory to a map mapping a size to a absolute thumbnail filepath.
+// It assumes that several commands are available to the shell:
+// magick (tried using a library but it made my computer freeze while high on RAM),
+// ffmpegthumbnailer, and
+// pdftoppm.
 func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, projectID string, mediae map[string][]Media) (map[string]interface{}, error) {
 	alreadyMadeOnes := make([]string, 0)
 	madeThumbnails := make(map[string]map[uint16]string)
@@ -58,8 +56,8 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 	return metadata, nil
 }
 
-// MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image),
-// a target size & the file to save the thumbnail to. Returns the path where the thumbnail has been written.
+// MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image).
+// It returns the path where the thumbnail has been written to.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
 	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
 	if strings.HasPrefix(media.ContentType, "image/") {
@@ -90,7 +88,7 @@ func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo stri
 
 }
 
-// run is like exec.Command(...).Run(...) but the error's message is actually useful (it's not just "exit status n")
+// run is like exec.Command(...).Run(...) but the error's message is actually useful (it's not just "exit status n").
 func run(command string, args ...string) error {
 	// Create the proc
 	proc := exec.Command(command, args...)
@@ -117,19 +115,19 @@ func run(command string, args ...string) error {
 	return nil
 }
 
-// ComputeOutputThumbnailFilename returns the filename where to save a thumbnail
+// ComputeOutputThumbnailFilename returns the filename where to save a thumbnail.
 // according to the configuration and the given information.
 // file name templates are relative to the output database directory.
-// It uses media.Source because we might want to compute thumbnails of online media in the future
+// It uses media.Source because we might want to compute thumbnails of online media in the future.
 // Placeholders that will be replaced in the file name template:
 //
-// * <project id> - the project's id
-// * <parent> - the current media's directory
-// * <basename> - the media's basename (with the extension)
-// * <media id> - the media's id
-// * <size> - the current thumbnail size
-// * <extension> - the media's extension
-// * <lang> - the current language
+// 		<project id> - the project's id
+// 		<parent> - the current media's directory
+// 		<basename> - the media's basename (with the extension)
+// 		<media id> - the media's id
+// 		<size> - the current thumbnail size
+// 		<extension> - the media's extension
+// 		<lang> - the current language.
 func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)

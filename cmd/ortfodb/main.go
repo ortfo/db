@@ -5,7 +5,7 @@ import (
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
-	"github.com/ortfo/db"
+	ortfodb "github.com/ortfo/db"
 )
 
 const CLIUsage = `
@@ -125,7 +125,7 @@ func dispatchCommand(args docopt.Opts) error {
 	return nil
 }
 
-// RunCommandBuild runs the command 'build' given parsed CLI args from docopt
+// RunCommandBuild runs the command 'build' given parsed CLI args from docopt.
 func RunCommandBuild(args docopt.Opts) error {
 	flags := ortfodb.Flags{}
 	args.Bind(&flags)

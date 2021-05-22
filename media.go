@@ -18,14 +18,14 @@ import (
 	"gitlab.com/opennota/screengen"
 )
 
-// ImageDimensions represents metadata about a media as it's extracted from its file
+// ImageDimensions represents metadata about a media as it's extracted from its file.
 type ImageDimensions struct {
 	Width       int
 	Height      int
 	AspectRatio float32
 }
 
-// Thumbnail represents a thumbnail
+// Thumbnail represents a thumbnail.
 type Thumbnail struct {
 	Type        string
 	ContentType string
@@ -34,7 +34,7 @@ type Thumbnail struct {
 	Dimensions  ImageDimensions
 }
 
-// Media represents a media object inserted in the work object's ``media`` array.
+// Media represents a media object inserted in the work object's media array.
 type Media struct {
 	ID    string
 	Alt   string
@@ -55,7 +55,7 @@ type Media struct {
 	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
 }
 
-// GetImageDimensions returns an ``ImageDimensions`` object, given a pointer to a file
+// GetImageDimensions returns an ImageDimensions object, given a pointer to a file.
 func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	img, _, err := image.Decode(file)
 	if err != nil {
@@ -69,7 +69,7 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	return ImageDimensions{width, height, ratio}, nil
 }
 
-// AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration
+// AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -131,7 +131,7 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}, nil
 }
 
-// TransformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration
+// TransformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration.
 func (ctx *RunContext) TransformSource(source string) string {
 	for _, replacement := range ctx.Config.ReplaceMediaSources {
 		source = strings.ReplaceAll(source, replacement.Replace, replacement.With)
@@ -174,7 +174,7 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 	return
 }
 
-// AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
+// AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media.
 func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
 	if ctx.Flags.Scattered {
 		currentDirectory = path.Join(currentDirectory, ".portfoliodb")
