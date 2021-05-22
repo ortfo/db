@@ -1,7 +1,7 @@
 package ortfodb
 
-// ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
-const ConfigurationJSONSchema = `{
+// configurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
+const configurationJSONSchema = `{
 	"$schema": "http://json-schema.org/schema",
 	"$id": ".portfoliodb.yml",
 	"definitions": {
@@ -175,8 +175,8 @@ const ConfigurationJSONSchema = `{
 }
 `
 
-// DatabaseJSONSchema is the entire json string from database.json.schema
-const DatabaseJSONSchema = `{
+// databaseJSONSchema is the entire json string from database.json.schema
+const databaseJSONSchema = `{
 	"$schema": "http://json-schema.org/schema",
 	"$id": "portfoliodb-database",
 	"type": "array",

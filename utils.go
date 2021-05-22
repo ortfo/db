@@ -12,8 +12,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// ReadFileBytes reads the content of ``filename`` and returns the contents as a byte array
-func ReadFileBytes(filename string) ([]byte, error) {
+// readFileBytes reads the content of ``filename`` and returns the contents as a byte array
+func readFileBytes(filename string) ([]byte, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return []byte{}, err
@@ -26,17 +26,17 @@ func ReadFileBytes(filename string) ([]byte, error) {
 	return b, nil
 }
 
-// ReadFile reads the content of ``filename`` and returns the contents as a string
-func ReadFile(filename string) (string, error) {
-	content, err := ReadFileBytes(filename)
+// readFile reads the content of ``filename`` and returns the contents as a string
+func readFile(filename string) (string, error) {
+	content, err := readFileBytes(filename)
 	if err != nil {
 		return "", err
 	}
 	return string(content), nil
 }
 
-// WriteFile writes content to file filepath
-func WriteFile(filename string, content []byte) error {
+// writeFile writes content to file filepath
+func writeFile(filename string, content []byte) error {
 	absfilepath, err := filepath.Abs(filename)
 	if err != nil {
 		return err
@@ -57,8 +57,8 @@ func WriteFile(filename string, content []byte) error {
 	return nil
 }
 
-// ValidateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema ``schema``
-func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError, error) {
+// validateWithJSONSchema checks if the JSON document ``document`` conforms to the JSON schema ``schema``
+func validateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError, error) {
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	documentLoader := gojsonschema.NewStringLoader(document)
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
@@ -72,28 +72,28 @@ func ValidateWithJSONSchema(document string, schema string) (bool, []gojsonschem
 	return false, result.Errors(), nil
 }
 
-// FileExists checks if the given file exists, and returns ``true`` if it exists or ``false`` otherwise
-func FileExists(filename string) bool {
+// fileExists checks if the given file exists, and returns ``true`` if it exists or ``false`` otherwise
+func fileExists(filename string) bool {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return false
 	}
 	return true
 }
 
-// RegexpMatches checks if s matches the regex regex at least once
-func RegexpMatches(regex string, s string) bool {
+// regexpMatches checks if s matches the regex regex at least once
+func regexpMatches(regex string, s string) bool {
 	p := regexp.MustCompile(regex)
 	return p.MatchString(s)
 }
 
-// RegexpGroups returns all the capture groups' contents from the first match of regex regex in s. The first element [0] is the entire match. [1] is the first capture group's content, et cætera.
-func RegexpGroups(regex string, s string) []string {
+// regexpGroups returns all the capture groups' contents from the first match of regex regex in s. The first element [0] is the entire match. [1] is the first capture group's content, et cætera.
+func regexpGroups(regex string, s string) []string {
 	p := regexp.MustCompile(regex)
 	return p.FindStringSubmatch(s)
 }
 
-// IsValidURL tests a string to determine if it is a well-structured url or not.
-func IsValidURL(URL string) bool {
+// isValidURL tests a string to determine if it is a well-structured url or not.
+func isValidURL(URL string) bool {
 	_, err := url.ParseRequestURI(URL)
 	if err != nil {
 		return false
@@ -107,8 +107,8 @@ func IsValidURL(URL string) bool {
 	return true
 }
 
-// StringInSlice checks if needle is in haystack
-func StringInSlice(haystack []string, needle string) bool {
+// stringInSlice checks if needle is in haystack
+func stringInSlice(haystack []string, needle string) bool {
 	for _, v := range haystack {
 		if v == needle {
 			return true
@@ -117,8 +117,8 @@ func StringInSlice(haystack []string, needle string) bool {
 	return false
 }
 
-// FilterSlice returns a slice of strings containing only the elements that return true when called with cond.
-func FilterSlice(s []string, cond func(string) bool) []string {
+// filterSlice returns a slice of strings containing only the elements that return true when called with cond.
+func filterSlice(s []string, cond func(string) bool) []string {
 	filtered := make([]string, 0)
 	for _, item := range s {
 		if cond(item) {
@@ -128,8 +128,8 @@ func FilterSlice(s []string, cond func(string) bool) []string {
 	return filtered
 }
 
-// MapKeys returns a slice of strings containing the map's keys
-func MapKeys(m map[string]string) []string {
+// mapKeys returns a slice of strings containing the map's keys
+func mapKeys(m map[string]string) []string {
 	keys := make([]string, 0)
 	for k := range m {
 		keys = append(keys, k)
@@ -137,7 +137,7 @@ func MapKeys(m map[string]string) []string {
 	return keys
 }
 
-// FilepathBaseNoExt returns the basename of pth with the extension removed
-func FilepathBaseNoExt(pth string) string {
+// filepathBaseNoExt returns the basename of pth with the extension removed
+func filepathBaseNoExt(pth string) string {
 	return strings.TrimSuffix(filepath.Base(pth), path.Ext(pth))
 }

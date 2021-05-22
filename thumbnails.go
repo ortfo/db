@@ -30,7 +30,7 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 			for _, size := range ctx.Config.MakeThumbnails.Sizes {
 				saveTo := path.Join(ctx.DatabaseDirectory, ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang))
 				// Don't re-build already-built thumbs
-				if StringInSlice(alreadyMadeOnes, saveTo) {
+				if stringInSlice(alreadyMadeOnes, saveTo) {
 					continue
 				}
 				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
@@ -41,7 +41,7 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 				os.MkdirAll(filepath.Dir(saveTo), 0777)
 
 				// Make the thumbnail
-				err := ctx.makeThumbImage(media, size, saveTo)
+				err := ctx.MakeThumbnail(media, size, saveTo)
 
 				// Handle errors by showing them and setting this source to the empty string
 				// Don't return the error, because ending the whole build for one failed thumb would be too much.
@@ -49,7 +49,7 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 					fmt.Printf("\n%s\n", err)
 					madeThumbnails[media.Path][size] = ""
 				} else {
-					madeThumbnails[media.Path][size] = ctx.transformSource(saveTo)
+					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
 				}
 			}
 		}
@@ -58,9 +58,9 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 	return metadata, nil
 }
 
-// makeThumbImage creates a thumbnail on disk of the given media (it is assumed that the given media is an image),
+// MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image),
 // a target size & the file to save the thumbnail to. Returns the path where the thumbnail has been written.
-func (ctx *RunContext) makeThumbImage(media Media, targetSize uint16, saveTo string) error {
+func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
 	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
 	if strings.HasPrefix(media.ContentType, "image/") {
 		return run("convert", "-resize", fmt.Sprint(targetSize), media.AbsolutePath, saveTo)
@@ -135,7 +135,7 @@ func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID str
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
 	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Path)) // FIXME: depends on `replace media sources` removing the /home/ewen/projects/portfolio (see #28)
 	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.AbsolutePath))
-	computed = strings.ReplaceAll(computed, "<media id>", FilepathBaseNoExt(media.AbsolutePath))
+	computed = strings.ReplaceAll(computed, "<media id>", filepathBaseNoExt(media.AbsolutePath))
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
 	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.AbsolutePath), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)

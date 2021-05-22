@@ -26,10 +26,10 @@ type RunContext struct {
 }
 
 type Flags struct {
-	Scattered     bool
-	Silent        bool
-	Minified      bool
-	Config string
+	Scattered bool
+	Silent    bool
+	Minified  bool
+	Config    string
 }
 
 // Project represents a project
@@ -158,7 +158,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	// Compile the database
 	var worksJSON []byte
 	json := jsoniter.ConfigFastest
-	SetJSONNamingStrategy(LowerCaseWithUnderscores)
+	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	if flags.Minified {
 		worksJSON, _ = json.Marshal(works)
 	} else {
@@ -166,7 +166,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	}
 
 	// Output it
-	err = WriteFile(outputFilename, worksJSON)
+	err = writeFile(outputFilename, worksJSON)
 	if flags.Silent {
 		fmt.Print("\033[2K\r\n")
 		println(string(worksJSON))
@@ -195,7 +195,7 @@ func (p *Project) GetProjectPath() string {
 // Returns an empty string if the file is a directory or does not exist.
 func ReadDescriptionFile(directory string) (string, error) {
 	descriptionFilepath := path.Join(directory, "description.md")
-	if !FileExists(descriptionFilepath) {
+	if !fileExists(descriptionFilepath) {
 		return "", nil
 	}
 	descriptionFile, err := os.Stat(descriptionFilepath)
@@ -205,7 +205,7 @@ func ReadDescriptionFile(directory string) (string, error) {
 	if descriptionFile.IsDir() {
 		return "", nil
 	}
-	return ReadFile(descriptionFilepath)
+	return readFile(descriptionFilepath)
 }
 
 // UpdateBuildMetadata updates metadata about the latest build in config.BuildMetadataFilepath.
@@ -226,12 +226,12 @@ func (config Configuration) UpdateBuildMetadata() (err error) {
 	if err != nil {
 		return
 	}
-	err = WriteFile(config.BuildMetadataFilepath, raw)
+	err = writeFile(config.BuildMetadataFilepath, raw)
 	return
 }
 
 func (config Configuration) GetBuildMetadata() (metadata BuildMetadata, err error) {
-	raw, err := ReadFileBytes(config.BuildMetadataFilepath)
+	raw, err := readFileBytes(config.BuildMetadataFilepath)
 	if err != nil {
 		return
 	}

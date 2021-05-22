@@ -21,7 +21,7 @@ func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaP
 	// Do not overwrite manually-set `colors` metadata entry
 	if _, ok := metadata["colors"]; !ok {
 		// Get only image filepaths
-		imageFilepaths := FilterSlice(mediaPaths, func(item string) bool {
+		imageFilepaths := filterSlice(mediaPaths, func(item string) bool {
 			contentType, err := mimetype.DetectFile(item)
 			return err == nil && strings.HasPrefix(contentType.String(), "image/")
 		})
@@ -39,17 +39,19 @@ func extractColorsFromFiles(files []string, defaultFiles []string) (ExtractedCol
 		return ExtractedColors{}, nil
 	}
 	if len(files) == 1 {
-		return extractColors(files[0])
+		return ExtractColors(files[0])
 	}
 	for _, filename := range files {
-		if StringInSlice(defaultFiles, filename) {
-			return extractColors(filename)
+		if stringInSlice(defaultFiles, filename) {
+			return ExtractColors(filename)
 		}
 	}
-	return extractColors(files[0])
+	return ExtractColors(files[0])
 }
 
-func extractColors(filename string) (ExtractedColors, error) {
+// ExtractColors extracts the 3 most proeminent colors from the given image-decodable file
+// See https://pkg.go.dev/image#Decode for what formats are decodable.
+func ExtractColors(filename string) (ExtractedColors, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return ExtractedColors{}, err

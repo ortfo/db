@@ -19,7 +19,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 	// TODO: validate database.json
 	var parsedDatabase []Work
 	json := jsoniter.ConfigFastest
-	SetJSONNamingStrategy(LowerCaseWithUnderscores)
+	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	databaseFilepath, err := args.String("<from-filepath>")
 	if err != nil {
 		return err
@@ -28,11 +28,11 @@ func RunCommandReplicate(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	content, err := ReadFileBytes(databaseFilepath)
+	content, err := readFileBytes(databaseFilepath)
 	if err != nil {
 		return err
 	}
-	validated, validationErrors, err := ValidateWithJSONSchema(string(content), DatabaseJSONSchema)
+	validated, validationErrors, err := validateWithJSONSchema(string(content), databaseJSONSchema)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func ReplicateDescription(work Work) (string, error) {
 		return "", err
 	}
 	result += replicatedBlock
-	for _, language := range MapKeys(work.Title) {
+	for _, language := range mapKeys(work.Title) {
 		result += replicateLanguageMarker(language) + "\n\n"
 		replicatedBlock, err := replicateLocalizedBlock(work, language)
 		if err != nil {
@@ -199,7 +199,7 @@ func replicateAbbreviations(abbreviations []Abbreviation) string {
 	// Stores all the alread-replicated abbreviations' names (to handle duplicates)
 	replicated := make([]string, 0, len(abbreviations))
 	for _, abbreviation := range abbreviations {
-		if StringInSlice(replicated, abbreviation.Name) {
+		if stringInSlice(replicated, abbreviation.Name) {
 			continue
 		}
 		result += "*[" + abbreviation.Name + "]: " + abbreviation.Definition

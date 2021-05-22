@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	patternLanguageMarker         string = `^::\s+(.+)$`
-	patternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
-	mediaEmbedAttributeLooped     rune   = '~'
-	mediaEmbedAttributeAutoplay   rune   = '>'
-	mediaEmbedAttributeNoControls rune   = '='
+	PatternLanguageMarker         string = `^::\s+(.+)$`
+	PatternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
+	RuneLooped                    rune   = '~'
+	RuneAutoplay                  rune   = '>'
+	RuneHideControls              rune   = '='
 )
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns
@@ -55,11 +55,11 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 	ctx.Status("Parsing description.md")
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
-	notLocalizedRaw, localizedRawBlocks := splitOnLanguageMarkers(markdownRaw)
+	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
 	localized := len(localizedRawBlocks) > 0
 	var allLanguages []string
 	if localized {
-		allLanguages = MapKeys(localizedRawBlocks)
+		allLanguages = mapKeys(localizedRawBlocks)
 	} else {
 		allLanguages = make([]string, 1)
 		allLanguages[0] = "default" // TODO: make this configurable
@@ -76,7 +76,7 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 		if localized {
 			raw += localizedRawBlocks[language]
 		}
-		title[language], paragraphs[language], mediaEmbedDeclarations[language], links[language], footnotes[language], abbreviations[language] = parseSingleLanguageDescription(raw)
+		title[language], paragraphs[language], mediaEmbedDeclarations[language], links[language], footnotes[language], abbreviations[language] = ParseSingleLanguageDescription(raw)
 	}
 	return ParsedDescription{
 		Metadata:               metadata,
@@ -153,12 +153,12 @@ type ParsedDescription struct {
 	Footnotes              map[string][]Footnote
 }
 
-// splitOnLanguageMarkers returns two values:
+// SplitOnLanguageMarkers returns two values:
 // 1. the text before any language markers
 // 2. a map with language codes as keys and the content as values
-func splitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
+func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	lines := strings.Split(markdownRaw, "\n")
-	pattern := regexp.MustCompile(patternLanguageMarker)
+	pattern := regexp.MustCompile(PatternLanguageMarker)
 	currentLanguage := ""
 	before := ""
 	markdownRawPerLanguage := map[string]string{}
@@ -176,11 +176,11 @@ func splitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	return before, markdownRawPerLanguage
 }
 
-// parseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output)
+// ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output)
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps
-func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, []Footnote, []Abbreviation) {
-	markdownRaw = handleAltMediaEmbedSyntax(markdownRaw)
-	htmlRaw := markdownToHTML(markdownRaw)
+func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, []Footnote, []Abbreviation) {
+	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
+	htmlRaw := MarkdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
 	paragraphs := make([]Paragraph, 0)
 	mediae := make([]MediaEmbedDeclaration, 0)
@@ -203,8 +203,8 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		}
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			// A media embed
-			alt, title := extractTitleFromMediaAlt(firstChild.Attrs()["alt"])
-			alt, attributes := extractAttributesFromAlt(alt)
+			alt, title := ExtractTitleFromMediaAlt(firstChild.Attrs()["alt"])
+			alt, attributes := ExtractAttributesFromAlt(alt)
 			mediae = append(mediae, MediaEmbedDeclaration{
 				Alt:        alt,
 				Title:      title,
@@ -219,14 +219,14 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 				Title: firstChild.Attrs()["title"],
 				URL:   firstChild.Attrs()["href"],
 			})
-		} else if RegexpMatches(patternAbbreviationDefinition, innerHTML(paragraph)) {
+		} else if regexpMatches(PatternAbbreviationDefinition, innerHTML(paragraph)) {
 			// An abbreviation definition
-			groups := RegexpGroups(patternAbbreviationDefinition, innerHTML(paragraph))
+			groups := regexpGroups(PatternAbbreviationDefinition, innerHTML(paragraph))
 			abbreviations = append(abbreviations, Abbreviation{
 				Name:       groups[1],
 				Definition: groups[2],
 			})
-		} else if RegexpMatches(patternLanguageMarker, innerHTML(paragraph)) {
+		} else if regexpMatches(PatternLanguageMarker, innerHTML(paragraph)) {
 			// A language marker (ignored)
 			continue
 		} else {
@@ -254,18 +254,19 @@ func parseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 			// Dont insert <abbr>s while in <pre> text
 			continue
 		}
-		processedParagraphs = append(processedParagraphs, replaceAbbreviations(paragraph, abbreviations))
+		processedParagraphs = append(processedParagraphs, ReplaceAbbreviations(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
 }
 
-// handleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...)
-func handleAltMediaEmbedSyntax(markdownRaw string) string {
+// HandleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...)
+func HandleAltMediaEmbedSyntax(markdownRaw string) string {
 	pattern := regexp.MustCompile(`(?m)^>(\[[^\]]+\]\([^)]+\)\s*)$`)
 	return pattern.ReplaceAllString(markdownRaw, "!$1")
 }
 
-func extractTitleFromMediaAlt(altAttribute string) (string, string) {
+// ExtractTitleFromMediaAlt extracts the title from the alt attribute's value by considering that a string starting with “ and ending with ” at the end of the alt is the title
+func ExtractTitleFromMediaAlt(altAttribute string) (string, string) {
 	alt, title := "", ""
 	var inTitleDecl bool
 	var prevRune rune
@@ -285,7 +286,8 @@ func extractTitleFromMediaAlt(altAttribute string) (string, string) {
 	return strings.TrimSpace(alt), strings.TrimSpace(title)
 }
 
-func extractAttributesFromAlt(alt string) (string, MediaAttributes) {
+// ExtractAttributesFromAlt extracts sigils from the end of the alt attribute, returns the alt without them as well as the parse result.
+func ExtractAttributesFromAlt(alt string) (string, MediaAttributes) {
 	attrs := MediaAttributes{
 		Controls: true, // Controls is added by default, others aren't
 	}
@@ -305,12 +307,12 @@ func extractAttributesFromAlt(alt string) (string, MediaAttributes) {
 			continue
 		}
 		if inAttributesZone {
-			if revChar == mediaEmbedAttributeAutoplay {
+			if revChar == RuneAutoplay {
 				attrs.Autoplay = true
 				attrs.Muted = true
-			} else if revChar == mediaEmbedAttributeLooped {
+			} else if revChar == RuneLooped {
 				attrs.Looped = true
-			} else if revChar == mediaEmbedAttributeNoControls {
+			} else if revChar == RuneHideControls {
 				attrs.Controls = false
 				attrs.Playsinline = true
 			}
@@ -323,7 +325,7 @@ func extractAttributesFromAlt(alt string) (string, MediaAttributes) {
 }
 
 func isMediaEmbedAttribute(char rune) bool {
-	return char == mediaEmbedAttributeAutoplay || char == mediaEmbedAttributeLooped || char == mediaEmbedAttributeNoControls
+	return char == RuneAutoplay || char == RuneLooped || char == RuneHideControls
 }
 
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`
@@ -338,9 +340,9 @@ func innerHTML(element soup.Root) string {
 	return innerHTML
 }
 
-// markdownToHTML converts markdown markdownRaw into an HTML string
-func markdownToHTML(markdownRaw string) string {
-	//TODO: handle markdown extensions (need to take in a "config Configuration" parameter)
+// MarkdownToHTML converts markdown markdownRaw into an HTML string
+func MarkdownToHTML(markdownRaw string) string {
+	// TODO: add (ctx *RunContext) receiver, take markdown configuration into account when activating extensions
 	extensions := parser.CommonExtensions | // Common stuff
 		parser.Footnotes | // [^1]: footnotes
 		parser.AutoHeadingIDs | // Auto-add [id] to headings
@@ -353,8 +355,8 @@ func markdownToHTML(markdownRaw string) string {
 	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
 }
 
-// replaceAbbreviations processes the given Paragraph to replace abbreviations
-func replaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
+// ReplaceAbbreviations processes the given Paragraph to replace abbreviations
+func ReplaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
 	processed := paragraph.Content
 	for _, abbreviation := range currentLanguageAbbreviations {
 		var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)

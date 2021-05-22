@@ -9,9 +9,9 @@ with open("database.schema.json", encoding="utf-8") as file:
 with open("json_schemas.go", mode="w", encoding="utf-8") as file:
     file.write(f"""package ortfodb
 
-// ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
-const ConfigurationJSONSchema = `{config_schema}`
+// configurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
+const configurationJSONSchema = `{config_schema}`
 
-// DatabaseJSONSchema is the entire json string from database.json.schema
-const DatabaseJSONSchema = `{database_schema}`
+// databaseJSONSchema is the entire json string from database.json.schema
+const databaseJSONSchema = `{database_schema}`
 """)

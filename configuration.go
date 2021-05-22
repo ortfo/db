@@ -12,57 +12,28 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type configurationBuildStepsExtractColors struct {
+type ExtractColorsConfiguration struct {
 	Enabled      bool
 	Extract      []string
 	DefaultFiles []string `yaml:"default files"`
 }
 
-type configurationBuildStepsMakeGifs struct {
+type MakeGIFsConfiguration struct {
 	Enabled          bool
 	FileNameTemplate string `yaml:"file name template"`
 }
 
-type configurationBuildStepsMakeThumbnails struct {
+type MakeThumbnailsConfiguration struct {
 	Enabled          bool
 	Sizes            []uint16
 	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
 }
 
-type configurationBuildSteps struct {
-	ExtractColors  configurationBuildStepsExtractColors  `yaml:"extract colors"`
-	MakeGifs       configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
-	MakeThumbnails configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
-}
-
-type configurationMarkdownAnchoredHeadings struct {
-	Enabled bool
-	Format  string
-}
-
-type configurationMarkdownCustomSyntax struct {
-	From string
-	To   string
-}
-
-type configurationCopyMedia struct {
-	To string
-}
-
-type checks struct {
-	SchemaCompliance     string `yaml:"schema compliance"`
-	WorkFolderUniqueness string `yaml:"work folder uniqueness"`
-	WorkFolderSafeness   string `yaml:"work folder safeness"`
-	YamlHeader           string `yaml:"yaml header"`
-	TitlePresence        string `yaml:"title presence"`
-	TitleUniqueness      string `yaml:"title uniqueness"`
-	WorkingUrls          string `yaml:"working urls"`
-}
-
-type replaceMediaSource struct {
-	Replace string `yaml:"replace"`
-	With    string `yaml:"with"`
+type BuildSteps struct {
+	ExtractColors  ExtractColorsConfiguration  `yaml:"extract colors"`
+	MakeGifs       MakeGIFsConfiguration       `yaml:"make GIFs"`
+	MakeThumbnails MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 }
 
 type BuildMetadata struct {
@@ -71,13 +42,15 @@ type BuildMetadata struct {
 
 // Configuration represents what the .portfoliodb.yml configuration file describes
 type Configuration struct {
-	ExtractColors         configurationBuildStepsExtractColors  `yaml:"extract colors"`
-	MakeGifs              configurationBuildStepsMakeGifs       `yaml:"make GIFs"`
-	MakeThumbnails        configurationBuildStepsMakeThumbnails `yaml:"make thumbnails"`
-	Checks                checks                                `yaml:"checks"`
-	ReplaceMediaSources   []replaceMediaSource                  `yaml:"replace media sources"`
-	BuildMetadataFilepath string                                `yaml:"build metadata file"`
-	CopyMedia             configurationCopyMedia                `yaml:"copy media"`
+	ExtractColors       ExtractColorsConfiguration  `yaml:"extract colors"`
+	MakeGifs            MakeGIFsConfiguration       `yaml:"make GIFs"`
+	MakeThumbnails      MakeThumbnailsConfiguration `yaml:"make thumbnails"`
+	ReplaceMediaSources []struct {
+		Replace string `yaml:"replace"`
+		With    string `yaml:"with"`
+	} `yaml:"replace media sources"`
+	BuildMetadataFilepath string              `yaml:"build metadata file"`
+	CopyMedia             struct{ To string } `yaml:"copy media"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`
@@ -93,7 +66,7 @@ type Configuration struct {
 
 // LoadConfiguration loads the given configuration YAML file and puts it contents into ``loadInto``.
 func LoadConfiguration(filename string, loadInto *Configuration) error {
-	raw, err := ReadFileBytes(filename)
+	raw, err := readFileBytes(filename)
 	if err != nil {
 		return err
 	}
@@ -126,18 +99,18 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError, error) {
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
-	configContent, err := ReadFileBytes(configFilepath)
+	configContent, err := readFileBytes(configFilepath)
 	if err != nil {
 		return false, nil, err
 	}
 	yaml.Unmarshal(configContent, &configuration)
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
-	return ValidateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema)
+	return validateWithJSONSchema(string(configurationDocument), configurationJSONSchema)
 }
 
-// SetJSONNamingStrategy rename struct fields uniformly
-func SetJSONNamingStrategy(translate func(string) string) {
+// setJSONNamingStrategy rename struct fields uniformly
+func setJSONNamingStrategy(translate func(string) string) {
 	jsoniter.RegisterExtension(&namingStrategyExtension{jsoniter.DummyExtension{}, translate})
 }
 
@@ -166,8 +139,8 @@ func (extension *namingStrategyExtension) UpdateStructDescriptor(structDescripto
 	}
 }
 
-// LowerCaseWithUnderscores one strategy to SetNamingStrategy for. It will change HelloWorld to hello_world.
-func LowerCaseWithUnderscores(name string) string {
+// lowerCaseWithUnderscores one strategy to SetNamingStrategy for. It will change HelloWorld to hello_world.
+func lowerCaseWithUnderscores(name string) string {
 	// Handle acronyms
 	if isAllUpper(name) {
 		return strings.ToLower(name)

@@ -104,24 +104,24 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}
 
 	if isVideo {
-		dimensions, duration, hasSound, err = GetVideoDimensionsDurationHasSound(filename)
+		dimensions, duration, hasSound, err = AnalyzeVideo(filename)
 		if err != nil {
 			return Media{}, err
 		}
 	}
 
 	if isAudio {
-		duration = GetAudioDuration(file)
+		duration = AnalyzeAudio(file)
 		hasSound = true
 	}
 
 	return Media{
-		ID:           slugify.Marshal(FilepathBaseNoExt(filename)),
+		ID:           slugify.Marshal(filepathBaseNoExt(filename)),
 		Alt:          embedDeclaration.Alt,
 		Title:        embedDeclaration.Title,
 		Source:       embedDeclaration.Source,
 		AbsolutePath: filename,
-		Path:         ctx.transformSource(filename),
+		Path:         ctx.TransformSource(filename),
 		ContentType:  contentType,
 		Dimensions:   dimensions,
 		Duration:     duration,
@@ -131,16 +131,16 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}, nil
 }
 
-// transformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration
-func (ctx *RunContext) transformSource(source string) string {
+// TransformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration
+func (ctx *RunContext) TransformSource(source string) string {
 	for _, replacement := range ctx.Config.ReplaceMediaSources {
 		source = strings.ReplaceAll(source, replacement.Replace, replacement.With)
 	}
 	return source
 }
 
-// GetAudioDuration takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.
-func GetAudioDuration(file *os.File) uint {
+// AnalyzeAudio takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.
+func AnalyzeAudio(file *os.File) uint {
 	var duration uint
 	decoder := mp3.NewDecoder(file)
 	skipped := 0
@@ -156,8 +156,8 @@ func GetAudioDuration(file *os.File) uint {
 	return duration
 }
 
-// GetVideoDimensionsDurationHasSound returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
-func GetVideoDimensionsDurationHasSound(filename string) (dimensions ImageDimensions, duration uint, hasSound bool, err error) {
+// AnalyzeVideo returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
+func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, hasSound bool, err error) {
 	video, err := screengen.NewGenerator(filename)
 	if err != nil {
 		return
@@ -185,7 +185,7 @@ func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbe
 		analyzedMediae[language] = make([]Media, 0)
 		for _, media := range mediae {
 			// Handle sources which are URLs
-			if IsValidURL(media.Source) {
+			if isValidURL(media.Source) {
 				analyzedMedia := Media{
 					Alt:        media.Alt,
 					Title:      media.Title,
