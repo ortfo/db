@@ -93,6 +93,23 @@ func RunCommandBuild(args docopt.Opts) error {
 			return err
 		}
 
+		// Copy over the media
+		if config.CopyMedia.To != "" {
+			for _, mediae := range analyzedMediae {
+				for _, media := range mediae {
+					content, err := os.ReadFile(media.AbsolutePath)
+					if err != nil {
+						fmt.Printf("\nCould not copy %s to %s: %v\n", media.AbsolutePath, config.CopyMedia.To, err)
+					}
+					// FIXME: this also depends on `replace media source` (see #28)
+					err = os.WriteFile(path.Join(config.CopyMedia.To, media.Path), content, 0777)
+					if err != nil {
+						fmt.Printf("\nCould not copy %s to %s: %v\n", media.AbsolutePath, config.CopyMedia.To, err)
+					}
+				}
+			}
+		}
+
 		// Make thumbnails
 		// TODO: Color extraction comes after since it could take advantage of built thumbs to sample the color:
 		// - faster (it takes the smallest image)
