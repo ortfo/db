@@ -63,7 +63,7 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 func (ctx *RunContext) makeThumbImage(media Media, targetSize uint16, saveTo string) error {
 	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
 	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("convert", "-thumbnail", fmt.Sprint(targetSize), media.AbsolutePath, saveTo)
+		return run("convert", "-resize", fmt.Sprint(targetSize), media.AbsolutePath, saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "video/") {
