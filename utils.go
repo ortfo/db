@@ -20,6 +20,9 @@ func ReadFileBytes(filepath string) ([]byte, error) {
 	}
 	defer file.Close()
 	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		return []byte{}, err
+	}
 	return b, nil
 }
 
@@ -35,6 +38,9 @@ func ReadFile(filepath string) (string, error) {
 // WriteFile writes content to file filepath
 func WriteFile(filename string, content []byte) error {
 	absfilepath, err := filepath.Abs(filename)
+	if err != nil {
+		return err
+	}
 	f, err := os.Create(absfilepath)
 	if err != nil {
 		return err

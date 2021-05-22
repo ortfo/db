@@ -21,6 +21,9 @@ func RunCommandReplicate(args docopt.Opts) error {
 	json := jsoniter.ConfigFastest
 	SetJSONNamingStrategy(LowerCaseWithUnderscores)
 	databaseFilepath, err := args.String("<from-filepath>")
+	if err != nil {
+		return err
+	}
 	targetDatabasePath, err := args.String("<to-directory>")
 	if err != nil {
 		return err
