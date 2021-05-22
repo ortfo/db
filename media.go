@@ -1,4 +1,4 @@
-package main
+package ortfodb
 
 // Functions to analyze media files.
 // Used to go from a ParsedDescription struct to a Work struct.
@@ -176,7 +176,7 @@ func GetVideoDimensionsDurationHasSound(filename string) (dimensions ImageDimens
 
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media
 func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
-	if ctx.ScatteredMode {
+	if ctx.Flags.Scattered {
 		currentDirectory = path.Join(currentDirectory, ".portfoliodb")
 	}
 	analyzedMediae := make(map[string][]Media)

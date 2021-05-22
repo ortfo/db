@@ -1,4 +1,4 @@
-package main
+package ortfodb
 
 import (
 	"errors"
@@ -11,9 +11,26 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
-
-	"github.com/docopt/docopt-go"
 )
+
+// RunContext holds several "global" references used throughout all the functions of a command
+type RunContext struct {
+	Config            *Configuration
+	CurrentProject    string
+	DatabaseDirectory string
+	Flags             Flags
+	Progress          struct {
+		Current int
+		Total   int
+	}
+}
+
+type Flags struct {
+	Scattered     bool
+	Silent        bool
+	Minified      bool
+	Config string
+}
 
 // Project represents a project
 type Project struct {
@@ -23,26 +40,13 @@ type Project struct {
 	Ctx            *RunContext
 }
 
-// RunCommandBuild runs the command 'build' given parsed CLI args from docopt
-func RunCommandBuild(args docopt.Opts) error {
-	json := jsoniter.ConfigFastest
-	SetJSONNamingStrategy(LowerCaseWithUnderscores)
-	// Weird bug if args.String("<database>") is used...
-	databaseDirectory := args["<database>"].([]string)[0]
-	outputFilename, _ := args.String("<to-filepath>")
-	scatteredMode, _ := args.Bool("--scattered")
-	config, validationErrs, err := GetConfigurationFromCLIArgs(args)
-	if len(validationErrs) > 0 {
-		DisplayValidationErrors(validationErrs, "configuration")
-		return nil
-	}
-	if err != nil {
-		return err
-	}
+// Build builds the database at outputFilename from databaseDirectory.
+// Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration
+func Build(databaseDirectory string, outputFilename string, flags Flags, config Configuration) error {
 	// defer fmt.Print("\033[2K\r\n")
 	ctx := RunContext{
 		Config:            &config,
-		ScatteredMode:     scatteredMode,
+		Flags:             flags,
 		DatabaseDirectory: databaseDirectory,
 	}
 	works := make([]Work, 0)
@@ -64,7 +68,7 @@ func RunCommandBuild(args docopt.Opts) error {
 
 		// Compute the description file's path
 		var descriptionFilename string
-		if ctx.ScatteredMode {
+		if ctx.Flags.Scattered {
 			descriptionFilename = path.Join(dirEntryAbsPath, ".portfoliodb", "description.md")
 		} else {
 			descriptionFilename = path.Join(dirEntryAbsPath, "description.md")
@@ -153,7 +157,9 @@ func RunCommandBuild(args docopt.Opts) error {
 
 	// Compile the database
 	var worksJSON []byte
-	if val, _ := args.Bool("--minified"); val {
+	json := jsoniter.ConfigFastest
+	SetJSONNamingStrategy(LowerCaseWithUnderscores)
+	if flags.Minified {
 		worksJSON, _ = json.Marshal(works)
 	} else {
 		worksJSON, _ = json.MarshalIndent(works, "", "    ")
@@ -161,7 +167,7 @@ func RunCommandBuild(args docopt.Opts) error {
 
 	// Output it
 	err = WriteFile(outputFilename, worksJSON)
-	if val, _ := args.Bool("--silent"); !val {
+	if flags.Silent {
 		fmt.Print("\033[2K\r\n")
 		println(string(worksJSON))
 	}
@@ -179,7 +185,7 @@ func RunCommandBuild(args docopt.Opts) error {
 
 // GetProjectPath returns the project's folder path with regard to databaseDirectory
 func (p *Project) GetProjectPath() string {
-	if p.Ctx.ScatteredMode {
+	if p.Ctx.Flags.Scattered {
 		return path.Join(p.Ctx.DatabaseDirectory, p.ID, ".portfoliodb")
 	}
 	return path.Join(p.Ctx.DatabaseDirectory, p.ID)

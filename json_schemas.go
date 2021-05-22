@@ -1,4 +1,4 @@
-package main
+package ortfodb
 
 // ConfigurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
 const ConfigurationJSONSchema = `{

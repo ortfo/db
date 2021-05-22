@@ -1,4 +1,4 @@
-package main
+package ortfodb
 
 import (
 	"io/ioutil"

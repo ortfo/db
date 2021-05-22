@@ -1,14 +1,12 @@
-package main
+package ortfodb
 
 import (
+	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/docopt/docopt-go"
-	"github.com/imdatngo/mergo"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
@@ -93,40 +91,38 @@ type Configuration struct {
 	// }
 }
 
-// LoadConfiguration loads the .portfoliodb.yml file in ``databaseFolderPath`` and puts it contents into ``loadInto``.
-func LoadConfiguration(filepath string, loadInto *Configuration) error {
-	raw, err := ReadFileBytes(filepath)
+// LoadConfiguration loads the given configuration YAML file and puts it contents into ``loadInto``.
+func LoadConfiguration(filename string, loadInto *Configuration) error {
+	raw, err := ReadFileBytes(filename)
 	if err != nil {
 		return err
 	}
 	return yaml.Unmarshal(raw, loadInto)
 }
 
-// GetConfiguration  reads from the .portfoliodb.yml file in ``databaseFolderPath``
-// and returns a ``Configuration`` struct
-func GetConfiguration(filepath string) (Configuration, error) {
-	var userConfig Configuration
-	defaultConfig := Configuration{}
-	// Load the user's configuration
-	if err := LoadConfiguration(filepath, &userConfig); err != nil {
-		return Configuration{}, err
+// NewConfiguration loads a YAML configuration file.
+// If filepath is empty, the path defaults to databaseDirectory/.portfoliodb.yaml.
+// This function also validates the configuration and prints any error to the user.
+// Use LoadConfiguration for a lower-level function that just loads the YAML file into a struct.
+func NewConfiguration(filename string, databaseDirectory string) (Configuration, error) {
+	if filename == "" {
+		filename = path.Join(databaseDirectory, ".portfoliodb.yaml")
 	}
-	// Then merge defaultConfig into userConfig, to fill out uninitialized fields
-	if err := mergo.Merge(&userConfig, &defaultConfig); err != nil {
-		return Configuration{}, err
+	validated, validationErrors, err := ValidateConfiguration(filename)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("while validating configuration %s: %v", filename, err.Error())
 	}
-	return userConfig, nil
-}
-
-// ResolveConfigurationPath determines the path of the configuration file to use
-func ResolveConfigurationPath(databaseDirectory string, explicitlySpecifiedConfigurationFilepath string) string {
-	if explicitlySpecifiedConfigurationFilepath == "" {
-		return path.Join(databaseDirectory, ".portfoliodb.yml")
+	if !validated {
+		DisplayValidationErrors(validationErrors, filename)
+		return Configuration{}, fmt.Errorf("the configuration file is invalid. See validation errors above")
 	}
-	return explicitlySpecifiedConfigurationFilepath
+	config := Configuration{}
+	err = LoadConfiguration(filename, &config)
+	return config, err
 }
 
 // ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath
+// The third return value (of type error) is not nil when the validation process itself fails, not if the validation ran succesfully with a result of "not validated".
 func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError, error) {
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
@@ -138,30 +134,6 @@ func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultEr
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
 	return ValidateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema)
-}
-
-// GetConfigurationFromCLIArgs gets the configuration by using the CLI arguments
-func GetConfigurationFromCLIArgs(args docopt.Opts) (Configuration, []gojsonschema.ResultError, error) {
-	// Weird bug if args.String("<database>") is used...
-	databaseDirectory := args["<database>"].([]string)[0]
-	explicitConfigFilepath, _ := args.String("--config")
-	configFilepath := ResolveConfigurationPath(databaseDirectory, explicitConfigFilepath)
-	configFilepath, err := filepath.Abs(configFilepath)
-	if err != nil {
-		return Configuration{}, nil, err
-	}
-	validated, validationErrors, err := ValidateConfiguration(configFilepath)
-	if err != nil {
-		return Configuration{}, nil, err
-	}
-	if !validated {
-		return Configuration{}, validationErrors, nil
-	}
-	var config Configuration
-	if err := LoadConfiguration(configFilepath, &config); err != nil {
-		return Configuration{}, make([]gojsonschema.ResultError, 0), err
-	}
-	return config, make([]gojsonschema.ResultError, 0), nil
 }
 
 // SetJSONNamingStrategy rename struct fields uniformly

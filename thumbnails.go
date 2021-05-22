@@ -4,7 +4,7 @@
 // ffmpegthumbnailer,
 // pdftoppm
 
-package main
+package ortfodb
 
 import (
 	"bytes"

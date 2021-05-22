@@ -5,6 +5,7 @@ import (
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
+	"github.com/ortfo/db"
 )
 
 const CLIUsage = `
@@ -100,7 +101,7 @@ func main() {
 	args, _ := docopt.ParseDoc(usage)
 
 	if err := dispatchCommand(args); err != nil {
-		// Leading \n because previous lines will have \r\033[K in front
+		// Start with leading \n because previous lines will have \r\033[K in front
 		colorstring.Println("\n[red][bold]An error occured[reset]")
 		colorstring.Println("\t[red]" + err.Error())
 	}
@@ -112,7 +113,7 @@ func dispatchCommand(args docopt.Opts) error {
 		return err
 	}
 	if val, _ := args.Bool("replicate"); val {
-		err := RunCommandReplicate(args)
+		err := ortfodb.RunCommandReplicate(args)
 		return err
 	}
 	if val, _ := args.Bool("add"); val {
@@ -124,14 +125,16 @@ func dispatchCommand(args docopt.Opts) error {
 	return nil
 }
 
-// RunContext holds several "global" references used throughout all the functions of a command
-type RunContext struct {
-	Config            *Configuration
-	CurrentProject    string
-	DatabaseDirectory string
-	ScatteredMode     bool
-	Progress          struct {
-		Current int
-		Total   int
+// RunCommandBuild runs the command 'build' given parsed CLI args from docopt
+func RunCommandBuild(args docopt.Opts) error {
+	flags := ortfodb.Flags{}
+	args.Bind(&flags)
+	// Weird bug if args.String("<database>") is used...
+	databaseDirectory := args["<database>"].([]string)[0]
+	outputFilename, _ := args.String("<to-filepath>")
+	config, err := ortfodb.NewConfiguration(flags.Config, databaseDirectory)
+	if err != nil {
+		return err
 	}
+	return ortfodb.Build(databaseDirectory, outputFilename, flags, config)
 }
