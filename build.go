@@ -1,5 +1,5 @@
 // Package ortfodb exposes the various functions used by the ortfodb portfolio database creation command-line tool.
-// It is notably used by ortfomk to share some common data between the too complementing programs.
+// It is notably used by ortfomk to share some common data between the two complementing programs.
 // See https://ewen.works/ortfodb for more information.
 package ortfodb
 
