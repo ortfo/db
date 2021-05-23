@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"os"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
@@ -104,6 +105,7 @@ func main() {
 		// Start with leading \n because previous lines will have \r\033[K in front
 		colorstring.Println("\n[red][bold]An error occured[reset]")
 		colorstring.Println("\t[red]" + err.Error())
+		os.Exit(1)
 	}
 }
 
