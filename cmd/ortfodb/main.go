@@ -10,10 +10,10 @@ import (
 
 const CLIUsage = `
 Usage:
-  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
-  portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  portfoliodb [options] <database> add <fullname> [<metadata-item>...]
-  portfoliodb [options] <database> validate <database>
+  ortfodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
+  ortfodb [options] <database> add <fullname> [<metadata-item>...]
+  ortfodb [options] <database> validate
 
 Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
@@ -22,9 +22,9 @@ Options:
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
 
 Examples:
-  portfoliodb database build database.json
-  portfoliodb database add schoolsyst/presentation -#web -#site --color 268CCE
-  portfoliodb replicate database.json replicated-database --config=.portfoliodb.yml
+  ortfodb database build database.json
+  ortfodb database add schoolsyst/presentation -#web -#site --color 268CCE
+  ortfodb replicate database.json replicated-database --config=.portfoliodb.yml
 
 Commands:
   build <from-directory> <to-filepath>

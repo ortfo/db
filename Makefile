@@ -4,8 +4,8 @@ build:
 	go build
 
 install:
-	sudo cp portfoliodb /usr/bin/portfoliodb
-	sudo chmod +x /usr/bin/portfoliodb
+	sudo cp cmd/ortfodb/ortfodb ~/.local/bin/ortfodb
+	sudo chmod +x ~/.local/bin/ortfodb
 
 readme:
 	./tools/build_readme.py
