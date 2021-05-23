@@ -1,4 +1,4 @@
-.PHONY: configuration_schema.go
+.PHONY: json_schemas.go
 
 build:
 	cd cmd/ortfodb; \
@@ -12,7 +12,7 @@ install:
 readme:
 	./tools/build_readme.py
 
-configuration_schema.go:
+json_schemas.go:
 	./tools/build_configuration_schema_go.py
 
 dev:
