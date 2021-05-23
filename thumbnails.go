@@ -26,13 +26,15 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 		for _, media := range mediae {
 			madeThumbnails[media.Path] = make(map[uint16]string)
 			for _, size := range ctx.Config.MakeThumbnails.Sizes {
-				saveTo := path.Join(ctx.DatabaseDirectory, ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang))
+				saveTo := ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang)
 				// Don't re-build already-built thumbs
 				if stringInSlice(alreadyMadeOnes, saveTo) {
+					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
 					continue
 				}
 				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
 				if !ctx.NeedsRebuiling(saveTo) {
+					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
 					continue
 				}
 				// Create potentially missing directories
