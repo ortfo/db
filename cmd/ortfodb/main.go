@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
@@ -130,9 +131,16 @@ func dispatchCommand(args docopt.Opts) error {
 // RunCommandBuild runs the command 'build' given parsed CLI args from docopt.
 func RunCommandBuild(args docopt.Opts) error {
 	flags := ortfodb.Flags{}
-	args.Bind(&flags)
-	// Weird bug if args.String("<database>") is used...
-	databaseDirectory := args["<database>"].([]string)[0]
+	// stupid (docopt).Bind() won't work
+	flags.Config, _ = args.String("--config")
+	flags.Minified, _ = args.Bool("--minified")
+	flags.Scattered, _ = args.Bool("--scattered")
+	flags.Silent, _ = args.Bool("--silent")
+	databaseDirectory, _ := args.String("<database>")
+	databaseDirectory, err := filepath.Abs(databaseDirectory)
+	if err != nil {
+		return err
+	}
 	outputFilename, _ := args.String("<to-filepath>")
 	config, err := ortfodb.NewConfiguration(flags.Config, databaseDirectory)
 	if err != nil {
