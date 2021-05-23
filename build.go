@@ -170,7 +170,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 	// Output it
 	err = writeFile(outputFilename, worksJSON)
-	if flags.Silent {
+	if !flags.Silent {
 		fmt.Print("\033[2K\r\n")
 		println(string(worksJSON))
 	}
