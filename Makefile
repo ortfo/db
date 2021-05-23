@@ -1,7 +1,9 @@
 .PHONY: configuration_schema.go
 
 build:
-	go build
+	cd cmd/ortfodb; \
+		go mod tidy; \
+		go build;
 
 install:
 	sudo cp cmd/ortfodb/ortfodb ~/.local/bin/ortfodb
