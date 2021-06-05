@@ -28,10 +28,9 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 	var rawYAMLPart string
 	var markdownPart string
 	for _, line := range strings.Split(descriptionRaw, "\n") {
-		// if strings.TrimSpace(line) == "" && !inYAMLHeader {
-		// 	continue
-		// }
-		if strings.TrimSpace(line) == "---" {
+		line = strings.TrimSpace(line)
+		// A YAML header separator is 3 or more dashes on a line (without anything else on the same line)
+		if strings.Trim(line, "-") == "" && strings.Count(line, "-") >= 3 {
 			inYAMLHeader = !inYAMLHeader
 			continue
 		}
