@@ -1,7 +1,0 @@
-build steps:
-  extract colors:
-    enabled: yes
-    default file name:
-        - logo.png
-        - square-cover-art.png
-        - square-cover-art.jpeg
