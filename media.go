@@ -116,7 +116,7 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}
 
 	return Media{
-		ID:           slugify.Marshal(filepathBaseNoExt(filename)),
+		ID:           slugify.Marshal(filepathBaseNoExt(filename), true),
 		Alt:          embedDeclaration.Alt,
 		Title:        embedDeclaration.Title,
 		Source:       embedDeclaration.Source,

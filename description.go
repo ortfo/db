@@ -213,7 +213,7 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			// An isolated link
 			links = append(links, Link{
-				ID:    slugify.Marshal(firstChild.FullText()),
+				ID:    slugify.Marshal(firstChild.FullText(), true),
 				Name:  innerHTML(firstChild),
 				Title: firstChild.Attrs()["title"],
 				URL:   firstChild.Attrs()["href"],
