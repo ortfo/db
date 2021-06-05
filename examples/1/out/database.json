@@ -1,0 +1,54 @@
+[
+    {
+        "id": "spotifydash",
+        "metadata": {
+            "created": "2021-05-29",
+            "made with": [
+                "svelte"
+            ],
+            "wip": true,
+            "thumbnails": {
+                
+            },
+            "colors": {
+                "primary": "",
+                "secondary": "",
+                "tertiary": ""
+            }
+        },
+        "title": {
+            "fr": "spotifydash",
+            "en": "spotifydash"
+        },
+        "paragraphs": {
+            "fr": [],
+            "en": []
+        },
+        "media": {
+            "fr": [],
+            "en": []
+        },
+        "links": {
+            "fr": [
+                {
+                    "id": "code-source",
+                    "name": "Code source",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/spotifydash"
+                }
+            ],
+            "en": [
+                {
+                    "id": "source-code",
+                    "name": "Source code",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/spotifydash"
+                }
+            ]
+        },
+        "footnotes": {
+            "fr": [],
+            "en": []
+        }
+    }
+]
