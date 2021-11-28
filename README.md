@@ -11,9 +11,10 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
 Pre-compiled binaries are available through [GitHub Releases](https://help.github.com/en/github/administering-a-repository/releasing-projects-on-github):
 
 ```shell
-$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/portfoliodb
+$ git clone https://github.com/ortfo/portfoliodb portfoliodb
 # Put the command in a directory that is in your PATH, so that you can use portfoliodb from anywhere, e.g.:
-$ mv portfoliodb /usr/bin/portfoliodb
+$ mv portfoliodb /usr/bin/portfoliodb 
+# ln -s would be even better!
 ```
 
 See [Compiling](#compiling) for instructions on how to compile this yourself
