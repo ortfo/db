@@ -6,8 +6,8 @@ build:
 		go build;
 
 install:
-	sudo cp cmd/ortfodb/ortfodb ~/.local/bin/ortfodb
-	sudo chmod +x ~/.local/bin/ortfodb
+	cp cmd/ortfodb/ortfodb ~/.local/bin/ortfodb
+	chmod +x ~/.local/bin/ortfodb
 
 readme:
 	./tools/build_readme.py
