@@ -18,7 +18,9 @@ Usage:
   ortfodb [options] <database> validate
 
 Options:
-  -C --config=<filepath>      Use the configuration path at <filepath>. [default: .portfoliodb.yml]
+  -C --config=<filepath>      Use the configuration path at <filepath>. Defaults to .portfoliodb.yaml.
+							  If not provided, and if .portfoliodb.yaml does not exist, a default configuration
+							  will be written to .portfoliodb.yaml and used.
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.

@@ -2,6 +2,8 @@ package ortfodb
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -76,6 +78,15 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 func NewConfiguration(filename string, databaseDirectory string) (Configuration, error) {
 	if filename == "" {
 		filename = path.Join(databaseDirectory, ".portfoliodb.yaml")
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			fmt.Println("No configuration file found. Using default configuration.")
+			defaultConfig, err := yaml.Marshal(DefaultConfiguration())
+			if err != nil {
+				panic(err)
+			}
+			ioutil.WriteFile(".portfoliodb.yaml", []byte(defaultConfig), 0o644)
+			return DefaultConfiguration(), nil
+		}
 	}
 	validated, validationErrors, err := ValidateConfiguration(filename)
 	if err != nil {
@@ -103,6 +114,24 @@ func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultEr
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
 	return validateWithJSONSchema(string(configurationDocument), configurationJSONSchema)
+}
+
+// DefaultConfiguration returns a configuration with sensible defaults.
+func DefaultConfiguration() Configuration {
+	return Configuration{
+		ExtractColors: ExtractColorsConfiguration{
+			Enabled: true,
+		},
+		MakeThumbnails: MakeThumbnailsConfiguration{
+			Enabled:          true,
+			Sizes:            []uint16{100, 400, 600, 1200},
+			FileNameTemplate: "<media directory>/<work id>/<media id>@<size>.webp",
+		},
+		Media: struct{ At string }{
+			At: "media/",
+		},
+		BuildMetadataFilepath: ".lastbuild.yaml",
+	}
 }
 
 // setJSONNamingStrategy rename struct fields uniformly.
