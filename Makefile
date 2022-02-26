@@ -1,4 +1,4 @@
-.PHONY: json_schemas.go
+.PHONY: json_schemas.go examples
 
 build:
 	cd cmd/ortfodb; \
@@ -17,3 +17,6 @@ json_schemas.go:
 
 dev:
 	filewatcher -I "{**.go,configuration.schema.json,_README.md}" -x configuration_schema.go "make configuration_schema.go && make && make readme && date +%H:%M:%S"
+
+examples:
+	cd examples/1; ortfodb in build out/database.json --config conf/.portfoliodb.yaml --scattered
