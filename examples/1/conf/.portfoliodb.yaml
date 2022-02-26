@@ -1,18 +1,12 @@
-replace media sources:
-  - replace: /mnt/datacore/projects/
-    with: ''
-  - replace: /home/ewen/projects/
-    with: ''
-
 extract colors:
   enabled: true
 
 make thumbnails:
   enabled: true
-  sizes: [400, 700, 1200]
-  file name template: out/media/<parent>/<media id>@<size>.webp
+  sizes: [100, 400, 600, 1200]
+  file name template: <media directory>/<work id>/<media id>@<size>.webp
 
-copy media:
-  to: out/media/
+media:
+  at: out/media
 
 build metadata file: conf/.lastbuild.yaml

@@ -8,7 +8,11 @@
             ],
             "wip": true,
             "thumbnails": {
-                
+                "screen.png": {
+                    "400": "out/media/spotifydash/screen@400.webp",
+                    "700": "out/media/spotifydash/screen@700.webp",
+                    "1200": "out/media/spotifydash/screen@1200.webp"
+                }
             },
             "colors": {
                 "primary": "",
@@ -25,18 +29,60 @@
             "en": []
         },
         "media": {
-            "fr": [],
-            "en": []
-        },
-        "links": {
-            "fr": [
+            "en": [
                 {
-                    "id": "code-source",
-                    "name": "Code source",
+                    "id": "screen",
+                    "alt": "a screenshot of the app",
                     "title": "",
-                    "url": "https://github.com/ewen-lbh/spotifydash"
+                    "source": "../screen.png",
+                    "path": "screen.png",
+                    "content_type": "image/png",
+                    "size": 331857,
+                    "dimensions": {
+                        "width": 999,
+                        "height": 394,
+                        "aspect_ratio": 2.535533
+                    },
+                    "duration": 0,
+                    "online": false,
+                    "attributes": {
+                        "looped": false,
+                        "autoplay": false,
+                        "muted": false,
+                        "playsinline": false,
+                        "controls": true
+                    },
+                    "has_sound": false
                 }
             ],
+            "fr": [
+                {
+                    "id": "screen",
+                    "alt": "une capture d’écran de l’application",
+                    "title": "",
+                    "source": "../screen.png",
+                    "path": "screen.png",
+                    "content_type": "image/png",
+                    "size": 331857,
+                    "dimensions": {
+                        "width": 999,
+                        "height": 394,
+                        "aspect_ratio": 2.535533
+                    },
+                    "duration": 0,
+                    "online": false,
+                    "attributes": {
+                        "looped": false,
+                        "autoplay": false,
+                        "muted": false,
+                        "playsinline": false,
+                        "controls": true
+                    },
+                    "has_sound": false
+                }
+            ]
+        },
+        "links": {
             "en": [
                 {
                     "id": "source-code",
@@ -44,11 +90,19 @@
                     "title": "",
                     "url": "https://github.com/ewen-lbh/spotifydash"
                 }
+            ],
+            "fr": [
+                {
+                    "id": "code-source",
+                    "name": "Code source",
+                    "title": "",
+                    "url": "https://github.com/ewen-lbh/spotifydash"
+                }
             ]
         },
         "footnotes": {
-            "fr": [],
-            "en": []
+            "en": [],
+            "fr": []
         }
     }
 ]
