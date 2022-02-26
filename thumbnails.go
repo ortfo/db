@@ -29,12 +29,12 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 				saveTo := ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang)
 				// Don't re-build already-built thumbs
 				if stringInSlice(alreadyMadeOnes, saveTo) {
-					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
+					madeThumbnails[media.Path][size] = saveTo
 					continue
 				}
 				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
 				if !ctx.NeedsRebuiling(saveTo) {
-					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
+					madeThumbnails[media.Path][size] = saveTo
 					continue
 				}
 				// Create potentially missing directories
@@ -49,7 +49,7 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 					fmt.Printf("\n%s\n", err)
 					madeThumbnails[media.Path][size] = ""
 				} else {
-					madeThumbnails[media.Path][size] = ctx.TransformSource(saveTo)
+					madeThumbnails[media.Path][size] = saveTo
 				}
 			}
 		}
@@ -63,11 +63,11 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
 	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
 	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("convert", "-resize", fmt.Sprint(targetSize), media.AbsolutePath, saveTo)
+		return run("convert", "-resize", fmt.Sprint(targetSize), ctx.AbsolutePathToMedia(media), saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "video/") {
-		return run("ffmpegthumbnailer", "-i"+media.AbsolutePath, "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
+		return run("ffmpegthumbnailer", "-i"+ctx.AbsolutePathToMedia(media), "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
 	}
 
 	if media.ContentType == "application/pdf" {
@@ -79,7 +79,7 @@ func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo stri
 		}
 		// TODO: (maybe) update media.Dimensions now that we have an image of the PDF though this will only be representative when all pages of the PDF have the same dimensions.
 		// pdftoppm *adds* the extension to the end of the filename even if it already has it... smh.
-		err = run("pdftoppm", "-singlefile", "-png", media.AbsolutePath, strings.TrimSuffix(temporaryPng.Name(), ".png"))
+		err = run("pdftoppm", "-singlefile", "-png", ctx.AbsolutePathToMedia(media), strings.TrimSuffix(temporaryPng.Name(), ".png"))
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ func run(command string, args ...string) error {
 // Placeholders that will be replaced in the file name template:
 //
 // 		<project id> - the project's id
-// 		<parent> - the current media's directory
+// 		<media directory> - the value of media.at in the configuration
 // 		<basename> - the media's basename (with the extension)
 // 		<media id> - the media's id
 // 		<size> - the current thumbnail size
@@ -133,11 +133,12 @@ func run(command string, args ...string) error {
 func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
-	computed = strings.ReplaceAll(computed, "<parent>", filepath.Dir(media.Path)) // FIXME: depends on `replace media sources` removing the /home/ewen/projects/portfolio (see #28)
-	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.AbsolutePath))
-	computed = strings.ReplaceAll(computed, "<media id>", filepathBaseNoExt(media.AbsolutePath))
+	computed = strings.ReplaceAll(computed, "<work id>", projectID)
+	computed = strings.ReplaceAll(computed, "<media directory>", ctx.Config.Media.At)
+	computed = strings.ReplaceAll(computed, "<basename>", path.Base(ctx.AbsolutePathToMedia(media)))
+	computed = strings.ReplaceAll(computed, "<media id>", media.ID)
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
-	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.AbsolutePath), ".", "", 1))
+	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(ctx.AbsolutePathToMedia(media)), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)
 	return computed
 }

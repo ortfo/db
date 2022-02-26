@@ -62,7 +62,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 // ReplicateAll recreates a database inside targetDatabase containing all the works in works.
 func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	for _, work := range works {
-		ctx.CurrentProject = work.ID
+		ctx.CurrentWorkID = work.ID
 		ctx.Status("Replicating")
 		err := ReplicateOne(targetDatabase, work)
 		if err != nil {
@@ -93,6 +93,17 @@ func ReplicateOne(targetDatabase string, work Work) error {
 	return nil
 }
 
+// EmbedDeclaration returns the embed declaration associated with a fully analyzed media.
+// It just drops properties acquired during analysis, basically.
+func (media *Media) EmbedDeclaration() MediaEmbedDeclaration {
+	return MediaEmbedDeclaration{
+		Alt:        media.Alt,
+		Title:      media.Title,
+		Source:     media.Source,
+		Attributes: media.Attributes,
+	}
+}
+
 // ParsedDescription turns a fully analyzed Work into a ParsedDescription by dropping analysis data from media, turning them into embed declarations.
 // All other properties present in ParsedDescription are kept as is from the Work.
 func (work *Work) ParsedDescription() ParsedDescription {
@@ -102,12 +113,7 @@ func (work *Work) ParsedDescription() ParsedDescription {
 		mediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0, len(mediae))
 
 		for _, media := range mediae {
-			mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], MediaEmbedDeclaration{
-				Alt:        media.Alt,
-				Title:      media.Title,
-				Source:     media.Source,
-				Attributes: media.Attributes,
-			})
+			mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], media.EmbedDeclaration())
 		}
 	}
 

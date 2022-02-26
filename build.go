@@ -18,8 +18,9 @@ import (
 
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
-	Config            *Configuration
-	CurrentProject    string
+	Config *Configuration
+	// ID of the work currently being processed.
+	CurrentWorkID     string
 	DatabaseDirectory string
 	Flags             Flags
 	Progress          struct {
@@ -52,6 +53,11 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		Flags:             flags,
 		DatabaseDirectory: databaseDirectory,
 	}
+	err := os.MkdirAll(config.Media.At, 0o755)
+	if err != nil {
+		return fmt.Errorf("while creating the media output directory: %w", err)
+	}
+
 	works := make([]Work, 0)
 	databaseFiles, err := os.ReadDir(ctx.DatabaseDirectory)
 	if err != nil {
@@ -69,6 +75,8 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 			continue
 		}
 
+		workID := dirEntry.Name()
+
 		// Compute the description file's path
 		var descriptionFilename string
 		if ctx.Flags.Scattered {
@@ -84,7 +92,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		}
 
 		// Update the UI
-		ctx.CurrentProject = dirEntry.Name()
+		ctx.CurrentWorkID = workID
 		ctx.Progress.Current++
 
 		// Parse the description
@@ -101,18 +109,25 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		}
 
 		// Copy over the media
-		if config.CopyMedia.To != "" {
-			for _, mediae := range analyzedMediae {
-				for _, media := range mediae {
-					content, err := os.ReadFile(media.AbsolutePath)
-					if err != nil {
-						fmt.Printf("\nCould not copy %s to %s: %v\n", media.AbsolutePath, config.CopyMedia.To, err)
-					}
-					// FIXME: this also depends on `replace media source` (see #28)
-					err = os.WriteFile(path.Join(config.CopyMedia.To, media.Path), content, 0777)
-					if err != nil {
-						fmt.Printf("\nCould not copy %s to %s: %v\n", media.AbsolutePath, config.CopyMedia.To, err)
-					}
+		if config.Media.At == "" {
+			return errors.New("please specify a destination for the media files in the configuration file (set media.at)")
+		}
+
+		for _, mediae := range analyzedMediae {
+			for _, media := range mediae {
+				absolutePath := path.Join(dirEntryAbsPath, media.Path)
+				content, err := os.ReadFile(absolutePath)
+				if err != nil {
+					fmt.Printf("could not copy %s to %s: %v\n", absolutePath, config.Media.At, err)
+				}
+				err = os.MkdirAll(path.Dir(ctx.AbsolutePathToMedia(media)), 0o755)
+				if err != nil {
+					return fmt.Errorf("could not create output directory for %s: %w", ctx.AbsolutePathToMedia(media), err)
+				}
+
+				err = os.WriteFile(ctx.AbsolutePathToMedia(media), content, 0777)
+				if err != nil {
+					fmt.Printf("could not copy %s to %s: %v\n", absolutePath, config.Media.At, err)
 				}
 			}
 		}
@@ -125,7 +140,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		metadata := description.Metadata
 		if config.MakeThumbnails.Enabled {
 			ctx.Status("Making thumbnails")
-			metadata, err = ctx.StepMakeThumbnails(metadata, dirEntry.Name(), analyzedMediae)
+			metadata, err = ctx.StepMakeThumbnails(metadata, workID, analyzedMediae)
 			if err != nil {
 				return err
 			}
@@ -139,7 +154,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 			mediaPaths := make([]string, 0)
 			for _, mediaeInOneLang := range analyzedMediae {
 				for _, media := range mediaeInOneLang {
-					mediaPaths = append(mediaPaths, media.AbsolutePath)
+					mediaPaths = append(mediaPaths, ctx.AbsolutePathToMedia(media))
 				}
 			}
 			metadata = ctx.StepExtractColors(metadata, mediaPaths)
@@ -147,7 +162,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 		// Return the finished work
 		work := Work{
-			ID:         dirEntry.Name(),
+			ID:         workID,
 			Metadata:   metadata,
 			Title:      description.Title,
 			Paragraphs: description.Paragraphs,

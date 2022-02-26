@@ -39,12 +39,10 @@ type Media struct {
 	ID    string
 	Alt   string
 	Title string
-	// Source is the media's path, verbatim from the embed declaration (what's actually written in the description file)
+	// Source is the media's path, verbatim from the embed declaration (what's actually written in the description file).
 	Source string
-	// AbsolutePath is the actual location of the file as an absolute path
-	AbsolutePath string
-	// Path is AbsolutePath with transformations applied, following the configuration.
-	// See Configuration.ReplaceMediaSources
+	// Path is the media's path, relative to (media directory)/(work ID).
+	// See Configuration.Media.At.
 	Path        string
 	ContentType string
 	Size        uint64 // In bytes
@@ -53,6 +51,10 @@ type Media struct {
 	Online      bool // Whether the media is hosted online (referred to by an URL)
 	Attributes  MediaAttributes
 	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
+}
+
+func (ctx *RunContext) AbsolutePathToMedia(media Media) string {
+	return path.Join(ctx.Config.Media.At, ctx.CurrentWorkID, media.Path)
 }
 
 // GetImageDimensions returns an ImageDimensions object, given a pointer to a file.
@@ -116,27 +118,26 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}
 
 	return Media{
-		ID:           slugify.Marshal(filepathBaseNoExt(filename), true),
-		Alt:          embedDeclaration.Alt,
-		Title:        embedDeclaration.Title,
-		Source:       embedDeclaration.Source,
-		AbsolutePath: filename,
-		Path:         ctx.TransformSource(filename),
-		ContentType:  contentType,
-		Dimensions:   dimensions,
-		Duration:     duration,
-		Size:         uint64(fileInfo.Size()),
-		Attributes:   embedDeclaration.Attributes,
-		HasSound:     hasSound,
+		ID:          slugify.Marshal(filepathBaseNoExt(filename), true),
+		Alt:         embedDeclaration.Alt,
+		Title:       embedDeclaration.Title,
+		Source:      embedDeclaration.Source,
+		Path:        ctx.RelativePathToMedia(embedDeclaration),
+		ContentType: contentType,
+		Dimensions:  dimensions,
+		Duration:    duration,
+		Size:        uint64(fileInfo.Size()),
+		Attributes:  embedDeclaration.Attributes,
+		HasSound:    hasSound,
 	}, nil
 }
 
-// TransformSource returns the appropriate URI (HTTPS, local...), taking into account the configuration.
-func (ctx *RunContext) TransformSource(source string) string {
-	for _, replacement := range ctx.Config.ReplaceMediaSources {
-		source = strings.ReplaceAll(source, replacement.Replace, replacement.With)
+func (ctx *RunContext) RelativePathToMedia(embedDeclaration MediaEmbedDeclaration) string {
+	if ctx.Flags.Scattered {
+		return path.Clean(path.Join(".portfoliodb", embedDeclaration.Source))
+	} else {
+		return path.Clean(embedDeclaration.Source)
 	}
-	return source
 }
 
 // AnalyzeAudio takes in an os.File and returns the duration of the audio file in seconds. If any error occurs the duration will be 0.

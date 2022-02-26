@@ -42,15 +42,11 @@ type BuildMetadata struct {
 
 // Configuration represents what the .portfoliodb.yml configuration file describes.
 type Configuration struct {
-	ExtractColors       ExtractColorsConfiguration  `yaml:"extract colors"`
-	MakeGifs            MakeGIFsConfiguration       `yaml:"make GIFs"`
-	MakeThumbnails      MakeThumbnailsConfiguration `yaml:"make thumbnails"`
-	ReplaceMediaSources []struct {
-		Replace string `yaml:"replace"`
-		With    string `yaml:"with"`
-	} `yaml:"replace media sources"`
-	BuildMetadataFilepath string              `yaml:"build metadata file"`
-	CopyMedia             struct{ To string } `yaml:"copy media"`
+	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors"`
+	MakeGifs              MakeGIFsConfiguration       `yaml:"make GIFs"`
+	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails"`
+	BuildMetadataFilepath string                      `yaml:"build metadata file"`
+	Media                 struct{ At string }         `yaml:"media"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`

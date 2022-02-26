@@ -30,6 +30,7 @@ func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string)
 
 // Status prints the current compilation progress.
 func (ctx *RunContext) Status(text string) {
-	fmt.Print("\033[2K\r")
-	fmt.Printf("[%v/%v] %v: %v", ctx.Progress.Current, ctx.Progress.Total, ctx.CurrentProject, text)
+	// fmt.Print("\033[2K\r")
+	fmt.Printf("[%v/%v] %v: %v", ctx.Progress.Current, ctx.Progress.Total, ctx.CurrentWorkID, text)
+	fmt.Printf("\n")
 }
