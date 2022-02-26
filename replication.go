@@ -82,7 +82,7 @@ func ReplicateOne(targetDatabase string, work Work) error {
 	if err != nil {
 		return err
 	}
-	description, err := ReplicateDescription(work)
+	description, err := ReplicateDescription(work.ParsedDescription())
 	if err != nil {
 		return err
 	}
@@ -93,8 +93,34 @@ func ReplicateOne(targetDatabase string, work Work) error {
 	return nil
 }
 
+// ParsedDescription turns a fully analyzed Work into a ParsedDescription by dropping analysis data from media, turning them into embed declarations.
+// All other properties present in ParsedDescription are kept as is from the Work.
+func (work *Work) ParsedDescription() ParsedDescription {
+	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
+
+	for language, mediae := range work.Media {
+		mediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0, len(mediae))
+
+		for _, media := range mediae {
+			mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], MediaEmbedDeclaration{
+				Alt:        media.Alt,
+				Title:      media.Title,
+				Source:     media.Source,
+				Attributes: media.Attributes,
+			})
+		}
+	}
+
+	return ParsedDescription{
+		Paragraphs:             work.Paragraphs,
+		Metadata:               work.Metadata,
+		Title:                  work.Title,
+		MediaEmbedDeclarations: mediaEmbedDeclarations,
+	}
+}
+
 // ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
-func ReplicateDescription(work Work) (string, error) {
+func ReplicateDescription(work ParsedDescription) (string, error) {
 	var result string
 	// Start with the YAML header, this one is never localized
 	yamlHeader, err := replicateMetadata(work.Metadata)
@@ -119,7 +145,7 @@ func ReplicateDescription(work Work) (string, error) {
 	return strings.TrimSpace(result), nil
 }
 
-func replicateLocalizedBlock(work Work, language string) (string, error) {
+func replicateLocalizedBlock(work ParsedDescription, language string) (string, error) {
 	var result string
 	end := "\n\n"
 	// Abbreviations will be stored here to declare them in the markdown
@@ -129,7 +155,7 @@ func replicateLocalizedBlock(work Work, language string) (string, error) {
 		result += replicateTitle(work.Title[language]) + end
 	}
 	// Then, every media
-	for _, media := range work.Media[language] {
+	for _, media := range work.MediaEmbedDeclarations[language] {
 		result += replicateMediaEmbed(media) + end
 	}
 	for _, paragraph := range work.Paragraphs[language] {
@@ -232,7 +258,7 @@ func replicateMetadata(metadata map[string]interface{}) (string, error) {
 }
 
 //TODO: configure whether to use >[]() syntax: never, or only for non-images
-func replicateMediaEmbed(media Media) string {
+func replicateMediaEmbed(media MediaEmbedDeclaration) string {
 	if media.Title != "" {
 		return "![" + media.Alt + ` "` + media.Title + `"](` + media.Source + ")"
 	}
