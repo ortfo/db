@@ -46,10 +46,6 @@ func RunCommandReplicate(args docopt.Opts) error {
 	}
 	ctx := RunContext{
 		Config: &Configuration{},
-		Progress: struct {
-			Current int
-			Total   int
-		}{Total: len(parsedDatabase)},
 	}
 	defer fmt.Print("\033[2K\r\n")
 	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)
@@ -63,7 +59,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 	for _, work := range works {
 		ctx.CurrentWorkID = work.ID
-		ctx.Status("Replicating")
+		// ctx.Status() TODO
 		err := ReplicateOne(targetDatabase, work)
 		if err != nil {
 			return err

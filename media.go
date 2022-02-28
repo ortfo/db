@@ -216,7 +216,9 @@ func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbe
 				continue
 			}
 
-			ctx.Status("Analyzing " + path.Base(filename))
+			ctx.Status(StepMediaAnalysis, ProgressDetails{
+				File: filename,
+			})
 			analyzedMedia, err := ctx.AnalyzeMediaFile(filename, media)
 			if err != nil {
 				return map[string][]Media{}, err

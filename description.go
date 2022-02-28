@@ -53,7 +53,6 @@ func ParseYAMLHeader(descriptionRaw string) (map[string]interface{}, string) {
 
 // ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription.
 func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
-	ctx.Status("Parsing description.md")
 	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)

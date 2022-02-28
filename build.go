@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"math"
 	"os"
 	"time"
 
@@ -27,14 +28,21 @@ type RunContext struct {
 	Progress          struct {
 		Current int
 		Total   int
+		// See ProgressFile.Current.Step in progress.go
+		Step BuildStep
+		// See ProgressFile.Current.Resolution in progress.go
+		Resolution int
+		// See ProgressFile.Current.File in progress.go
+		File string
 	}
 }
 
 type Flags struct {
-	Scattered bool
-	Silent    bool
-	Minified  bool
-	Config    string
+	Scattered    bool
+	Silent       bool
+	Minified     bool
+	Config       string
+	ProgressFile string
 }
 
 // Project represents a project.
@@ -107,13 +115,17 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 		// Update the UI
 		ctx.CurrentWorkID = workID
-		ctx.Progress.Current++
+		ctx.IncrementProgress()
 
 		// Parse the description
 		descriptionRaw, err := ioutil.ReadFile(descriptionFilename)
 		if err != nil {
 			return err
 		}
+
+		ctx.Status(StepDescription, ProgressDetails{
+			File: descriptionFilename,
+		})
 		description := ctx.ParseDescription(string(descriptionRaw))
 
 		// Analyze mediae
@@ -153,7 +165,6 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		// - for more content types (PDFs and videos cannot be used directly, but thumbnails of them can)
 		metadata := description.Metadata
 		if config.MakeThumbnails.Enabled {
-			ctx.Status("Making thumbnails")
 			metadata, err = ctx.StepMakeThumbnails(metadata, workID, analyzedMediae)
 			if err != nil {
 				return err
@@ -162,7 +173,6 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 		// Extract colors
 		if config.ExtractColors.Enabled {
-			ctx.Status("Extracting colors")
 			// Build up the array of media paths
 			// TODO: include thumbnails instead
 			mediaPaths := make([]string, 0)
@@ -283,4 +293,24 @@ func (ctx *RunContext) NeedsRebuiling(absolutePath string) bool {
 		return true
 	}
 	return fileMeta.ModTime().After(metadata.PreviousBuildDate)
+}
+
+// ProgressFileData returns a ProgressData struct ready to be marshalled to JSON for --write-progress.
+func (ctx *RunContext) ProgressFileData() ProgressFile {
+	return ProgressFile{
+		Total:     ctx.Progress.Total,
+		Processed: ctx.Progress.Current,
+		Percent:   int(math.Floor((float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100))),
+		Current: struct {
+			ID         string
+			Step       BuildStep
+			Resolution int
+			File       string
+		}{
+			ID:         ctx.CurrentWorkID,
+			Step:       ctx.Progress.Step,
+			Resolution: ctx.Progress.Resolution,
+			File:       ctx.Progress.File,
+		},
+	}
 }

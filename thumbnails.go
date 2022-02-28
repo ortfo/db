@@ -61,7 +61,10 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 // MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image).
 // It returns the path where the thumbnail has been written to.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
-	ctx.Status(fmt.Sprintf("Making thumbnail %s", saveTo))
+	ctx.Status(StepThumbnails, ProgressDetails{
+		Resolution: int(targetSize),
+		File:       ctx.AbsolutePathToMedia(media),
+	})
 	if strings.HasPrefix(media.ContentType, "image/") {
 		return run("convert", "-resize", fmt.Sprint(targetSize), ctx.AbsolutePathToMedia(media), saveTo)
 	}

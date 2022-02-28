@@ -24,6 +24,7 @@ Options:
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
+  --write-progress=<filepath> Write build progress to <filepath>. See Build Progress section for more information.
 
 Examples:
   ortfodb database build database.json
@@ -99,6 +100,24 @@ Scattered mode:
       description.md
 
   Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
+
+Build Progress:
+  For integration purposes, the current build progress can be written to a file.
+  The progress information is written as JSON, and has the following structure:
+
+	total: the total number of works to process.
+	processed: the number of works processed so far.
+	percent: The current overall progress percentage of the build. Equal to processed/total * 100.
+	current: {
+		id: The id of the work being built.
+		step: The current step. One of: "thumbnail", "color extraction", "description", "media analysis"
+		resolution: The resolution of the thumbnail being generated. 0 when step is not "thumbnails"
+		file: The file being processed (
+			original media when making thumbnails or during media analysis,
+			media the colors are being extracted from, or
+			the description.md file when parsing description
+		)
+	}
 `
 
 func main() {
@@ -139,6 +158,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	flags.Minified, _ = args.Bool("--minified")
 	flags.Scattered, _ = args.Bool("--scattered")
 	flags.Silent, _ = args.Bool("--silent")
+	flags.ProgressFile, _ = args.String("--write-progress")
 	databaseDirectory, _ := args.String("<database>")
 	databaseDirectory, err := filepath.Abs(databaseDirectory)
 	if err != nil {

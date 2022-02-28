@@ -26,27 +26,33 @@ func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaP
 			return err == nil && strings.HasPrefix(contentType.String(), "image/")
 		})
 		// Extract colors from them
-		extractedColors, err := extractColorsFromFiles(imageFilepaths, ctx.Config.ExtractColors.DefaultFiles)
-		if err == nil {
-			metadata["colors"] = extractedColors
+		extractFromFile := selectFileToExtractColorsFrom(imageFilepaths, ctx.Config.ExtractColors.DefaultFiles)
+		if extractFromFile != "" {
+			ctx.Status(StepColorExtraction, ProgressDetails{
+				File: extractFromFile,
+			})
+			extractedColors, err := ExtractColors(extractFromFile)
+			if err == nil {
+				metadata["colors"] = extractedColors
+			}
 		}
 	}
 	return metadata
 }
 
-func extractColorsFromFiles(files []string, defaultFiles []string) (ExtractedColors, error) {
+func selectFileToExtractColorsFrom(files []string, defaultFiles []string) string {
 	if len(files) == 0 {
-		return ExtractedColors{}, nil
+		return ""
 	}
 	if len(files) == 1 {
-		return ExtractColors(files[0])
+		return files[0]
 	}
 	for _, filename := range files {
 		if stringInSlice(defaultFiles, filename) {
-			return ExtractColors(filename)
+			return filename
 		}
 	}
-	return ExtractColors(files[0])
+	return files[0]
 }
 
 // ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.
