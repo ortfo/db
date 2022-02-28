@@ -6,6 +6,7 @@ package ortfodb
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"time"
@@ -59,21 +60,40 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	}
 
 	works := make([]Work, 0)
+	workDirectories := make([]fs.DirEntry, 0)
 	databaseFiles, err := os.ReadDir(ctx.DatabaseDirectory)
 	if err != nil {
 		return err
 	}
-	ctx.Progress.Total = len(databaseFiles)
-	// TODO: setting to ignore/allow “dotfolders”
-	for _, dirEntry := range databaseFiles {
-		dirEntryAbsPath := path.Join(ctx.DatabaseDirectory, dirEntry.Name())
 
-		// Ignore non-dir files
+	// Build up workDirectories by filtering through databaseFiles.
+	// We do this beforehand to compute ctx.Progress.Total.
+	for _, dirEntry := range databaseFiles {
+		// TODO: setting to ignore/allow “dotfolders”
+
+		dirEntryAbsPath := path.Join(ctx.DatabaseDirectory, dirEntry.Name())
 		if !dirEntry.IsDir() {
-			// FIXME: ctx.Progress.Total should be correct on initialization.
-			ctx.Progress.Total--
 			continue
 		}
+		// Compute the description file's path
+		var descriptionFilename string
+		if ctx.Flags.Scattered {
+			descriptionFilename = path.Join(dirEntryAbsPath, ctx.Config.ScatteredModeFolder, "description.md")
+		} else {
+			descriptionFilename = path.Join(dirEntryAbsPath, "description.md")
+		}
+		// If it's not there, this directory is not a project worth scanning.
+		if _, err := os.Stat(descriptionFilename); os.IsNotExist(err) {
+			continue
+		}
+
+		workDirectories = append(workDirectories, dirEntry)
+	}
+
+	ctx.Progress.Total = len(workDirectories)
+
+	for _, dirEntry := range workDirectories {
+		dirEntryAbsPath := path.Join(ctx.DatabaseDirectory, dirEntry.Name())
 
 		workID := dirEntry.Name()
 
@@ -83,12 +103,6 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 			descriptionFilename = path.Join(dirEntryAbsPath, ctx.Config.ScatteredModeFolder, "description.md")
 		} else {
 			descriptionFilename = path.Join(dirEntryAbsPath, "description.md")
-		}
-
-		// If it's not there, this directory is not a project worth scanning.
-		if _, err := os.Stat(descriptionFilename); os.IsNotExist(err) {
-			ctx.Progress.Total--
-			continue
 		}
 
 		// Update the UI
