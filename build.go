@@ -80,7 +80,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		// Compute the description file's path
 		var descriptionFilename string
 		if ctx.Flags.Scattered {
-			descriptionFilename = path.Join(dirEntryAbsPath, ".portfoliodb", "description.md")
+			descriptionFilename = path.Join(dirEntryAbsPath, ctx.Config.ScatteredModeFolder, "description.md")
 		} else {
 			descriptionFilename = path.Join(dirEntryAbsPath, "description.md")
 		}
@@ -204,7 +204,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 // GetProjectPath returns the project's folder path with regard to databaseDirectory.
 func (p *Project) ProjectPath() string {
 	if p.Ctx.Flags.Scattered {
-		return path.Join(p.Ctx.DatabaseDirectory, p.ID, ".portfoliodb")
+		return path.Join(p.Ctx.DatabaseDirectory, p.ID, p.Ctx.Config.ScatteredModeFolder)
 	}
 	return path.Join(p.Ctx.DatabaseDirectory, p.ID)
 }

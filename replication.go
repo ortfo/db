@@ -286,7 +286,7 @@ func replicateParagraph(p Paragraph) (string, error) {
 }
 
 func htmlToMarkdown(html string) (string, error) {
-	// TODO: configurable domain for translating relative to absolute URLS from .portfoliodb.yml
+	// TODO: configurable domain for translating relative to absolute URLS from ortfodb.yaml
 	converter := html2md.NewConverter("", true, nil)
 	return converter.ConvertString(html)
 }

@@ -19,4 +19,4 @@ dev:
 	filewatcher -I "{**.go,configuration.schema.json,_README.md}" -x configuration_schema.go "make configuration_schema.go && make && make readme && date +%H:%M:%S"
 
 examples:
-	cd examples/1; ortfodb in build out/database.json --config conf/.portfoliodb.yaml --scattered
+	cd examples/1; ortfodb in build out/database.json --config conf/ortfodb.yaml --scattered

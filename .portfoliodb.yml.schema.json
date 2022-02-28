@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/schema",
-	"$id": ".portfoliodb.yml",
+	"$id": "ortfodb.yaml",
 	"definitions": {
 		"validate_check": {
 			"type": [

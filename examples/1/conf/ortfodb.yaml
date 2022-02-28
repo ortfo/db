@@ -10,3 +10,5 @@ media:
   at: out/media
 
 build metadata file: conf/.lastbuild.yaml
+
+scattered mode folder: portfolio/

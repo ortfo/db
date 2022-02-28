@@ -1,6 +1,6 @@
 {
     "yaml.schemas": {
-        ".portfoliodb.yml.schema.json": ["example/.portfoliodb.yml", ".porfoliodb.yml"]
+        "ortfodb.yaml.schema.json": ["example/ortfodb.yaml", ".porfoliodb.yml"]
     },
     "go.inferGopath": false,
     "python.formatting.provider": "black"

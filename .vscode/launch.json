@@ -10,7 +10,7 @@
 			"request": "launch",
 			"mode": "auto",
 			"program": "${workspaceFolder}/cmd/ortfodb",
-			"args": ["in", "build","out/database.json", "--config", "conf/.portfoliodb.yaml", "--scattered"],
+			"args": ["in", "build","out/database.json", "--config", "conf/ortfodb.yaml", "--scattered"],
 			"cwd": "${workspaceFolder}/examples/1"
 		}
 

@@ -117,7 +117,7 @@ Of course, you can use links inside of a paragraphs, but you can also declare is
 
 ## Configuration
 
-Put this in `.portfoliodb.yml` in the root of your database:
+Put this in `ortfodb.yaml` in the root of your database:
 
 ```yaml
 build steps:
@@ -156,7 +156,7 @@ validate:
     working urls: off
 ```
 
-PRO TIP: You can use the provided `.portfoliodb.yml.schema.json` to validate your YAML file
+PRO TIP: You can use the provided `ortfodb.yaml.schema.json` to validate your YAML file
 with this JSONSchema
 
 ## Extra markdown features
@@ -184,7 +184,7 @@ Except for the `>[text](video/audio URL/filepath)` feature, the markdown also su
 
 The extra features discussed just above are all available or disable, using the module name:
 
-_.portfoliodb.yml_
+_ortfodb.yaml_
 ```yaml
 markdown:
   abbreviations: on

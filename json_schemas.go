@@ -1,9 +1,9 @@
 package ortfodb
 
-// configurationJSONSchema is the entire json string from .portfoliodb.yml.json.schema
+// configurationJSONSchema is the entire json string from ortfodb.yaml.json.schema
 const configurationJSONSchema = `{
 	"$schema": "http://json-schema.org/schema",
-	"$id": ".portfoliodb.yml",
+	"$id": "ortfodb.yaml",
 	"definitions": {
 		"validate_check": {
 			"type": [

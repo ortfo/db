@@ -42,13 +42,14 @@ type BuildMetadata struct {
 	PreviousBuildDate time.Time
 }
 
-// Configuration represents what the .portfoliodb.yml configuration file describes.
+// Configuration represents what the ortfodb.yaml configuration file describes.
 type Configuration struct {
 	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors"`
 	MakeGifs              MakeGIFsConfiguration       `yaml:"make GIFs"`
 	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 	BuildMetadataFilepath string                      `yaml:"build metadata file"`
 	Media                 struct{ At string }         `yaml:"media"`
+	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`
@@ -68,23 +69,27 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(raw, loadInto)
+	err = yaml.Unmarshal(raw, loadInto)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewConfiguration loads a YAML configuration file.
-// If filepath is empty, the path defaults to databaseDirectory/.portfoliodb.yaml.
+// If filepath is empty, the path defaults to databaseDirectory/ortfodb.yaml.
 // This function also validates the configuration and prints any error to the user.
 // Use LoadConfiguration for a lower-level function that just loads the YAML file into a struct.
 func NewConfiguration(filename string, databaseDirectory string) (Configuration, error) {
 	if filename == "" {
-		filename = path.Join(databaseDirectory, ".portfoliodb.yaml")
+		filename = path.Join(databaseDirectory, "ortfodb.yaml")
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			fmt.Println("No configuration file found. Using default configuration.")
 			defaultConfig, err := yaml.Marshal(DefaultConfiguration())
 			if err != nil {
 				panic(err)
 			}
-			ioutil.WriteFile(".portfoliodb.yaml", []byte(defaultConfig), 0o644)
+			ioutil.WriteFile("ortfodb.yaml", []byte(defaultConfig), 0o644)
 			return DefaultConfiguration(), nil
 		}
 	}
@@ -96,8 +101,18 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 		DisplayValidationErrors(validationErrors, filename)
 		return Configuration{}, fmt.Errorf("the configuration file is invalid. See validation errors above")
 	}
+
 	config := Configuration{}
 	err = LoadConfiguration(filename, &config)
+
+	// Set default value for ScatteredModeFolder
+	if config.ScatteredModeFolder == "" {
+		config.ScatteredModeFolder = ".ortfo"
+	}
+
+	// Remove trailing slash(es) from folder name.
+	config.ScatteredModeFolder = strings.TrimRight(config.ScatteredModeFolder, "/\\")
+
 	return config, err
 }
 
@@ -131,6 +146,7 @@ func DefaultConfiguration() Configuration {
 			At: "media/",
 		},
 		BuildMetadataFilepath: ".lastbuild.yaml",
+		ScatteredModeFolder:   ".ortfo",
 	}
 }
 

@@ -134,7 +134,7 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 
 func (ctx *RunContext) RelativePathToMedia(embedDeclaration MediaEmbedDeclaration) string {
 	if ctx.Flags.Scattered {
-		return path.Clean(path.Join(".portfoliodb", embedDeclaration.Source))
+		return path.Clean(path.Join(ctx.Config.ScatteredModeFolder, embedDeclaration.Source))
 	} else {
 		return path.Clean(embedDeclaration.Source)
 	}
@@ -178,7 +178,7 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 // AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media.
 func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
 	if ctx.Flags.Scattered {
-		currentDirectory = path.Join(currentDirectory, ".portfoliodb")
+		currentDirectory = path.Join(currentDirectory, ctx.Config.ScatteredModeFolder)
 	}
 	analyzedMediae := make(map[string][]Media)
 	analyzedMediaeBySource := make(map[string]Media)
