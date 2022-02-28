@@ -50,6 +50,8 @@ type Configuration struct {
 	BuildMetadataFilepath string                      `yaml:"build metadata file"`
 	Media                 struct{ At string }         `yaml:"media"`
 	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
+	// Signals whether the configuration was instanciated by DefaultConfiguration.
+	IsDefault bool `yaml:"-"`
 	// Markdown struct {
 	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
 	// 	DefinitionLists    bool                                  `yaml:"definition lists"`
@@ -84,7 +86,6 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 	if filename == "" {
 		filename = path.Join(databaseDirectory, "ortfodb.yaml")
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			fmt.Println("No configuration file found. Using default configuration.")
 			defaultConfig, err := yaml.Marshal(DefaultConfiguration())
 			if err != nil {
 				panic(err)
@@ -147,6 +148,7 @@ func DefaultConfiguration() Configuration {
 		},
 		BuildMetadataFilepath: ".lastbuild.yaml",
 		ScatteredModeFolder:   ".ortfo",
+		IsDefault:             true,
 	}
 }
 

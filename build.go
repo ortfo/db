@@ -35,6 +35,7 @@ type RunContext struct {
 		// See ProgressFile.Current.File in progress.go
 		File string
 	}
+	Spinner Spinner
 }
 
 type Flags struct {
@@ -56,12 +57,24 @@ type Project struct {
 // Build builds the database at outputFilename from databaseDirectory.
 // Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration.
 func Build(databaseDirectory string, outputFilename string, flags Flags, config Configuration) error {
-	// defer fmt.Print("\033[2K\r\n")
 	ctx := RunContext{
 		Config:            &config,
 		Flags:             flags,
 		DatabaseDirectory: databaseDirectory,
 	}
+
+	ctx.Spinner = ctx.CreateSpinner(outputFilename)
+	if !flags.Silent {
+		err := ctx.Spinner.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if ctx.Config.IsDefault {
+		ctx.LogInfo("No configuration file found. The default configuration was used.")
+	}
+
 	err := os.MkdirAll(config.Media.At, 0o755)
 	if err != nil {
 		return fmt.Errorf("while creating the media output directory: %w", err)
@@ -144,7 +157,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 				absolutePath := path.Join(dirEntryAbsPath, media.Path)
 				content, err := os.ReadFile(absolutePath)
 				if err != nil {
-					fmt.Printf("could not copy %s to %s: %v\n", absolutePath, config.Media.At, err)
+					ctx.LogError("could not copy %s to %s: %v", absolutePath, config.Media.At, err)
 				}
 				err = os.MkdirAll(path.Dir(ctx.AbsolutePathToMedia(media)), 0o755)
 				if err != nil {
@@ -153,7 +166,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 				err = os.WriteFile(ctx.AbsolutePathToMedia(media), content, 0777)
 				if err != nil {
-					fmt.Printf("could not copy %s to %s: %v\n", absolutePath, config.Media.At, err)
+					ctx.LogError("could not copy %s to %s: %v", absolutePath, config.Media.At, err)
 				}
 			}
 		}
@@ -222,6 +235,9 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	if err != nil {
 		println(err.Error())
 	}
+
+	ctx.Spinner.Stop()
+
 	return nil
 }
 
@@ -300,7 +316,7 @@ func (ctx *RunContext) ProgressFileData() ProgressFile {
 	return ProgressFile{
 		Total:     ctx.Progress.Total,
 		Processed: ctx.Progress.Current,
-		Percent:   int(math.Floor((float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100))),
+		Percent:   int(math.Floor(float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100)),
 		Current: struct {
 			ID         string
 			Step       BuildStep

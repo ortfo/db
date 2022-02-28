@@ -1,7 +1,6 @@
 package ortfodb
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	jsoniter "github.com/json-iterator/go"
@@ -44,28 +43,14 @@ type ProgressDetails struct {
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
 func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
-	// fmt.Print("\033[2K\r")
 	ctx.Progress.Step = step
 	ctx.Progress.Resolution = details.Resolution
 	ctx.Progress.File = details.File
 
-	var message string
-	switch step {
-	case StepColorExtraction:
-		message = fmt.Sprintf("Extracting colors from %s", details.File)
-	case StepDescription:
-		message = fmt.Sprintf("Parsing description %s", details.File)
-	case StepMediaAnalysis:
-		message = fmt.Sprintf("Analyzing media %s", details.File)
-	case StepThumbnails:
-		message = fmt.Sprintf("Generating thumbnails for %s", details.File)
-	}
-
-	fmt.Printf("\033[2K\r[%03d] %s: %s", ctx.ProgressFileData().Percent, ctx.CurrentWorkID, message)
-
+	ctx.UpdateSpinner()
 	err := ctx.WriteProgressFile()
 	if err != nil {
-		fmt.Println("couldn't write progress file:", err)
+		ctx.LogError("Couldn't write to progress file:", err)
 	}
 }
 
@@ -73,6 +58,7 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 func (ctx *RunContext) IncrementProgress() error {
 	ctx.Progress.Current++
 
+	ctx.UpdateSpinner()
 	return ctx.WriteProgressFile()
 }
 
