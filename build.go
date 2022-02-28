@@ -208,13 +208,13 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 	}
 
 	// Output it
-	err = writeFile(outputFilename, worksJSON)
-	if !flags.Silent {
-		fmt.Print("\033[2K\r\n")
-		println(string(worksJSON))
-	}
-	if err != nil {
-		println(err.Error())
+	if outputFilename == "-" {
+		fmt.Println(string(worksJSON))
+	} else {
+		err = writeFile(outputFilename, worksJSON)
+		if err != nil {
+			println(err.Error())
+		}
 	}
 
 	// Update the the build metadata file

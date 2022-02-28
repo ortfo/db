@@ -36,6 +36,7 @@ Commands:
     Scan in <from-directory> for folders with description.md files
     (and potential media files)
     and compile the whole database into a JSON file at <to-filepath>
+	If <to-filepath> is "-", the output will be written to stdout.
 
   replicate <from-filepath> <to-directory>
     The reverse operation of 'build'.
