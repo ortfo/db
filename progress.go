@@ -10,10 +10,10 @@ import (
 type BuildStep string
 
 const (
-	StepThumbnails      = "thumbnails"
-	StepMediaAnalysis   = "media analysis"
-	StepDescription     = "description"
-	StepColorExtraction = "color extraction"
+	StepThumbnails      BuildStep = "thumbnails"
+	StepMediaAnalysis   BuildStep = "media analysis"
+	StepDescription     BuildStep = "description"
+	StepColorExtraction BuildStep = "color extraction"
 )
 
 // ProgressFile holds the data that gets written to the progress file as JSON.
