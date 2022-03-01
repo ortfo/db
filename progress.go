@@ -51,7 +51,7 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 	ctx.UpdateSpinner()
 	err := ctx.WriteProgressFile()
 	if err != nil {
-		ctx.LogError("Couldn't write to progress file:", err)
+		ctx.LogError("Couldn't write to progress file: %s", err)
 	}
 }
 
