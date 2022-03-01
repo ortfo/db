@@ -4,18 +4,20 @@ package ortfodb
 // Used to go from a ParsedDescription struct to a Work struct.
 
 import (
+	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/metal3d/go-slugify"
+	ffmpeg "github.com/ssttevee/go-ffmpeg"
 	"github.com/tcolgate/mp3"
-	"gitlab.com/opennota/screengen"
 )
 
 // ImageDimensions represents metadata about a media as it's extracted from its file.
@@ -159,19 +161,32 @@ func AnalyzeAudio(file *os.File) uint {
 
 // AnalyzeVideo returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
 func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, hasSound bool, err error) {
-	video, err := screengen.NewGenerator(filename)
+	probe, err := ffmpeg.DefaultConfiguration()
 	if err != nil {
 		return
 	}
-	height := video.Height()
-	width := video.Width()
-	dimensions = ImageDimensions{
-		Height:      height,
-		Width:       width,
-		AspectRatio: float32(width) / float32(height),
+	_, video, err := probe.Probe(filename)
+	if err != nil {
+		return
 	}
-	duration = uint(video.Duration) / 1000
-	hasSound = video.AudioCodec != ""
+	for _, stream := range video.Streams {
+		if stream.CodecType == "audio" {
+			hasSound = true
+		}
+		if stream.CodecType == "video" {
+			dimensions = ImageDimensions{
+				Height:      stream.Height,
+				Width:       stream.Width,
+				AspectRatio: float32(stream.Width) / float32(stream.Height),
+			}
+		}
+	}
+	durationFloat, parseErr := strconv.ParseFloat(video.Format.Duration, 64)
+	if parseErr != nil {
+		err = fmt.Errorf("couldn't convert media duration %#v to number: %w", video.Format.Duration, parseErr)
+		return
+	}
+	duration = uint(durationFloat)
 	return
 }
 

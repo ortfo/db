@@ -16,11 +16,11 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/oliamb/cutter v0.2.2 // indirect
+	github.com/ssttevee/go-ffmpeg v0.2.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/theckman/yacspin v0.13.12
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yuin/goldmark v1.3.7 // indirect
-	gitlab.com/opennota/screengen v0.0.0-20191122132138-74a8d677a1a5
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
