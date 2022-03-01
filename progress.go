@@ -2,6 +2,7 @@ package ortfodb
 
 import (
 	"io/ioutil"
+	"math"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -75,4 +76,26 @@ func (ctx *RunContext) WriteProgressFile() error {
 	}
 
 	return ioutil.WriteFile(ctx.Flags.ProgressFile, progressDataJSON, 0644)
+}
+
+// ProgressFileData returns a ProgressData struct ready to be marshalled to JSON for --write-progress.
+func (ctx *RunContext) ProgressFileData() ProgressFile {
+	return ProgressFile{
+		Total:     ctx.Progress.Total,
+		Processed: ctx.Progress.Current,
+		Percent:   int(math.Floor(float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100)),
+		Current: struct {
+			ID         string
+			Step       BuildStep
+			Resolution int
+			File       string
+			Language   string
+		}{
+			ID:         ctx.CurrentWorkID,
+			Step:       ctx.Progress.Step,
+			Resolution: ctx.Progress.Resolution,
+			File:       ctx.Progress.File,
+			Language:   "",
+		},
+	}
 }

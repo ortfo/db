@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
-	"math"
 	"os"
 	"time"
 
@@ -309,24 +308,4 @@ func (ctx *RunContext) NeedsRebuiling(absolutePath string) bool {
 		return true
 	}
 	return fileMeta.ModTime().After(metadata.PreviousBuildDate)
-}
-
-// ProgressFileData returns a ProgressData struct ready to be marshalled to JSON for --write-progress.
-func (ctx *RunContext) ProgressFileData() ProgressFile {
-	return ProgressFile{
-		Total:     ctx.Progress.Total,
-		Processed: ctx.Progress.Current,
-		Percent:   int(math.Floor(float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100)),
-		Current: struct {
-			ID         string
-			Step       BuildStep
-			Resolution int
-			File       string
-		}{
-			ID:         ctx.CurrentWorkID,
-			Step:       ctx.Progress.Step,
-			Resolution: ctx.Progress.Resolution,
-			File:       ctx.Progress.File,
-		},
-	}
 }
