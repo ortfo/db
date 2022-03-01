@@ -42,14 +42,14 @@ type Spinner interface {
 	Unpause() error
 }
 
-type DummySpinner struct {
+type dummySpinner struct {
 }
 
-func (d DummySpinner) Start() error   { return nil }
-func (d DummySpinner) Stop() error    { return nil }
-func (d DummySpinner) Message(string) {}
-func (d DummySpinner) Pause() error   { return nil }
-func (d DummySpinner) Unpause() error { return nil }
+func (d dummySpinner) Start() error   { return nil }
+func (d dummySpinner) Stop() error    { return nil }
+func (d dummySpinner) Message(string) {}
+func (d dummySpinner) Pause() error   { return nil }
+func (d dummySpinner) Unpause() error { return nil }
 
 func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 	writer := os.Stdout
@@ -75,10 +75,10 @@ func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 
 	if err != nil {
 		ctx.LogError("Couldn't start spinner: %s", err)
-		return DummySpinner{}
+		return dummySpinner{}
 	}
 	if ctx.Flags.Silent {
-		return DummySpinner{}
+		return dummySpinner{}
 	}
 
 	return spinner
