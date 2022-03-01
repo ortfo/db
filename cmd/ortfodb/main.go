@@ -118,6 +118,8 @@ Build Progress:
 			media the colors are being extracted from, or
 			the description.md file when parsing description
 		)
+		language: Unused. Only here for consistency with ortfo/mk's --write-progress
+		output: Unused. Only here for consistency with ortfo/mk's --write-progress
 	}
 `
 

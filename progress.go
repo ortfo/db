@@ -34,6 +34,10 @@ type ProgressFile struct {
 		//
 		// - the description.md file when parsing description
 		File string
+		// Unused. Only here for consistency with ortfo/mk's --write-progress
+		Language string
+		// Unused. Only here for consistency with ortfo/mk's --write-progress
+		Output string
 	}
 }
 
@@ -90,12 +94,14 @@ func (ctx *RunContext) ProgressFileData() ProgressFile {
 			Resolution int
 			File       string
 			Language   string
+			Output     string
 		}{
 			ID:         ctx.CurrentWorkID,
 			Step:       ctx.Progress.Step,
 			Resolution: ctx.Progress.Resolution,
 			File:       ctx.Progress.File,
 			Language:   "",
+			Output:     "",
 		},
 	}
 }
