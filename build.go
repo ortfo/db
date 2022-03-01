@@ -128,7 +128,6 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 		// Update the UI
 		ctx.CurrentWorkID = workID
-		ctx.IncrementProgress()
 
 		// Parse the description
 		descriptionRaw, err := ioutil.ReadFile(descriptionFilename)
@@ -208,6 +207,7 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 			Footnotes:  description.Footnotes,
 		}
 		works = append(works, work)
+		ctx.IncrementProgress()
 	}
 
 	// Compile the database
