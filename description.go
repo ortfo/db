@@ -68,8 +68,8 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
 	links := make(map[string][]Link)
 	title := make(map[string]string)
-	footnotes := make(map[string][]Footnote)
-	abbreviations := make(map[string][]Abbreviation)
+	footnotes := make(map[string]Footnotes)
+	abbreviations := make(map[string]Abbreviations)
 	for _, language := range allLanguages {
 		// Unlocalized stuff appears the same in every language.
 		raw := notLocalizedRaw
@@ -88,17 +88,11 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedDescription {
 	}
 }
 
-// Abbreviation represents an abbreviation declaration in a description.md file.
-type Abbreviation struct {
-	Name       string
-	Definition string
-}
+// Abbreviations represents the abbreviations declared in a description.md file.
+type Abbreviations map[string]string
 
-// Footnote represents a footnote declaration in a description.md file.
-type Footnote struct {
-	Name    string
-	Content string
-}
+// Footnotes represents the footnote declarations in a description.md file.
+type Footnotes map[string]string
 
 // Paragraph represents a paragraph declaration in a description.md file.
 type Paragraph struct {
@@ -122,7 +116,7 @@ type Work struct {
 	Paragraphs map[string][]Paragraph
 	Media      map[string][]Media
 	Links      map[string][]Link
-	Footnotes  map[string][]Footnote
+	Footnotes  map[string]Footnotes
 }
 
 // MediaEmbedDeclaration represents media embeds. (abusing the ![]() syntax to extend it to any file).
@@ -150,7 +144,7 @@ type ParsedDescription struct {
 	Paragraphs             map[string][]Paragraph
 	MediaEmbedDeclarations map[string][]MediaEmbedDeclaration
 	Links                  map[string][]Link
-	Footnotes              map[string][]Footnote
+	Footnotes              map[string]Footnotes
 }
 
 // SplitOnLanguageMarkers returns two values:
@@ -178,15 +172,15 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 
 // ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
-func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, []Footnote, []Abbreviation) {
+func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, Footnotes, Abbreviations) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := MarkdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
 	paragraphs := make([]Paragraph, 0)
 	mediae := make([]MediaEmbedDeclaration, 0)
 	links := make([]Link, 0)
-	footnotes := make([]Footnote, 0)
-	abbreviations := make([]Abbreviation, 0)
+	footnotes := make(Footnotes)
+	abbreviations := make(Abbreviations)
 	paragraphLike := make([]soup.Root, 0)
 	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
 	for _, element := range htmlTree.Find("body").Children() {
@@ -222,10 +216,7 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		} else if regexpMatches(PatternAbbreviationDefinition, innerHTML(paragraph)) {
 			// An abbreviation definition
 			groups := regexpGroups(PatternAbbreviationDefinition, innerHTML(paragraph))
-			abbreviations = append(abbreviations, Abbreviation{
-				Name:       groups[1],
-				Definition: groups[2],
-			})
+			abbreviations[groups[1]] = groups[2]
 		} else if regexpMatches(PatternLanguageMarker, innerHTML(paragraph)) {
 			// A language marker (ignored)
 			continue
@@ -241,10 +232,7 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	for _, div := range htmlTree.FindAll("div") {
 		if div.Attrs()["class"] == "footnotes" {
 			for _, li := range div.FindAll("li") {
-				footnotes = append(footnotes, Footnote{
-					Name:    strings.TrimPrefix(li.Attrs()["id"], "fn:"),
-					Content: innerHTML(li),
-				})
+				footnotes[strings.TrimPrefix(li.Attrs()["id"], "fn:")] = innerHTML(li)
 			}
 		}
 	}
@@ -356,11 +344,11 @@ func MarkdownToHTML(markdownRaw string) string {
 }
 
 // ReplaceAbbreviations processes the given Paragraph to replace abbreviations.
-func ReplaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations []Abbreviation) Paragraph {
+func ReplaceAbbreviations(paragraph Paragraph, currentLanguageAbbreviations Abbreviations) Paragraph {
 	processed := paragraph.Content
-	for _, abbreviation := range currentLanguageAbbreviations {
-		var replacePattern = regexp.MustCompile(`\b` + abbreviation.Name + `\b`)
-		processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+abbreviation.Definition+"\">"+abbreviation.Name+"</abbr>")
+	for name, definition := range currentLanguageAbbreviations {
+		var replacePattern = regexp.MustCompile(`\b` + name + `\b`)
+		processed = replacePattern.ReplaceAllString(paragraph.Content, "<abbr title=\""+definition+"\">"+name+"</abbr>")
 	}
 
 	return Paragraph{Content: processed}

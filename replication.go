@@ -151,7 +151,7 @@ func replicateLocalizedBlock(work ParsedDescription, language string) (string, e
 	var result string
 	end := "\n\n"
 	// Abbreviations will be stored here to declare them in the markdown
-	abbreviations := make([]Abbreviation, 0)
+	abbreviations := make(Abbreviations)
 	// Start with the title
 	if work.Title[language] != "" {
 		result += replicateTitle(work.Title[language]) + end
@@ -167,7 +167,7 @@ func replicateLocalizedBlock(work ParsedDescription, language string) (string, e
 		}
 		// This is not finished: we need to properly translate to markdown abbreviations & footnotes
 		parsedHTML := soup.HTMLParse(replicatedParagraph)
-		abbreviations = append(abbreviations, collectAbbreviations(parsedHTML)...)
+		abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
 		replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
 		replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
 		result += replicatedParagraph + end
@@ -175,8 +175,8 @@ func replicateLocalizedBlock(work ParsedDescription, language string) (string, e
 	for _, link := range work.Links[language] {
 		result += replicateLink(link) + end
 	}
-	for _, footnote := range work.Footnotes[language] {
-		result += replicateFootnoteDefinition(footnote) + end
+	for name, content := range work.Footnotes[language] {
+		result += replicateFootnoteDefinition(name, content) + end
 	}
 	result += replicateAbbreviations(abbreviations)
 	return result, nil
@@ -210,34 +210,31 @@ func transformAbbreviations(htmlSoup soup.Root, markdown string) string {
 	return transformedMarkdown
 }
 
-func collectAbbreviations(htmlSoup soup.Root) []Abbreviation {
-	abbreviations := make([]Abbreviation, 0)
+func collectAbbreviations(htmlSoup soup.Root) Abbreviations {
+	abbreviations := make(Abbreviations)
 	for _, abbr := range htmlSoup.FindAll("abbr") {
-		abbreviations = append(abbreviations, Abbreviation{
-			Definition: abbr.Attrs()["title"],
-			Name:       abbr.FullText(),
-		})
+		abbreviations[abbr.FullText()] = abbr.Attrs()["title"]
 	}
 	return abbreviations
 }
 
 // We replicate all abbreviations in one function to avoid duplicates.
-func replicateAbbreviations(abbreviations []Abbreviation) string {
+func replicateAbbreviations(abbreviations Abbreviations) string {
 	var result string
 	// Stores all the alread-replicated abbreviations' names (to handle duplicates)
 	replicated := make([]string, 0, len(abbreviations))
-	for _, abbreviation := range abbreviations {
-		if stringInSlice(replicated, abbreviation.Name) {
+	for name, definition := range abbreviations {
+		if stringInSlice(replicated, name) {
 			continue
 		}
-		result += "*[" + abbreviation.Name + "]: " + abbreviation.Definition
-		replicated = append(replicated, abbreviation.Name)
+		result += "*[" + name + "]: " + definition
+		replicated = append(replicated, definition)
 	}
 	return result
 }
 
-func replicateFootnoteDefinition(footnote Footnote) string {
-	return "[^" + footnote.Name + "]: " + footnote.Content
+func replicateFootnoteDefinition(name string, content string) string {
+	return "[^" + name + "]: " + content
 }
 
 func replicateLink(link Link) string {

@@ -141,3 +141,14 @@ func mapKeys(m map[string]string) []string {
 func filepathBaseNoExt(pth string) string {
 	return strings.TrimSuffix(filepath.Base(pth), path.Ext(pth))
 }
+
+// merge merges the given maps. Conflicting keys are overwritten by the values of the latest map with that key.
+func merge[K comparable, V any](maps ...map[K]V) map[K]V {
+	result := make(map[K]V)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
+	}
+	return result
+}
