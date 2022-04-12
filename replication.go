@@ -166,7 +166,7 @@ func replicateLocalizedBlock(work ParsedDescription, language string) (string, e
 			return "", err
 		}
 		// This is not finished: we need to properly translate to markdown abbreviations & footnotes
-		parsedHTML := soup.HTMLParse(replicatedParagraph)
+		parsedHTML := soup.HTMLParse(paragraph.Content)
 		abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
 		replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
 		replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
@@ -227,7 +227,7 @@ func replicateAbbreviations(abbreviations Abbreviations) string {
 		if stringInSlice(replicated, name) {
 			continue
 		}
-		result += "*[" + name + "]: " + definition
+		result += "*[" + name + "]: " + definition + "\n"
 		replicated = append(replicated, definition)
 	}
 	return result
