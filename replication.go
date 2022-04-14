@@ -253,7 +253,7 @@ func replicateMetadata(metadata map[string]interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "---\n" + string(yamlBytes) + "\n---", nil
+	return "---\n" + string(yamlBytes) + "---", nil
 }
 
 //TODO: configure whether to use >[]() syntax: never, or only for non-images
@@ -268,6 +268,9 @@ func replicateParagraph(p Paragraph) (string, error) {
 	markdown, err := htmlToMarkdown(p.Content)
 	if err != nil {
 		return "", err
+	}
+	if strings.TrimSpace(markdown) == "" {
+		markdown = "<p></p>"
 	}
 	var result string
 	if p.ID != "" {
