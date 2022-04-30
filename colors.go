@@ -76,7 +76,7 @@ func kmeans(img image.Image) (ExtractedColors, error) {
 	if err != nil {
 		return ExtractedColors{}, err
 	}
-	colors := make([]string, 3)
+	colors := make([]string, 0)
 	for _, centroid := range centroids {
 		colors = append(colors, centroid.AsString())
 	}
