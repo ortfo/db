@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mitchellh/go-homedir"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
@@ -113,6 +114,11 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 
 	// Remove trailing slash(es) from folder name.
 	config.ScatteredModeFolder = strings.TrimRight(config.ScatteredModeFolder, "/\\")
+
+	// Expand ~
+	config.MakeThumbnails.FileNameTemplate, err = homedir.Expand(config.MakeThumbnails.FileNameTemplate)
+	config.Media.At, err = homedir.Expand(config.Media.At)
+	config.BuildMetadataFilepath, err = homedir.Expand(config.BuildMetadataFilepath)
 
 	return config, err
 }
