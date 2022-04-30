@@ -232,7 +232,7 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 	for _, div := range htmlTree.FindAll("div") {
 		if div.Attrs()["class"] == "footnotes" {
 			for _, li := range div.FindAll("li") {
-				footnotes[strings.TrimPrefix(li.Attrs()["id"], "fn:")] = innerHTML(li)
+				footnotes[strings.TrimPrefix(li.Attrs()["id"], "fn:")] = trimHTMLWhitespace(innerHTML(li))
 			}
 		}
 	}
@@ -245,6 +245,20 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		processedParagraphs = append(processedParagraphs, ReplaceAbbreviations(paragraph, abbreviations))
 	}
 	return title, processedParagraphs, mediae, links, footnotes, abbreviations
+}
+
+// trimHTMLWhitespace removes whitespace from the beginning and end of an HTML string, also removing leading & trailing <br> tags.
+func trimHTMLWhitespace(rawHTML string) string {
+	rawHTML = strings.TrimSpace(rawHTML)
+	for _, toRemove := range []string{"<br>", "<br />", "<br/>"} {
+		for strings.HasPrefix(rawHTML, toRemove) {
+			rawHTML = strings.TrimPrefix(rawHTML, toRemove)
+		}
+		for strings.HasSuffix(rawHTML, toRemove) {
+			rawHTML = strings.TrimSuffix(rawHTML, toRemove)
+		}
+	}
+	return rawHTML
 }
 
 // HandleAltMediaEmbedSyntax handles the >[...](...) syntax by replacing it in htmlRaw with ![...](...).

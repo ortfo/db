@@ -28,7 +28,9 @@ Some paragraph, an empty one is below, beware!
 
 <p></p>
 
-HAHA!
+HAHA![^1]
+
+[^1]: By the way, this shouldn't have trailing <br>'s!
 
 `)
 
@@ -59,7 +61,7 @@ HAHA!
 				},
 				{
 					ID:      "",
-					Content: "<p>HAHA!</p>",
+					Content: "<p>HAHA!<sup class=\"footnote-ref\" id=\"fnref:1\"><a href=\"#fn:1\">1</a></sup></p>",
 				},
 			},
 		},
@@ -73,7 +75,9 @@ HAHA!
 		},
 		Footnotes: map[string]Footnotes{
 			"fr": {},
-			"en": {},
+			"en": {
+				"1": "By the way, this shouldn’t have trailing <br/>’s!",
+			},
 		},
 	}
 
