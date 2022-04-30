@@ -7,6 +7,7 @@ import (
 
 	"github.com/EdlinOrg/prominentcolor"
 	"github.com/gabriel-vasile/mimetype"
+	_ "golang.org/x/image/webp"
 )
 
 // ExtractedColors reprensents the object in a Work's metadata.colors.
