@@ -83,3 +83,19 @@ HAHA![^1]
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestImageCaptions(t *testing.T) {
+	_, _, actual, _, _, _ := ParseSingleLanguageDescription(`![some alt text "right “there" “here”](https://example.com/source "the title “here”")`)
+	expected := []MediaEmbedDeclaration{
+		{
+			Alt: `some alt text “right “there” “here”`,
+			Title: `the title “here”`,
+			Source: "https://example.com/source",
+			Attributes: MediaAttributes{
+				Controls: true,
+			},
+		},
+	}
+	assert.Equal(t, expected, actual)
+
+}

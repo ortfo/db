@@ -172,15 +172,15 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 
 // ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
-func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []MediaEmbedDeclaration, []Link, Footnotes, Abbreviations) {
+func ParseSingleLanguageDescription(markdownRaw string) (title string, paragraphs []Paragraph, mediae []MediaEmbedDeclaration, links []Link, footnotes Footnotes, abbreviations Abbreviations) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := MarkdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
-	paragraphs := make([]Paragraph, 0)
-	mediae := make([]MediaEmbedDeclaration, 0)
-	links := make([]Link, 0)
-	footnotes := make(Footnotes)
-	abbreviations := make(Abbreviations)
+	paragraphs = make([]Paragraph, 0)
+	mediae = make([]MediaEmbedDeclaration, 0)
+	links = make([]Link, 0)
+	footnotes = make(Footnotes)
+	abbreviations = make(Abbreviations)
 	paragraphLike := make([]soup.Root, 0)
 	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
 	for _, element := range htmlTree.Find("body").Children() {
@@ -197,11 +197,10 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 		}
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			// A media embed
-			alt, title := ExtractTitleFromMediaAlt(firstChild.Attrs()["alt"])
-			alt, attributes := ExtractAttributesFromAlt(alt)
+			alt, attributes := ExtractAttributesFromAlt(firstChild.Attrs()["alt"])
 			mediae = append(mediae, MediaEmbedDeclaration{
 				Alt:        alt,
-				Title:      title,
+				Title:      firstChild.Attrs()["title"],
 				Source:     firstChild.Attrs()["src"],
 				Attributes: attributes,
 			})
@@ -228,11 +227,13 @@ func ParseSingleLanguageDescription(markdownRaw string) (string, []Paragraph, []
 			})
 		}
 	}
-	title := innerHTML(htmlTree.Find("h1"))
-	for _, div := range htmlTree.FindAll("div") {
-		if div.Attrs()["class"] == "footnotes" {
-			for _, li := range div.FindAll("li") {
-				footnotes[strings.TrimPrefix(li.Attrs()["id"], "fn:")] = trimHTMLWhitespace(innerHTML(li))
+	if h1 := htmlTree.Find("h1"); h1.Error == nil {
+		title = innerHTML(h1)
+		for _, div := range htmlTree.FindAll("div") {
+			if div.Attrs()["class"] == "footnotes" {
+				for _, li := range div.FindAll("li") {
+					footnotes[strings.TrimPrefix(li.Attrs()["id"], "fn:")] = trimHTMLWhitespace(innerHTML(li))
+				}
 			}
 		}
 	}
@@ -266,28 +267,6 @@ func HandleAltMediaEmbedSyntax(markdownRaw string) string {
 	pattern := regexp.MustCompile(`(?m)^>(\[[^\]]+\]\([^)]+\)\s*)$`)
 	return pattern.ReplaceAllString(markdownRaw, "!$1")
 }
-
-// ExtractTitleFromMediaAlt extracts the title from the alt attribute's value by considering that a string starting with “ and ending with ” at the end of the alt is the title.
-func ExtractTitleFromMediaAlt(altAttribute string) (string, string) {
-	alt, title := "", ""
-	var inTitleDecl bool
-	var prevRune rune
-	// ideaseed “Ideaseed’s wordmark”
-	for _, curRune := range altAttribute {
-		if curRune == '“' && prevRune == ' ' {
-			inTitleDecl = true
-		} else if curRune == '”' {
-			inTitleDecl = false
-		} else if inTitleDecl {
-			title += string(curRune)
-		} else {
-			alt += string(curRune)
-		}
-		prevRune = rune(curRune)
-	}
-	return strings.TrimSpace(alt), strings.TrimSpace(title)
-}
-
 // ExtractAttributesFromAlt extracts sigils from the end of the alt attribute, returns the alt without them as well as the parse result.
 func ExtractAttributesFromAlt(alt string) (string, MediaAttributes) {
 	attrs := MediaAttributes{
