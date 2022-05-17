@@ -17,7 +17,7 @@ import (
 const (
 	PatternLanguageMarker         string = `^::\s+(.+)$`
 	PatternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
-	RuneLooped                    rune   = '~'
+	RuneLoop                      rune   = '~'
 	RuneAutoplay                  rune   = '>'
 	RuneHideControls              rune   = '='
 )
@@ -130,7 +130,7 @@ type MediaEmbedDeclaration struct {
 
 // MediaAttributes stores which HTML attributes should be added to the media.
 type MediaAttributes struct {
-	Looped      bool // Controlled with attribute character ~ (adds)
+	Loop        bool // Controlled with attribute character ~ (adds)
 	Autoplay    bool // Controlled with attribute character > (adds)
 	Muted       bool // Controlled with attribute character > (adds)
 	Playsinline bool // Controlled with attribute character = (adds)
@@ -267,6 +267,7 @@ func HandleAltMediaEmbedSyntax(markdownRaw string) string {
 	pattern := regexp.MustCompile(`(?m)^>(\[[^\]]+\]\([^)]+\)\s*)$`)
 	return pattern.ReplaceAllString(markdownRaw, "!$1")
 }
+
 // ExtractAttributesFromAlt extracts sigils from the end of the alt attribute, returns the alt without them as well as the parse result.
 func ExtractAttributesFromAlt(alt string) (string, MediaAttributes) {
 	attrs := MediaAttributes{
@@ -277,36 +278,35 @@ func ExtractAttributesFromAlt(alt string) (string, MediaAttributes) {
 	if !isMediaEmbedAttribute(lastRune) {
 		return alt, attrs
 	}
-	returnedAlt := ""
+	altText := ""
 	// We iterate backwards:
 	// if there are attributes, they'll be at the end of the alt text separated by a space
 	inAttributesZone := true
 	for i := len([]rune(alt)) - 1; i >= 0; i-- {
-		revChar := []rune(alt)[i]
-		if revChar == ' ' && inAttributesZone {
+		char := []rune(alt)[i]
+		if char == ' ' && inAttributesZone {
 			inAttributesZone = false
 			continue
 		}
 		if inAttributesZone {
-			if revChar == RuneAutoplay {
+			if char == RuneAutoplay {
 				attrs.Autoplay = true
 				attrs.Muted = true
-			} else if revChar == RuneLooped {
-				attrs.Looped = true
-			} else if revChar == RuneHideControls {
+			} else if char == RuneLoop {
+				attrs.Loop = true
+			} else if char == RuneHideControls {
 				attrs.Controls = false
 				attrs.Playsinline = true
 			}
 		} else {
-			// TODO better variable name
-			returnedAlt = string(revChar) + returnedAlt
+			altText = string(char) + altText
 		}
 	}
-	return returnedAlt, attrs
+	return altText, attrs
 }
 
 func isMediaEmbedAttribute(char rune) bool {
-	return char == RuneAutoplay || char == RuneLooped || char == RuneHideControls
+	return char == RuneAutoplay || char == RuneLoop || char == RuneHideControls
 }
 
 // innerHTML returns the HTML string of what's _inside_ the given element, just like JS' `element.innerHTML`.

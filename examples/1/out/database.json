@@ -46,7 +46,7 @@
                     "duration": 0,
                     "online": false,
                     "attributes": {
-                        "looped": false,
+                        "loop": false,
                         "autoplay": false,
                         "muted": false,
                         "playsinline": false,
@@ -72,7 +72,7 @@
                     "duration": 0,
                     "online": false,
                     "attributes": {
-                        "looped": false,
+                        "loop": false,
                         "autoplay": false,
                         "muted": false,
                         "playsinline": false,

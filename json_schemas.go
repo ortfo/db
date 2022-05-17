@@ -289,9 +289,9 @@ const databaseJSONSchema = `{
 							"attributes": {
 								"type": "object",
 								"properties": {
-									"looped": {
+									"loop": {
 										"type": "boolean",
-										"description": "Whether to add looped to the potential HTML element's attributes (<video>, <audio>)."
+										"description": "Whether to add loop to the potential HTML element's attributes (<video>, <audio>)."
 									},
 									"autoplay": {
 										"type": "boolean",
