@@ -14,6 +14,7 @@ import (
 	"path"
 
 	jsoniter "github.com/json-iterator/go"
+	recurcopy "github.com/plus3it/gorecurcopy"
 	"gopkg.in/yaml.v2"
 )
 
@@ -152,8 +153,11 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 
 		for _, mediae := range analyzedMediae {
 			for _, media := range mediae {
+				var content []byte
 				absolutePath := path.Join(dirEntryAbsPath, media.Path)
-				content, err := os.ReadFile(absolutePath)
+				if media.ContentType != "directory" {
+					content, err = os.ReadFile(absolutePath)
+				}
 				if err != nil {
 					ctx.LogError("could not copy %s to %s: %v", absolutePath, config.Media.At, err)
 				}
@@ -161,8 +165,11 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 				if err != nil {
 					return fmt.Errorf("could not create output directory for %s: %w", ctx.AbsolutePathToMedia(media), err)
 				}
-
-				err = os.WriteFile(ctx.AbsolutePathToMedia(media), content, 0777)
+				if media.ContentType == "directory" {
+					err = recurcopy.CopyDirectory(absolutePath, ctx.AbsolutePathToMedia(media))
+				} else {
+					err = os.WriteFile(ctx.AbsolutePathToMedia(media), content, 0777)
+				}
 				if err != nil {
 					ctx.LogError("could not copy %s to %s: %v", absolutePath, config.Media.At, err)
 				}

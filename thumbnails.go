@@ -12,7 +12,25 @@ import (
 	"strings"
 )
 
-//TODO: convert GIFs from `online: True` sources (YouTube, Dailymotion, Vimeo, you name it.). Might want to look at <https://github.com/hunterlong/gifs>
+var ThumbnailableContentTypes = []string{"image/*", "video/*", "application/pdf"}
+
+func (m Media) Thumbnailable() bool {
+	// TODO
+	if m.Online {
+		return false
+	}
+
+	for _, contentTypePattern := range ThumbnailableContentTypes {
+		match, err := filepath.Match(contentTypePattern, m.ContentType)
+		if err != nil {
+			panic(err)
+		}
+		if match {
+			return true
+		}
+	}
+	return false
+}
 
 // StepMakeThumbnails executes the step "make thumbnails" and returns a new metadata object with a new thumbnails entry mapping a file's path relative to the database directory to a map mapping a size to a absolute thumbnail filepath.
 // It assumes that several commands are available to the shell:
@@ -24,6 +42,9 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 	madeThumbnails := make(map[string]map[uint16]string)
 	for lang, mediae := range mediae {
 		for _, media := range mediae {
+			if !media.Thumbnailable() {
+				continue
+			}
 			madeThumbnails[media.Path] = make(map[uint16]string)
 			for _, size := range ctx.Config.MakeThumbnails.Sizes {
 				saveTo := ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang)

@@ -14,6 +14,7 @@ require (
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/plus3it/gorecurcopy v0.0.1
 	github.com/ssttevee/go-ffmpeg v0.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300

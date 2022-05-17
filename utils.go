@@ -152,3 +152,23 @@ func merge[K comparable, V any](maps ...map[K]V) map[K]V {
 	}
 	return result
 }
+
+// some returns true if predicate evaluates to true on any of the haystack elements
+func some[T any](haystack []T, predicate func(T) bool) bool {
+	for _, v := range haystack {
+		if predicate(v) {
+			return true
+		}
+	}
+	return false
+}
+
+// all returns true if predicate evaluates to true on all of the haystack elements
+func all[T any](haystack []T, predicate func(T) bool) bool {
+	for _, v := range haystack {
+		if !predicate(v) {
+			return false
+		}
+	}
+	return true
+}
