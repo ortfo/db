@@ -6,8 +6,22 @@ package ortfodb
 import (
 	"fmt"
 	"image"
+
+	// Supported formats
+	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+
+	_ "github.com/hullerob/go.farbfeld"
+	_ "github.com/jbuchbinder/gopnm" // PBM, PGM and PPM
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/ccitt"
+	_ "golang.org/x/image/riff"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/vp8"
+	_ "golang.org/x/image/vp8l"
+	_ "golang.org/x/image/webp"
+
 	"os"
 	"path"
 	"path/filepath"
@@ -15,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
 	ffmpeg "github.com/ssttevee/go-ffmpeg"
 	"github.com/tcolgate/mp3"
@@ -73,9 +88,42 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	return ImageDimensions{width, height, ratio}, nil
 }
 
+// GetSVGDimensions returns an ImageDimensions object, given a pointer to a SVG file.
+// If neither viewBox nor width & height attributes are set, the resulting dimensions will be 0x0.
+func GetSVGDimensions(file *os.File) (ImageDimensions, error) {
+	svg, err := svg.Parse(file, svg.IgnoreErrorMode)
+	if err != nil {
+		return ImageDimensions{}, fmt.Errorf("while parsing SVG file: %w", err)
+	}
+
+	var height, width float64
+	if svg.Width != "" && svg.Height != "" {
+		height, err = strconv.ParseFloat(svg.Height, 32)
+		if err != nil {
+			return ImageDimensions{}, fmt.Errorf("cannot parse SVG height attribute as a number: %w", err)
+		}
+		width, err = strconv.ParseFloat(svg.Width, 32)
+		if err != nil {
+			return ImageDimensions{}, fmt.Errorf("cannot parse SVG width attribute as a number: %w", err)
+		}
+	} else if svg.ViewBox.H != 0 && svg.ViewBox.W != 0 {
+		height = float64(svg.ViewBox.H)
+		width = float64(svg.ViewBox.W)
+	} else {
+		return ImageDimensions{}, fmt.Errorf("cannot determine dimensions of SVG file")
+	}
+
+	return ImageDimensions{
+		Width:       int(width),
+		Height:      int(height),
+		AspectRatio: float32(width) / float32(height),
+	}, nil
+}
+
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
 	file, err := os.Open(filename)
+	defer file.Close()
 	if err != nil {
 		return Media{}, err
 	}
@@ -85,11 +133,16 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}
 
 	var contentType string
-	mimeType, err := mimetype.DetectFile(filename)
-	if err != nil {
-		contentType = "application/octet-stream"
+
+	if fileInfo.IsDir() {
+		contentType = "directory"
 	} else {
-		contentType = mimeType.String()
+		mimeType, err := mimetype.DetectFile(filename)
+		if err != nil {
+			contentType = "application/octet-stream"
+		} else {
+			contentType = mimeType.String()
+		}
 	}
 
 	isAudio := strings.HasPrefix(contentType, "audio/")
@@ -101,7 +154,11 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	var hasSound bool
 
 	if isImage {
-		dimensions, err = GetImageDimensions(file)
+		if contentType == "image/svg" || contentType == "image/svg+xml" {
+			dimensions, err = GetSVGDimensions(file)
+		} else {
+			dimensions, err = GetImageDimensions(file)
+		}
 		if err != nil {
 			return Media{}, err
 		}
