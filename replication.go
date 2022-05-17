@@ -78,6 +78,7 @@ func ReplicateOne(targetDatabase string, work Work) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	description, err := ReplicateDescription(work.ParsedDescription())
 	if err != nil {
 		return err

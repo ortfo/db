@@ -63,6 +63,7 @@ func ExtractColors(filename string) (ExtractedColors, error) {
 	if err != nil {
 		return ExtractedColors{}, err
 	}
+	defer file.Close()
 	img, _, err := image.Decode(file)
 	if err != nil {
 		return ExtractedColors{}, err

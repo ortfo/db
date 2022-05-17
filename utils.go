@@ -45,12 +45,9 @@ func writeFile(filename string, content []byte) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
+
 	_, err = f.Write(content)
-	if err != nil {
-		f.Close()
-		return err
-	}
-	err = f.Close()
 	if err != nil {
 		return err
 	}
