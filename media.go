@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/gen2brain/go-fitz"
 	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
 	ffmpeg "github.com/ssttevee/go-ffmpeg"
@@ -64,7 +65,7 @@ type Media struct {
 	ContentType string
 	Size        uint64 // In bytes
 	Dimensions  ImageDimensions
-	Duration    uint // In seconds
+	Duration    uint // In seconds (except for PDFs, where it is in page count)
 	Online      bool // Whether the media is hosted online (referred to by an URL)
 	Attributes  MediaAttributes
 	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
@@ -123,10 +124,10 @@ func GetSVGDimensions(file *os.File) (ImageDimensions, error) {
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
 	file, err := os.Open(filename)
-	defer file.Close()
 	if err != nil {
 		return Media{}, err
 	}
+	defer file.Close()
 	fileInfo, err := file.Stat()
 	if err != nil {
 		return Media{}, err
@@ -148,6 +149,7 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	isAudio := strings.HasPrefix(contentType, "audio/")
 	isVideo := strings.HasPrefix(contentType, "video/")
 	isImage := strings.HasPrefix(contentType, "image/")
+	isPDF := contentType == "application/pdf"
 
 	var dimensions ImageDimensions
 	var duration uint
@@ -174,6 +176,13 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	if isAudio {
 		duration = AnalyzeAudio(file)
 		hasSound = true
+	}
+
+	if isPDF {
+		dimensions, duration, err = AnalyzePDF(filename)
+		if err != nil {
+			return Media{}, err
+		}
 	}
 
 	return Media{
@@ -214,6 +223,30 @@ func AnalyzeAudio(file *os.File) uint {
 		}
 	}
 	return duration
+}
+
+// AnalyzePDF returns an ImageDimensions struct for the first page of the PDF file at filename. It also returns the number of pages.
+func AnalyzePDF(filename string) (dimensions ImageDimensions, pagesCount uint, err error) {
+	document, err := fitz.New(filename)
+	if err != nil {
+		return dimensions, pagesCount, fmt.Errorf("while opening PDF: %w", err)
+	}
+
+	defer document.Close()
+
+	firstPage, err := document.Image(1)
+	if err != nil {
+		return dimensions, pagesCount, fmt.Errorf("while getting an image of the PDF's first page: %w", err)
+	}
+
+	width := firstPage.Bounds().Size().X
+	height := firstPage.Bounds().Size().Y
+
+	return ImageDimensions{
+		Width:       int(width),
+		Height:      int(height),
+		AspectRatio: float32(width) / float32(height),
+	}, uint(document.NumPage()), nil
 }
 
 // AnalyzeVideo returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.
