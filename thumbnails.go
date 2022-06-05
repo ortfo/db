@@ -2,6 +2,8 @@ package ortfodb
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -38,28 +40,38 @@ func (m Media) Thumbnailable() bool {
 // ffmpegthumbnailer, and
 // pdftoppm.
 func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, projectID string, mediae map[string][]Media) (map[string]interface{}, error) {
-	alreadyMadeOnes := make([]string, 0)
 	madeThumbnails := make(map[string]map[uint16]string)
 	for lang, mediae := range mediae {
 		for _, media := range mediae {
 			if !media.Thumbnailable() {
 				continue
 			}
+			builtSizes := make([]uint16, 0)
 			madeThumbnails[media.Path] = make(map[uint16]string)
+			mediaHash := ""
+			mediaBytes, err := os.ReadFile(ctx.AbsolutePathToMedia(media))
+			if err == nil {
+				sum := md5.Sum(mediaBytes)
+				mediaHash = base64.StdEncoding.EncodeToString(sum[:])
+			} else {
+				ctx.LogError(err.Error())
+			}
+			cached, foundCache := ctx.BuildMetadata.MediaCache[mediaHash]
 			for _, size := range ctx.Config.MakeThumbnails.Sizes {
-				saveTo := ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang)
-				// Don't re-build already-built thumbs
-				if stringInSlice(alreadyMadeOnes, saveTo) {
-					madeThumbnails[media.Path][size] = saveTo
-					continue
-				}
-				// FIXME this is not good, GetBuildMetadata is called in every loop, and it reads a file...
-				if !ctx.NeedsRebuiling(saveTo) {
+				saveTo := ctx.ComputeOutputThumbnailFilename(media, projectID, size, lang, mediaHash)
+				// FIXME this is not good,BuildMetadata is called in every loop, and it reads a file...
+				if foundCache && !ThumbnailNeedsRebuilding(ctx.AbsolutePathToMedia(media), cached, size, saveTo) {
 					madeThumbnails[media.Path][size] = saveTo
 					continue
 				}
 				// Create potentially missing directories
 				os.MkdirAll(filepath.Dir(saveTo), 0777)
+
+				ctx.Status(StepThumbnails, ProgressDetails{
+					Resolution: int(size),
+					File:       ctx.AbsolutePathToMedia(media),
+					Hash:       mediaHash,
+				})
 
 				// Make the thumbnail
 				err := ctx.MakeThumbnail(media, size, saveTo)
@@ -68,10 +80,17 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 				// Don't return the error, because ending the whole build for one failed thumb would be too much.
 				if err != nil {
 					ctx.LogError(err.Error())
-					madeThumbnails[media.Path][size] = ""
+					delete(madeThumbnails[media.Path], size)
 				} else {
+					builtSizes = append(builtSizes, size)
 					madeThumbnails[media.Path][size] = saveTo
 				}
+			}
+			// Update the the build metadata file
+			ctx.UpdateBuildMetadata(mediaHash, ctx.AbsolutePathToMedia(media), media, builtSizes)
+			err = ctx.WriteBuildMetadata()
+			if err != nil {
+				ctx.LogError("coudln't write metadata build file: %s", err.Error())
 			}
 		}
 	}
@@ -79,13 +98,23 @@ func (ctx *RunContext) StepMakeThumbnails(metadata map[string]interface{}, proje
 	return metadata, nil
 }
 
+// ThumbnailNeedsRebuilding determines if the cached media is up to date for the requested thumbnail. If false is returned, the thumbnail needs to be built again.
+func ThumbnailNeedsRebuilding(path string, cached CachedMedia, size uint16, saveTo string) bool {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return true
+	}
+	for _, builtSize := range cached.BuiltThumbnailSizes {
+		if builtSize == size {
+			return false
+		}
+	}
+	return true
+}
+
 // MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image).
 // It returns the path where the thumbnail has been written to.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
-	ctx.Status(StepThumbnails, ProgressDetails{
-		Resolution: int(targetSize),
-		File:       ctx.AbsolutePathToMedia(media),
-	})
 	if media.ContentType == "image/gif" {
 		return ctx.makeGifThumbnail(media, targetSize, saveTo)
 	}
@@ -231,20 +260,20 @@ func run(command string, args ...string) error {
 	return nil
 }
 
-// ComputeOutputThumbnailFilename returns the filename where to save a thumbnail.
-// according to the configuration and the given information.
+// ComputeOutputThumbnailFilename returns the filename where to save a thumbnail,
+// using to the configuration and the given information.
 // file name templates are relative to the output database directory.
-// It uses media.Source because we might want to compute thumbnails of online media in the future.
 // Placeholders that will be replaced in the file name template:
 //
-// 		<project id> - the project's id
-// 		<media directory> - the value of media.at in the configuration
-// 		<basename> - the media's basename (with the extension)
-// 		<media id> - the media's id
-// 		<size> - the current thumbnail size
-// 		<extension> - the media's extension
-// 		<lang> - the current language.
-func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
+// 		<project id>          the project’s id
+// 		<media directory>     the value of media.at in the configuration
+// 		<basename>            the media’s basename (with the extension)
+// 		<media id>            the media’s id
+// 		<size>                the current thumbnail size
+// 		<extension>           the media’s extension
+// 		<lang>                the current language.
+// 		<hash>                the media’s base64-encoded md5 hash
+func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string, hash string) string {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
 	computed = strings.ReplaceAll(computed, "<work id>", projectID)
@@ -254,5 +283,6 @@ func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID str
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
 	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(ctx.AbsolutePathToMedia(media)), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)
+	computed = strings.ReplaceAll(computed, "<hash>", hash)
 	return computed
 }

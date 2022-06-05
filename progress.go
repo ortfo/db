@@ -44,6 +44,7 @@ type ProgressFile struct {
 type ProgressDetails struct {
 	Resolution int
 	File       string
+	Hash       string
 }
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
@@ -51,6 +52,7 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 	ctx.Progress.Step = step
 	ctx.Progress.Resolution = details.Resolution
 	ctx.Progress.File = details.File
+	ctx.Progress.Hash = details.Hash
 
 	ctx.UpdateSpinner()
 	err := ctx.WriteProgressFile()

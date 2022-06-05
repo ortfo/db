@@ -4,18 +4,19 @@
 package ortfodb
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"path"
 
 	jsoniter "github.com/json-iterator/go"
 	recurcopy "github.com/plus3it/gorecurcopy"
-	"gopkg.in/yaml.v2"
 )
 
 // RunContext holds several "global" references used throughout all the functions of a command.
@@ -34,8 +35,10 @@ type RunContext struct {
 		Resolution int
 		// See ProgressFile.Current.File in progress.go
 		File string
+		Hash string
 	}
-	Spinner Spinner
+	BuildMetadata BuildMetadata
+	Spinner       Spinner
 }
 
 type Flags struct {
@@ -71,11 +74,20 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		}
 	}
 
+	raw, err := os.ReadFile(config.BuildMetadataFilepath)
+	if err == nil {
+		var metadata BuildMetadata
+		err = json.Unmarshal(raw, &metadata)
+		if err == nil {
+			ctx.BuildMetadata = metadata
+		}
+	}
+
 	if ctx.Config.IsDefault {
 		ctx.LogInfo("No configuration file found. The default configuration was used.")
 	}
 
-	err := os.MkdirAll(config.Media.At, 0o755)
+	err = os.MkdirAll(config.Media.At, 0o755)
 	if err != nil {
 		return fmt.Errorf("while creating the media output directory: %w", err)
 	}
@@ -236,12 +248,6 @@ func Build(databaseDirectory string, outputFilename string, flags Flags, config 
 		}
 	}
 
-	// Update the the build metadata file
-	err = config.UpdateBuildMetadata()
-	if err != nil {
-		println(err.Error())
-	}
-
 	ctx.Spinner.Stop()
 
 	return nil
@@ -272,47 +278,42 @@ func ReadDescriptionFile(directory string) (string, error) {
 	return readFile(descriptionFilepath)
 }
 
-// UpdateBuildMetadata updates metadata about the latest build in config.BuildMetadataFilepath.
-// If the file does not exist, it creates it.
-func (config Configuration) UpdateBuildMetadata() (err error) {
-	var metadata BuildMetadata
-	if _, err = os.Stat(config.BuildMetadataFilepath); errors.Is(err, os.ErrNotExist) {
-		os.MkdirAll(path.Dir(config.BuildMetadataFilepath), os.ModePerm)
-		metadata = BuildMetadata{}
-	} else {
-		metadata, err = config.BuildMetadata()
-		if err != nil {
-			return
+// WriteBuildMetadata writes the latest build metadata file.
+func (ctx *RunContext) WriteBuildMetadata() error {
+	_, err := os.Stat(ctx.Config.BuildMetadataFilepath)
+
+	if errors.Is(err, os.ErrNotExist) {
+		os.MkdirAll(filepath.Dir(ctx.Config.BuildMetadataFilepath), os.ModePerm)
+	} else if err != nil {
+		return fmt.Errorf("while creating parent directories for build metadata file: %w", err)
+	}
+
+	raw, err := json.Marshal(ctx.BuildMetadata)
+	if err != nil {
+		return fmt.Errorf("while marshaling build metadata to JSON: %w", err)
+	}
+
+	return os.WriteFile(ctx.Config.BuildMetadataFilepath, []byte(raw), 0644)
+}
+
+// UpdateBuildMetadata updates metadata about the latest build.
+func (ctx *RunContext) UpdateBuildMetadata(hash string, mediaPath string, media Media, builtThumbnailSizes []uint16) {
+	if ctx.BuildMetadata.MediaCache == nil {
+		ctx.BuildMetadata.MediaCache = make(map[string]CachedMedia)
+	}
+
+	if _, ok := ctx.BuildMetadata.MediaCache[hash]; !ok {
+		ctx.BuildMetadata.MediaCache[hash] = CachedMedia{
+			BuiltThumbnailSizes: noDuplicates(builtThumbnailSizes),
+			Media:               media,
+			Path:                mediaPath,
 		}
+	} else {
+		newCache := ctx.BuildMetadata.MediaCache[hash]
+		newCache.Media = media
+		newCache.BuiltThumbnailSizes = noDuplicates(append(ctx.BuildMetadata.MediaCache[hash].BuiltThumbnailSizes, builtThumbnailSizes...))
+		ctx.BuildMetadata.MediaCache[hash] = newCache
 	}
-	metadata.PreviousBuildDate = time.Now()
-	raw, err := yaml.Marshal(&metadata)
-	if err != nil {
-		return
-	}
-	err = writeFile(config.BuildMetadataFilepath, raw)
-	return
-}
 
-func (config Configuration) BuildMetadata() (metadata BuildMetadata, err error) {
-	raw, err := readFileBytes(config.BuildMetadataFilepath)
-	if err != nil {
-		return
-	}
-	err = yaml.Unmarshal(raw, &metadata)
-	return
-}
-
-// NeedsRebuiling returns true if the given path has its modified date sooner than the last build's date.
-// If any error occurs, the result is true (ie 'this file needs to be rebuilt').
-func (ctx *RunContext) NeedsRebuiling(absolutePath string) bool {
-	metadata, err := ctx.Config.BuildMetadata()
-	if err != nil {
-		return true
-	}
-	fileMeta, err := os.Stat(absolutePath)
-	if err != nil {
-		return true
-	}
-	return fileMeta.ModTime().After(metadata.PreviousBuildDate)
+	ctx.BuildMetadata.PreviousBuildDate = time.Now()
 }

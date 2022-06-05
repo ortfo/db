@@ -18,6 +18,7 @@ type ExtractedColors struct {
 }
 
 // StepExtractColors executes the step "extract colors" and returns a metadata object with the colors entry modified accordingly.
+// TODO cache that too, when I move extracted colors to a proper field of Media.
 func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaPaths []string) map[string]interface{} {
 	// Do not overwrite manually-set colors metadata entry
 	if _, ok := metadata["colors"]; !ok {

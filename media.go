@@ -4,6 +4,9 @@ package ortfodb
 // Used to go from a ParsedDescription struct to a Work struct.
 
 import (
+	"crypto/md5"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"image"
 
@@ -61,13 +64,14 @@ type Media struct {
 	Source string
 	// Path is the media's path, relative to (media directory)/(work ID).
 	// See Configuration.Media.At.
-	Path        string
+	Path       string
+	Attributes MediaAttributes
+	// Analysis
 	ContentType string
 	Size        uint64 // In bytes
 	Dimensions  ImageDimensions
-	Duration    uint // In seconds (except for PDFs, where it is in page count)
 	Online      bool // Whether the media is hosted online (referred to by an URL)
-	Attributes  MediaAttributes
+	Duration    uint // In seconds (except for PDFs, where it is in page count)
 	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
 }
 
@@ -89,6 +93,10 @@ func GetImageDimensions(file *os.File) (ImageDimensions, error) {
 	return ImageDimensions{width, height, ratio}, nil
 }
 
+func removeUnit(s string) string {
+	return strings.TrimSuffix(s, "px")
+}
+
 // GetSVGDimensions returns an ImageDimensions object, given a pointer to a SVG file.
 // If neither viewBox nor width & height attributes are set, the resulting dimensions will be 0x0.
 func GetSVGDimensions(file *os.File) (ImageDimensions, error) {
@@ -99,11 +107,11 @@ func GetSVGDimensions(file *os.File) (ImageDimensions, error) {
 
 	var height, width float64
 	if svg.Width != "" && svg.Height != "" {
-		height, err = strconv.ParseFloat(svg.Height, 32)
+		height, err = strconv.ParseFloat(removeUnit(svg.Height), 32)
 		if err != nil {
 			return ImageDimensions{}, fmt.Errorf("cannot parse SVG height attribute as a number: %w", err)
 		}
-		width, err = strconv.ParseFloat(svg.Width, 32)
+		width, err = strconv.ParseFloat(removeUnit(svg.Width), 32)
 		if err != nil {
 			return ImageDimensions{}, fmt.Errorf("cannot parse SVG width attribute as a number: %w", err)
 		}
@@ -134,10 +142,35 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	}
 
 	var contentType string
+	var contentHash string
+	var hashComputationReadErr error
 
 	if fileInfo.IsDir() {
 		contentType = "directory"
+		hashComputationReadErr = errors.New("is a directory")
 	} else {
+		content, hashComputationReadErr := os.ReadFile(filename)
+		if hashComputationReadErr == nil {
+			sum := md5.Sum(content)
+			contentHash = base64.StdEncoding.EncodeToString(sum[:])
+			if cached, found := ctx.BuildMetadata.MediaCache[contentHash]; found {
+				analyzedMedia := Media{
+					ID:          slugify.Marshal(filepathBaseNoExt(filename), true),
+					Alt:         embedDeclaration.Alt,
+					Title:       embedDeclaration.Title,
+					Source:      embedDeclaration.Source,
+					Path:        ctx.RelativePathToMedia(embedDeclaration),
+					Attributes:  embedDeclaration.Attributes,
+					ContentType: cached.ContentType,
+					Dimensions:  cached.Dimensions,
+					Duration:    cached.Duration,
+					Size:        cached.Size,
+					HasSound:    cached.HasSound,
+				}
+				ctx.UpdateBuildMetadata(contentHash, filename, analyzedMedia, []uint16{})
+				return analyzedMedia, nil
+			}
+		}
 		mimeType, err := mimetype.DetectFile(filename)
 		if err != nil {
 			contentType = "application/octet-stream"
@@ -185,19 +218,24 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 		}
 	}
 
-	return Media{
+	analyzedMedia := Media{
 		ID:          slugify.Marshal(filepathBaseNoExt(filename), true),
 		Alt:         embedDeclaration.Alt,
 		Title:       embedDeclaration.Title,
 		Source:      embedDeclaration.Source,
 		Path:        ctx.RelativePathToMedia(embedDeclaration),
+		Attributes:  embedDeclaration.Attributes,
 		ContentType: contentType,
 		Dimensions:  dimensions,
 		Duration:    duration,
 		Size:        uint64(fileInfo.Size()),
-		Attributes:  embedDeclaration.Attributes,
 		HasSound:    hasSound,
-	}, nil
+	}
+	if contentHash != "" {
+		ctx.LogInfo("not caching analysis of %s, computed content hash is empty (%s)", filename, hashComputationReadErr)
+		ctx.UpdateBuildMetadata(contentHash, filename, analyzedMedia, []uint16{})
+	}
+	return analyzedMedia, nil
 }
 
 func (ctx *RunContext) RelativePathToMedia(embedDeclaration MediaEmbedDeclaration) string {
@@ -327,6 +365,10 @@ func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbe
 			analyzedMedia, err := ctx.AnalyzeMediaFile(filename, media)
 			if err != nil {
 				return map[string][]Media{}, err
+			}
+			err = ctx.WriteBuildMetadata()
+			if err != nil {
+				ctx.LogError("couldn't write build metadata file: %s", err.Error())
 			}
 			analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
 			analyzedMediaeBySource[filename] = analyzedMedia
