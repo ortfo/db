@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
@@ -126,6 +127,14 @@ Build Progress:
 func main() {
 	usage := CLIUsage
 	args, _ := docopt.ParseDoc(usage)
+  if os.Getenv("DEBUG") == "1" {
+    cpuProfileFile, err := os.Create("ortfodb.pprof")
+    if err != nil {
+      panic(err)
+    }
+    pprof.StartCPUProfile(cpuProfileFile)
+    defer pprof.StopCPUProfile()
+  }
 
 	if err := dispatchCommand(args); err != nil {
 		// Start with leading \n because previous lines will have \r\033[K in front
