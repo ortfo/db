@@ -231,8 +231,9 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 		Size:        uint64(fileInfo.Size()),
 		HasSound:    hasSound,
 	}
-	if contentHash != "" {
+	if contentHash == "" {
 		ctx.LogInfo("not caching analysis of %s, computed content hash is empty (%s)", filename, hashComputationReadErr)
+	} else {
 		ctx.UpdateBuildMetadata(contentHash, filename, analyzedMedia, []uint16{})
 	}
 	return analyzedMedia, nil
