@@ -26,7 +26,7 @@ require (
 require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/gen2brain/go-fitz v1.19.0
 	github.com/hullerob/go.farbfeld v0.0.0-20181222022525-3661193c725f

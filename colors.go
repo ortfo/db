@@ -17,6 +17,10 @@ type ExtractedColors struct {
 	Tertiary  string
 }
 
+func (colors ExtractedColors) Empty() bool {
+	return colors.Primary == "" && colors.Secondary == "" && colors.Tertiary == ""
+}
+
 // StepExtractColors executes the step "extract colors" and returns a metadata object with the colors entry modified accordingly.
 // TODO cache that too, when I move extracted colors to a proper field of Media.
 func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaPaths []string) map[string]interface{} {

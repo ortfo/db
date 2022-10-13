@@ -5,10 +5,12 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/anaskhan96/soup"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/docopt/docopt-go"
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
@@ -131,12 +133,8 @@ func ReplicateDescription(work ParsedDescription) (string, error) {
 		return "", err
 	}
 	result += yamlHeader + "\n"
-	// Then, all the unlocalized stuff (language "default")
-	replicatedBlock, err := replicateLocalizedBlock(work, "default")
-	if err != nil {
-		return "", err
-	}
-	result += replicatedBlock
+	// TODO get rid of "default" language behavior
+	// if a file has NO language markers, auto-insert ":: (machine's language)" before parsing.
 	for _, language := range mapKeys(work.Title) {
 		result += replicateLanguageMarker(language) + "\n\n"
 		replicatedBlock, err := replicateLocalizedBlock(work, language)
@@ -157,24 +155,49 @@ func replicateLocalizedBlock(work ParsedDescription, language string) (string, e
 	if work.Title[language] != "" {
 		result += replicateTitle(work.Title[language]) + end
 	}
-	// Then, every media
-	for _, media := range work.MediaEmbedDeclarations[language] {
-		result += replicateMediaEmbed(media) + end
-	}
-	for _, paragraph := range work.Paragraphs[language] {
-		replicatedParagraph, err := replicateParagraph(paragraph)
-		if err != nil {
-			return "", err
+	// Then, for each block (ordered by the layout)
+	spew.Dump(work)
+	for _, blockId := range work.Metadata["layout"].([]interface{}) {
+		blockIdRow := make([]string, 0)
+		// Handle spacers
+		if blockId == nil {
+			continue
 		}
-		// This is not finished: we need to properly translate to markdown abbreviations & footnotes
-		parsedHTML := soup.HTMLParse(paragraph.Content)
-		abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
-		replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
-		replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
-		result += replicatedParagraph + end
-	}
-	for _, link := range work.Links[language] {
-		result += replicateLink(link) + end
+		if v, ok := blockId.([]interface{}); ok {
+			for _, elem := range v {
+				if elem == nil {
+					continue
+				}
+				blockIdRow = append(blockIdRow, elem.(string))
+			}
+		} else {
+			blockIdRow = []string{blockId.(string)}
+		}
+
+		for _, block := range blockIdRow {
+			number, _ := strconv.Atoi(block[1:])
+			index := number - 1
+			println("replicating", block, index, "in", language)	
+			switch block[0] {
+			case 'm':
+				result += replicateMediaEmbed(work.MediaEmbedDeclarations[language][index]) + end
+			case 'l':
+				result += replicateLink(work.Links[language][index]) + end
+			case 'p':
+				paragraph := work.Paragraphs[language][index]
+				replicatedParagraph, err := replicateParagraph(paragraph)
+				if err != nil {
+					return "", err
+				}
+				// This is not finished: we need to properly translate to markdown abbreviations & footnotes
+				parsedHTML := soup.HTMLParse(paragraph.Content)
+				abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
+				replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
+				replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
+				result += replicatedParagraph + end
+			default: // nothing
+			}
+		}
 	}
 	for name, content := range work.Footnotes[language] {
 		result += replicateFootnoteDefinition(name, content) + end
@@ -257,10 +280,24 @@ func replicateMetadata(metadata map[string]interface{}) (string, error) {
 	return "---\n" + string(yamlBytes) + "---", nil
 }
 
-//TODO: configure whether to use >[]() syntax: never, or only for non-images
+func replicateMediaAttributesString(attributes MediaAttributes) string {
+	result := ""
+	if attributes.Autoplay {
+		result += string(RuneAutoplay)
+	}
+	if !attributes.Controls {
+		result += string(RuneHideControls)
+	}
+	if attributes.Loop {
+		result += string(RuneLoop)
+	}
+	return result
+}
+
+// TODO: configure whether to use >[]() syntax: never, or only for non-images
 func replicateMediaEmbed(media MediaEmbedDeclaration) string {
 	if media.Title != "" {
-		return "![" + media.Alt + ` "` + media.Title + `"](` + media.Source + ")"
+		return "![" + media.Alt + " " + replicateMediaAttributesString(media.Attributes) + ` "` + media.Title + `"](` + media.Source + ")"
 	}
 	return "![" + media.Alt + "](" + media.Source + ")"
 }

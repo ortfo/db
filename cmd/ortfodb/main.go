@@ -14,6 +14,7 @@ import (
 const CLIUsage = `
 Usage:
   ortfodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] <database> build <include-works> <to-filepath> [--config=FILEPATH] [-msS] [--]
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   ortfodb [options] <database> add <fullname> [<metadata-item>...]
   ortfodb [options] <database> validate
@@ -33,11 +34,14 @@ Examples:
   ortfodb replicate database.json replicated-database --config=ortfodb.yaml
 
 Commands:
-  build <from-directory> <to-filepath>
-    Scan in <from-directory> for folders with description.md files
+  build <to-filepath>
+	Scan in <database> for folders with description.md files
     (and potential media files)
     and compile the whole database into a JSON file at <to-filepath>
 	If <to-filepath> is "-", the output will be written to stdout.
+
+  build <include-works> <to-filepath>
+	Like build <to-filepath>, but only re-build works that match the glob pattern <include-works>.
 
   replicate <from-filepath> <to-directory>
     The reverse operation of 'build'.
@@ -59,14 +63,14 @@ Commands:
     Make sure that everything is OK in the database:
     Each one of these checks are configurable and deactivable in ortfodb.yaml:validate.checks,
     the step name is the one in [square brackets] at the beginning of these lines.
-    1. [schema compliance] validate compliance to schema for ortfodb.yaml and .portfoliodb-metadata.yml
+    1. [schema compliance] validate compliance to schema for ortfodb.yaml 
     2. [work folder names] check work folder names for url-unsafe characters or case-insensitively non-unique folder names
     3. for each work directory:
-        a. [yaml header] check YAML header for unknown keys using .portfoliodb-metadata.yml
+        a. [yaml header] check YAML header for unknown keys 
         b. [title presence] check presence of work title
         c. [title uniqueness] check uniqueness (case-insensitive) of work title
         d. [tags presence] check if at least one tag is present
-        e. [tags knowledge] check absence of unknown tags (using .portfoliodb-metadata.yml)
+        e. [tags knowledge] check absence of unknown tags
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
 
@@ -127,14 +131,14 @@ Build Progress:
 func main() {
 	usage := CLIUsage
 	args, _ := docopt.ParseDoc(usage)
-  if os.Getenv("DEBUG") == "1" {
-    cpuProfileFile, err := os.Create("ortfodb.pprof")
-    if err != nil {
-      panic(err)
-    }
-    pprof.StartCPUProfile(cpuProfileFile)
-    defer pprof.StopCPUProfile()
-  }
+	if os.Getenv("DEBUG") == "1" {
+		cpuProfileFile, err := os.Create("ortfodb.pprof")
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(cpuProfileFile)
+		defer pprof.StopCPUProfile()
+	}
 
 	if err := dispatchCommand(args); err != nil {
 		// Start with leading \n because previous lines will have \r\033[K in front
@@ -181,5 +185,5 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	return ortfodb.Build(databaseDirectory, outputFilename, flags, config)
+	return ortfodb.BuildAll(databaseDirectory, outputFilename, flags, config)
 }

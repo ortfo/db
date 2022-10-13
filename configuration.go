@@ -39,15 +39,8 @@ type BuildSteps struct {
 	MakeThumbnails MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 }
 
-type CachedMedia struct {
-	Media
-	BuiltThumbnailSizes []uint16 `yaml:"built thumbnail sizes"`
-	Path                string
-}
-
 type BuildMetadata struct {
 	PreviousBuildDate time.Time
-	MediaCache        map[string]CachedMedia `json:"media_cache"`
 }
 
 // Configuration represents what the ortfodb.yaml configuration file describes.

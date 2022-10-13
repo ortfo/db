@@ -148,8 +148,8 @@ type ParsedDescription struct {
 }
 
 // SplitOnLanguageMarkers returns two values:
-// 		1. the text before any language markers
-// 		2. a map with language codes as keys and the content as values.
+//  1. the text before any language markers
+//  2. a map with language codes as keys and the content as values.
 func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	lines := strings.Split(markdownRaw, "\n")
 	pattern := regexp.MustCompile(PatternLanguageMarker)

@@ -4,8 +4,6 @@ package ortfodb
 // Used to go from a ParsedDescription struct to a Work struct.
 
 import (
-	"crypto/md5"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"image"
@@ -35,6 +33,7 @@ import (
 	"github.com/gen2brain/go-fitz"
 	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
+	recurcopy "github.com/plus3it/gorecurcopy"
 	ffmpeg "github.com/ssttevee/go-ffmpeg"
 	"github.com/tcolgate/mp3"
 )
@@ -44,15 +43,6 @@ type ImageDimensions struct {
 	Width       int
 	Height      int
 	AspectRatio float32
-}
-
-// Thumbnail represents a thumbnail.
-type Thumbnail struct {
-	Type        string
-	ContentType string
-	Format      string
-	Source      string
-	Dimensions  ImageDimensions
 }
 
 // Media represents a media object inserted in the work object's media array.
@@ -67,12 +57,14 @@ type Media struct {
 	Path       string
 	Attributes MediaAttributes
 	// Analysis
-	ContentType string
-	Size        uint64 // In bytes
-	Dimensions  ImageDimensions
-	Online      bool // Whether the media is hosted online (referred to by an URL)
-	Duration    uint // In seconds (except for PDFs, where it is in page count)
-	HasSound    bool // The media is either an audio file or a video file that contains an audio stream
+	ContentType     string
+	Size            uint64 // In bytes
+	Dimensions      ImageDimensions
+	Online          bool // Whether the media is hosted online (referred to by an URL)
+	Duration        uint // In seconds (except for PDFs, where it is in page count)
+	HasSound        bool // The media is either an audio file or a video file that contains an audio stream
+	ExtractedColors ExtractedColors
+	Thumbnails      map[uint16]string
 }
 
 func (ctx *RunContext) AbsolutePathToMedia(media Media) string {
@@ -129,48 +121,44 @@ func GetSVGDimensions(file *os.File) (ImageDimensions, error) {
 	}, nil
 }
 
+// PathToWorkFolder returns the path to the work's folder, including the .portfoliodb part if --scattered.
+func (ctx *RunContext) PathToWorkFolder(workID string) string {
+	path := filepath.Join(ctx.DatabaseDirectory, workID)
+	if ctx.Flags.Scattered {
+		path = filepath.Join(path, ctx.Config.ScatteredModeFolder)
+	}
+	return path
+}
+
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
-func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaEmbedDeclaration) (Media, error) {
+func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmbedDeclaration) (usedCache bool, media Media, err error) {
+	// Compute absolute filepath to media
+	var filename string
+	if !filepath.IsAbs(embedDeclaration.Source) {
+		filename, _ = filepath.Abs(filepath.Join(ctx.PathToWorkFolder(workID), embedDeclaration.Source))
+	} else {
+		filename = embedDeclaration.Source
+	}
 	file, err := os.Open(filename)
 	if err != nil {
-		return Media{}, err
+		return false, Media{}, err
 	}
 	defer file.Close()
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return Media{}, err
+		return false, Media{}, err
 	}
 
 	var contentType string
-	var contentHash string
-	var hashComputationReadErr error
 
 	if fileInfo.IsDir() {
 		contentType = "directory"
-		hashComputationReadErr = errors.New("is a directory")
 	} else {
-		content, hashComputationReadErr := os.ReadFile(filename)
-		if hashComputationReadErr == nil {
-			sum := md5.Sum(content)
-			contentHash = base64.StdEncoding.EncodeToString(sum[:])
-			if cached, found := ctx.BuildMetadata.MediaCache[contentHash]; found {
-				analyzedMedia := Media{
-					ID:          slugify.Marshal(filepathBaseNoExt(filename), true),
-					Alt:         embedDeclaration.Alt,
-					Title:       embedDeclaration.Title,
-					Source:      embedDeclaration.Source,
-					Path:        ctx.RelativePathToMedia(embedDeclaration),
-					Attributes:  embedDeclaration.Attributes,
-					ContentType: cached.ContentType,
-					Dimensions:  cached.Dimensions,
-					Duration:    cached.Duration,
-					Size:        cached.Size,
-					HasSound:    cached.HasSound,
-				}
-				ctx.UpdateBuildMetadata(contentHash, filename, analyzedMedia, []uint16{})
-				return analyzedMedia, nil
-			}
+		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration)
+		if usedCache {
+			return true, cachedAnalysis, nil
 		}
+
 		mimeType, err := mimetype.DetectFile(filename)
 		if err != nil {
 			contentType = "application/octet-stream"
@@ -195,14 +183,14 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 			dimensions, err = GetImageDimensions(file)
 		}
 		if err != nil {
-			return Media{}, err
+			return false, Media{}, err
 		}
 	}
 
 	if isVideo {
 		dimensions, duration, hasSound, err = AnalyzeVideo(filename)
 		if err != nil {
-			return Media{}, err
+			return false, Media{}, err
 		}
 	}
 
@@ -214,7 +202,7 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 	if isPDF {
 		dimensions, duration, err = AnalyzePDF(filename)
 		if err != nil {
-			return Media{}, err
+			return false, Media{}, err
 		}
 	}
 
@@ -231,12 +219,25 @@ func (ctx *RunContext) AnalyzeMediaFile(filename string, embedDeclaration MediaE
 		Size:        uint64(fileInfo.Size()),
 		HasSound:    hasSound,
 	}
-	if contentHash == "" {
-		ctx.LogInfo("not caching analysis of %s, computed content hash is empty (%s)", filename, hashComputationReadErr)
-	} else {
-		ctx.UpdateBuildMetadata(contentHash, filename, analyzedMedia, []uint16{})
+	return false, analyzedMedia, nil
+}
+
+func (ctx *RunContext) UseCache(filename string, embedDeclaration MediaEmbedDeclaration) (used bool, media Media) {
+	stat, err := os.Stat(filename)
+	if err != nil {
+		return
 	}
-	return analyzedMedia, nil
+
+	if stat.ModTime().After(ctx.BuildMetadata.PreviousBuildDate) {
+		return
+	}
+
+	if found, analyzedMedia := FindMedia(ctx.PreviousBuiltDatabase, embedDeclaration); found {
+		return true, analyzedMedia
+	}
+
+	return
+
 }
 
 func (ctx *RunContext) RelativePathToMedia(embedDeclaration MediaEmbedDeclaration) string {
@@ -319,61 +320,85 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 	return
 }
 
-// AnalyzeAllMediae analyzes all the mediae from ParsedDescription's MediaEmbedDeclarations and returns analyzed mediae, ready for use as Work.Media.
-func (ctx *RunContext) AnalyzeAllMediae(embedDeclarations map[string][]MediaEmbedDeclaration, currentDirectory string) (map[string][]Media, error) {
-	if ctx.Flags.Scattered {
-		currentDirectory = path.Join(currentDirectory, ctx.Config.ScatteredModeFolder)
+func (ctx *RunContext) HandleMedia(workID string, embedDeclaration MediaEmbedDeclaration, language string) (Media, error) {
+	usedCache, media, err := ctx.AnalyzeMediaFile(workID, embedDeclaration)
+	if err != nil {
+		return Media{}, fmt.Errorf("while analyzing media: %w", err)
 	}
-	analyzedMediae := make(map[string][]Media)
-	analyzedMediaeBySource := make(map[string]Media)
-	for language, mediae := range embedDeclarations {
-		analyzedMediae[language] = make([]Media, 0)
-		for _, media := range mediae {
-			// Handle sources which are URLs
-			if isValidURL(media.Source) {
-				analyzedMedia := Media{
-					Alt:        media.Alt,
-					Title:      media.Title,
-					Source:     media.Source,
-					Online:     true,
-					Attributes: media.Attributes,
-				}
-				analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-				continue
-			}
 
-			// Compute absolute filepath to media
-			var filename string
-			if !filepath.IsAbs(media.Source) {
-				filename, _ = filepath.Abs(path.Join(currentDirectory, media.Source))
-			} else {
-				filename = media.Source
-			}
+	// Copy over
+	if ctx.Config.Media.At == "" {
+		return Media{}, errors.New("please specify a destination for the media files in the configuration file (set media.at)")
+	}
 
-			// Skip already-analyzed
-			if alreadyAnalyzedMedia, ok := analyzedMediaeBySource[filename]; ok {
-				// Update fields independent of media.Source
-				alreadyAnalyzedMedia.Alt = media.Alt
-				alreadyAnalyzedMedia.Attributes = media.Attributes
-				alreadyAnalyzedMedia.Title = media.Title
-				analyzedMediae[language] = append(analyzedMediae[language], alreadyAnalyzedMedia)
-				continue
-			}
+	var content []byte
+	absolutePathSource := path.Join(ctx.DatabaseDirectory, workID, media.Path)
 
-			ctx.Status(StepMediaAnalysis, ProgressDetails{
-				File: filename,
-			})
-			analyzedMedia, err := ctx.AnalyzeMediaFile(filename, media)
-			if err != nil {
-				return map[string][]Media{}, err
-			}
-			err = ctx.WriteBuildMetadata()
-			if err != nil {
-				ctx.LogError("couldn't write build metadata file: %s", err.Error())
-			}
-			analyzedMediae[language] = append(analyzedMediae[language], analyzedMedia)
-			analyzedMediaeBySource[filename] = analyzedMedia
+	if absolutePathSource != ctx.AbsolutePathToMedia(media) {
+		err = os.MkdirAll(path.Dir(ctx.AbsolutePathToMedia(media)), 0o755)
+		if err != nil {
+			return Media{}, fmt.Errorf("could not create output directory for %s: %w", ctx.AbsolutePathToMedia(media), err)
+		}
+		if media.ContentType == "directory" {
+			err = recurcopy.CopyDirectory(absolutePathSource, ctx.AbsolutePathToMedia(media))
+		} else {
+			content, err = os.ReadFile(absolutePathSource)
+			err = os.WriteFile(ctx.AbsolutePathToMedia(media), content, 0777)
+		}
+
+		if err != nil {
+			return Media{}, fmt.Errorf("while copying media over: %w", err)
 		}
 	}
-	return analyzedMediae, nil
+
+	// Make thumbnail
+	var filenameForColorExtraction string
+	media.Thumbnails = make(map[uint16]string)
+	if !media.Thumbnailable() || !ctx.Config.MakeThumbnails.Enabled {
+		if strings.HasPrefix(media.ContentType, "image/") {
+			filenameForColorExtraction = ctx.AbsolutePathToMedia(media)
+		}
+	} else {
+		smallestThumbSize := ctx.Config.MakeThumbnails.Sizes[0]
+		for _, size := range ctx.Config.MakeThumbnails.Sizes {
+			saveTo := ctx.ComputeOutputThumbnailFilename(media, workID, size, language)
+
+			if _, err := os.Stat(saveTo); err == nil && usedCache {
+				continue
+			}
+
+			if size < smallestThumbSize {
+				smallestThumbSize = size
+				filenameForColorExtraction = saveTo
+			}
+
+			// Create potentially missing directories
+			os.MkdirAll(filepath.Dir(saveTo), 0777)
+
+			ctx.Status(StepThumbnails, ProgressDetails{
+				Resolution: int(size),
+				File:       ctx.AbsolutePathToMedia(media),
+			})
+
+			// Make the thumbnail
+			err := ctx.MakeThumbnail(media, size, saveTo)
+			if err != nil {
+				return media, fmt.Errorf("while making thumbnail for %s: %w", workID, err)
+			}
+			media.Thumbnails[size] = saveTo
+
+		}
+	}
+
+	// Extractor colors
+	if ctx.Config.ExtractColors.Enabled && filenameForColorExtraction != "" && !usedCache {
+		extracted, err := ExtractColors(filenameForColorExtraction)
+		if err != nil {
+			return media, fmt.Errorf("while extracting colors for %s: %w", workID, err)
+		} else {
+			media.ExtractedColors = extracted
+		}
+	}
+
+	return media, nil
 }
