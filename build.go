@@ -47,6 +47,7 @@ type Flags struct {
 	Minified     bool
 	Config       string
 	ProgressFile string
+	NoCache      bool
 }
 
 // Project represents a project.

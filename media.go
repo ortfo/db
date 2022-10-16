@@ -223,6 +223,9 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmb
 }
 
 func (ctx *RunContext) UseCache(filename string, embedDeclaration MediaEmbedDeclaration) (used bool, media Media) {
+	if ctx.Flags.NoCache {
+		return
+	}
 	stat, err := os.Stat(filename)
 	if err != nil {
 		return

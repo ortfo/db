@@ -26,6 +26,7 @@ Options:
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
+  --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
   --write-progress=<filepath> Write build progress to <filepath>. See Build Progress section for more information.
 
 Examples:
@@ -175,6 +176,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	flags.Scattered, _ = args.Bool("--scattered")
 	flags.Silent, _ = args.Bool("--silent")
 	flags.ProgressFile, _ = args.String("--write-progress")
+	flags.NoCache, _ = args.Bool("--no-cache")
 	databaseDirectory, _ := args.String("<database>")
 	databaseDirectory, err := filepath.Abs(databaseDirectory)
 	if err != nil {
