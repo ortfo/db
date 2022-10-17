@@ -132,6 +132,10 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmbedDeclaration) (usedCache bool, media Media, err error) {
+	ctx.Status(StepMediaAnalysis, ProgressDetails{
+		Resolution: 0,
+		File: embedDeclaration.Source,
+	})
 	// Compute absolute filepath to media
 	var filename string
 	if !filepath.IsAbs(embedDeclaration.Source) {
@@ -228,10 +232,12 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration MediaEmbedDecl
 	}
 	stat, err := os.Stat(filename)
 	if err != nil {
+		ctx.LogInfo("Cache miss for %s: file not found: %s", filename, err)
 		return
 	}
 
 	if stat.ModTime().After(ctx.BuildMetadata.PreviousBuildDate) {
+		ctx.LogInfo("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
 		return
 	}
 
@@ -239,6 +245,7 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration MediaEmbedDecl
 		return true, analyzedMedia
 	}
 
+	ctx.LogInfo("Cache miss for %s: media not found in previous database build", filename)
 	return
 
 }
