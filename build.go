@@ -96,6 +96,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		}
 		ctx.PreviousBuiltDatabase = []Work{}
 	} else {
+		// TODO unmarshal with respect to snake_case -> CamelCase conversion, we are using non-annotated struct fields' data currently.
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())

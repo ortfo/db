@@ -42,7 +42,7 @@ import (
 type ImageDimensions struct {
 	Width       int
 	Height      int
-	AspectRatio float32
+	AspectRatio float32 `json:"aspect_ratio"`
 }
 
 // Media represents a media object inserted in the work object's media array.
@@ -57,13 +57,13 @@ type Media struct {
 	Path       string
 	Attributes MediaAttributes
 	// Analysis
-	ContentType     string
+	ContentType     string `json:"content_type"`
 	Size            uint64 // In bytes
 	Dimensions      ImageDimensions
-	Online          bool // Whether the media is hosted online (referred to by an URL)
-	Duration        uint // In seconds (except for PDFs, where it is in page count)
-	HasSound        bool // The media is either an audio file or a video file that contains an audio stream
-	ExtractedColors ExtractedColors
+	Online          bool            // Whether the media is hosted online (referred to by an URL)
+	Duration        uint            // In seconds (except for PDFs, where it is in page count)
+	HasSound        bool            `json:"has_sound"` // The media is either an audio file or a video file that contains an audio stream
+	ExtractedColors ExtractedColors `json:"extracted_colors"`
 	Thumbnails      map[uint16]string
 }
 
@@ -155,7 +155,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmb
 		contentType = "directory"
 	} else {
 		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration)
-		if usedCache {
+		if usedCache && cachedAnalysis.ContentType != "" {
 			return true, cachedAnalysis, nil
 		}
 
@@ -367,6 +367,7 @@ func (ctx *RunContext) HandleMedia(workID string, embedDeclaration MediaEmbedDec
 			saveTo := ctx.ComputeOutputThumbnailFilename(media, workID, size, language)
 
 			if _, err := os.Stat(saveTo); err == nil && usedCache {
+				media.Thumbnails[size] = saveTo
 				continue
 			}
 
