@@ -32,14 +32,16 @@ Some paragraph, an empty one is below, beware!
 
 HAHA!`)
 
-	actual, err := ReplicateDescription(ParsedDescription{
-		Metadata: map[string]interface{}{
+	actual, err := ReplicateDescription(ParsedWork{
+		Metadata: WorkMetadata{AdditionalMetadata: map[string]interface{}{
 			"some":  "metadata",
 			"right": "here",
 		},
-		Title: map[string]string{
-			"fr": "A title",
-			"en": "Another title",
+			Aliases: []string{"alias1", "alias2"},
+		},
+		Title: map[string]HTMLString{
+			"fr": HTMLString("A title"),
+			"en": HTMLString("Another title"),
 		},
 		Paragraphs: map[string][]Paragraph{
 			"fr": {

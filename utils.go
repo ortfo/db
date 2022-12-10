@@ -126,7 +126,7 @@ func filterSlice(s []string, cond func(string) bool) []string {
 }
 
 // mapKeys returns a slice of strings containing the map's keys.
-func mapKeys(m map[string]string) []string {
+func mapKeys[T any](m map[string]T) []string {
 	keys := make([]string, 0)
 	for k := range m {
 		keys = append(keys, k)

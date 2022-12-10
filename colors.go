@@ -10,14 +10,14 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-// ExtractedColors reprensents the object in a Work's metadata.colors.
-type ExtractedColors struct {
+// ColorPalette reprensents the object in a Work's metadata.colors.
+type ColorPalette struct {
 	Primary   string
 	Secondary string
 	Tertiary  string
 }
 
-func (colors ExtractedColors) Empty() bool {
+func (colors ColorPalette) Empty() bool {
 	return colors.Primary == "" && colors.Secondary == "" && colors.Tertiary == ""
 }
 
@@ -63,30 +63,30 @@ func selectFileToExtractColorsFrom(files []string, defaultFiles []string) string
 
 // ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.
 // See https://pkg.go.dev/image#Decode for what formats are decodable.
-func ExtractColors(filename string) (ExtractedColors, error) {
+func ExtractColors(filename string) (ColorPalette, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return ExtractedColors{}, err
+		return ColorPalette{}, err
 	}
 	defer file.Close()
 	img, _, err := image.Decode(file)
 	if err != nil {
-		return ExtractedColors{}, err
+		return ColorPalette{}, err
 	}
 	return kmeans(img)
 }
 
 // kmeans extracts colors from img.
-func kmeans(img image.Image) (ExtractedColors, error) {
+func kmeans(img image.Image) (ColorPalette, error) {
 	centroids, err := prominentcolor.Kmeans(img)
 	if err != nil {
-		return ExtractedColors{}, err
+		return ColorPalette{}, err
 	}
 	colors := make([]string, 0)
 	for _, centroid := range centroids {
 		colors = append(colors, centroid.AsString())
 	}
-	return ExtractedColors{
+	return ColorPalette{
 		Primary:   colors[0],
 		Secondary: colors[1],
 		Tertiary:  colors[2],

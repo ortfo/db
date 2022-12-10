@@ -34,28 +34,29 @@ func (m Media) Thumbnailable() bool {
 
 // MakeThumbnail creates a thumbnail on disk of the given media (it is assumed that the given media is an image).
 // It returns the path where the thumbnail has been written to.
-func (ctx *RunContext) MakeThumbnail(media Media, targetSize uint16, saveTo string) error {
+// saveTo should be relative to cwd.
+func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string) error {
 	if media.ContentType == "image/gif" {
 		return ctx.makeGifThumbnail(media, targetSize, saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("convert", "-resize", fmt.Sprint(targetSize), ctx.AbsolutePathToMedia(media), saveTo)
+		return run("convert", "-resize", fmt.Sprint(targetSize), media.DistSource.Absolute(ctx), saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "video/") {
-		return run("ffmpegthumbnailer", "-i"+ctx.AbsolutePathToMedia(media), "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
+		return run("ffmpegthumbnailer", "-i"+media.DistSource.Absolute(ctx), "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
 	}
 
 	if media.ContentType == "application/pdf" {
 		return ctx.makePdfThumbnail(media, targetSize, saveTo)
 	}
 
-	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.Source, media.ContentType)
+	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.DistSource.Absolute(ctx), media.ContentType)
 
 }
 
-func (ctx *RunContext) makePdfThumbnail(media Media, targetSize uint16, saveTo string) error {
+func (ctx *RunContext) makePdfThumbnail(media Media, targetSize int, saveTo string) error {
 	// If the target extension was not supported, convert from png to the actual target extension
 	temporaryPng, err := ioutil.TempFile("", "*.png")
 	defer os.Remove(temporaryPng.Name())
@@ -64,21 +65,21 @@ func (ctx *RunContext) makePdfThumbnail(media Media, targetSize uint16, saveTo s
 	}
 	// TODO: (maybe) update media.Dimensions now that we have an image of the PDF though this will only be representative when all pages of the PDF have the same dimensions.
 	// pdftoppm *adds* the extension to the end of the filename even if it already has it... smh.
-	err = run("pdftoppm", "-singlefile", "-png", ctx.AbsolutePathToMedia(media), strings.TrimSuffix(temporaryPng.Name(), ".png"))
+	err = run("pdftoppm", "-singlefile", "-png", media.DistSource.Absolute(ctx), strings.TrimSuffix(temporaryPng.Name(), ".png"))
 	if err != nil {
 		return err
 	}
 	return run("convert", "-thumbnail", fmt.Sprint(targetSize), temporaryPng.Name(), saveTo)
 }
 
-func (ctx *RunContext) makeGifThumbnail(media Media, targetSize uint16, saveTo string) error {
+func (ctx *RunContext) makeGifThumbnail(media Media, targetSize int, saveTo string) error {
 	var dimensionToResize string
 	if media.Dimensions.AspectRatio > 1 {
 		dimensionToResize = "width"
 	} else {
 		dimensionToResize = "height"
 	}
-	source, err := os.Open(ctx.AbsolutePathToMedia(media))
+	source, err := os.Open(media.DistSource.Absolute(ctx))
 	if err != nil {
 		return fmt.Errorf("while opening source media: %w", err)
 	}
@@ -182,7 +183,7 @@ func run(command string, args ...string) error {
 
 // ComputeOutputThumbnailFilename returns the filename where to save a thumbnail,
 // using to the configuration and the given information.
-// file name templates are relative to the output database directory.
+// file name templates are relative to the output media directory.
 // Placeholders that will be replaced in the file name template:
 //
 //	<project id>          the project’s id
@@ -192,15 +193,14 @@ func run(command string, args ...string) error {
 //	<size>                the current thumbnail size
 //	<extension>           the media’s extension
 //	<lang>                the current language.
-func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize uint16, lang string) string {
+func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize int, lang string) MediaRootRelativeFilePath {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
 	computed = strings.ReplaceAll(computed, "<work id>", projectID)
-	computed = strings.ReplaceAll(computed, "<media directory>", ctx.Config.Media.At)
-	computed = strings.ReplaceAll(computed, "<basename>", path.Base(ctx.AbsolutePathToMedia(media)))
+	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.DistSource.Absolute(ctx)))
 	computed = strings.ReplaceAll(computed, "<media id>", media.ID)
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
-	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(ctx.AbsolutePathToMedia(media)), ".", "", 1))
+	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.DistSource.Absolute(ctx)), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)
-	return computed
+	return MediaRootRelativeFilePath(computed)
 }

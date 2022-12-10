@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
@@ -13,13 +12,14 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/docopt/docopt-go"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
 // RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt.
 func RunCommandReplicate(args docopt.Opts) error {
 	// TODO: validate database.json
-	var parsedDatabase []Work
+	var parsedDatabase []AnalyzedWork
 	json := jsoniter.ConfigFastest
 	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	databaseFilepath, err := args.String("<from-filepath>")
@@ -58,7 +58,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 }
 
 // ReplicateAll recreates a database inside targetDatabase containing all the works in works.
-func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
+func ReplicateAll(ctx RunContext, targetDatabase string, works []AnalyzedWork) error {
 	for _, work := range works {
 		ctx.CurrentWorkID = work.ID
 		// ctx.Status() TODO
@@ -72,7 +72,7 @@ func ReplicateAll(ctx RunContext, targetDatabase string, works []Work) error {
 }
 
 // ReplicateOne creates a description.md file in targetDatabase in the correct folder in order to replicate Work.
-func ReplicateOne(targetDatabase string, work Work) error {
+func ReplicateOne(targetDatabase string, work AnalyzedWork) error {
 	//TODO: make file mode configurable
 	workDirectory := path.Join(targetDatabase, work.ID)
 	os.MkdirAll(workDirectory, os.FileMode(0o0666))
@@ -81,7 +81,7 @@ func ReplicateOne(targetDatabase string, work Work) error {
 		return err
 	}
 	defer file.Close()
-	description, err := ReplicateDescription(work.ParsedDescription())
+	description, err := ReplicateDescription(work)
 	if err != nil {
 		return err
 	}
@@ -98,34 +98,56 @@ func (media *Media) EmbedDeclaration() MediaEmbedDeclaration {
 	return MediaEmbedDeclaration{
 		Alt:        media.Alt,
 		Title:      media.Title,
-		Source:     media.Source,
+		Source:     media.RelativeSource,
 		Attributes: media.Attributes,
 	}
 }
 
 // ParsedDescription turns a fully analyzed Work into a ParsedDescription by dropping analysis data from media, turning them into embed declarations.
 // All other properties present in ParsedDescription are kept as is from the Work.
-func (work *Work) ParsedDescription() ParsedDescription {
+func (work *AnalyzedWork) ParsedDescription() ParsedWork {
 	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
+	paragraphs := make(map[string][]Paragraph)
+	links := make(map[string][]Link)
+	orders := make(map[string][]string)
+	title := make(map[string]HTMLString)
+	footnotes := make(map[string]Footnotes)
 
-	for language, mediae := range work.Media {
-		mediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0, len(mediae))
+	for language, localized := range work.Localized {
+		mediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0)
+		paragraphs[language] = make([]Paragraph, 0)
+		links[language] = make([]Link, 0)
+		orders[language] = make([]string, 0)
+		title[language] = localized.Title
+		footnotes[language] = localized.Footnotes
 
-		for _, media := range mediae {
-			mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], media.EmbedDeclaration())
+		for _, block := range localized.Blocks {
+			switch block.Type {
+			case "media":
+				mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], block.Media.EmbedDeclaration())
+			case "paragraph":
+				paragraphs[language] = append(paragraphs[language], block.Paragraph)
+			case "link":
+				links[language] = append(links[language], block.Link)
+			}
+			orders[language] = append(orders[language], block.ID())
 		}
+
 	}
 
-	return ParsedDescription{
-		Paragraphs:             work.Paragraphs,
+	return ParsedWork{
 		Metadata:               work.Metadata,
-		Title:                  work.Title,
+		Title:                  title,
+		Paragraphs:             paragraphs,
 		MediaEmbedDeclarations: mediaEmbedDeclarations,
+		Links:                  links,
+		Footnotes:              footnotes,
+		ContentBlocksOrders:    orders,
 	}
 }
 
 // ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
-func ReplicateDescription(work ParsedDescription) (string, error) {
+func ReplicateDescription(work AnalyzedWork) (string, error) {
 	var result string
 	// Start with the YAML header, this one is never localized
 	yamlHeader, err := replicateMetadata(work.Metadata)
@@ -135,7 +157,7 @@ func ReplicateDescription(work ParsedDescription) (string, error) {
 	result += yamlHeader + "\n"
 	// TODO get rid of "default" language behavior
 	// if a file has NO language markers, auto-insert ":: (machine's language)" before parsing.
-	for _, language := range mapKeys(work.Title) {
+	for language := range work.Localized {
 		result += replicateLanguageMarker(language) + "\n\n"
 		replicatedBlock, err := replicateLocalizedBlock(work, language)
 		if err != nil {
@@ -146,61 +168,41 @@ func ReplicateDescription(work ParsedDescription) (string, error) {
 	return strings.TrimSpace(result), nil
 }
 
-func replicateLocalizedBlock(work ParsedDescription, language string) (string, error) {
+func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error) {
 	var result string
 	end := "\n\n"
+	content := work.Localized[language]
 	// Abbreviations will be stored here to declare them in the markdown
 	abbreviations := make(Abbreviations)
 	// Start with the title
-	if work.Title[language] != "" {
-		result += replicateTitle(work.Title[language]) + end
+	if content.Title != "" {
+		result += replicateTitle(content.Title) + end
 	}
 	// Then, for each block (ordered by the layout)
 	spew.Dump(work)
-	for _, blockId := range work.Metadata["layout"].([]interface{}) {
-		blockIdRow := make([]string, 0)
-		// Handle spacers
-		if blockId == nil {
-			continue
-		}
-		if v, ok := blockId.([]interface{}); ok {
-			for _, elem := range v {
-				if elem == nil {
-					continue
-				}
-				blockIdRow = append(blockIdRow, elem.(string))
+	for _, block := range content.Blocks {
+		fmt.Printf("replicating %s block #%s", block.Type, block.ID())
+		switch block.Type {
+		case "media":
+			result += replicateMediaEmbed(block.Media.EmbedDeclaration()) + end
+		case "link":
+			result += replicateLink(block.Link) + end
+		case "paragraph":
+			replicatedParagraph, err := replicateParagraph(block.Paragraph)
+			if err != nil {
+				return "", err
 			}
-		} else {
-			blockIdRow = []string{blockId.(string)}
-		}
-
-		for _, block := range blockIdRow {
-			number, _ := strconv.Atoi(block[1:])
-			index := number - 1
-			println("replicating", block, index, "in", language)	
-			switch block[0] {
-			case 'm':
-				result += replicateMediaEmbed(work.MediaEmbedDeclarations[language][index]) + end
-			case 'l':
-				result += replicateLink(work.Links[language][index]) + end
-			case 'p':
-				paragraph := work.Paragraphs[language][index]
-				replicatedParagraph, err := replicateParagraph(paragraph)
-				if err != nil {
-					return "", err
-				}
-				// This is not finished: we need to properly translate to markdown abbreviations & footnotes
-				parsedHTML := soup.HTMLParse(paragraph.Content)
-				abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
-				replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
-				replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
-				result += replicatedParagraph + end
-			default: // nothing
-			}
+			// This is not finished: we need to properly translate to markdown abbreviations & footnotes
+			parsedHTML := soup.HTMLParse(string(block.Content))
+			abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
+			replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
+			replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
+			result += replicatedParagraph + end
+		default: // nothing
 		}
 	}
-	for name, content := range work.Footnotes[language] {
-		result += replicateFootnoteDefinition(name, content) + end
+	for name, content := range content.Footnotes {
+		result += replicateFootnoteDefinition(name, string(content)) + end
 	}
 	result += replicateAbbreviations(abbreviations)
 	return result, nil
@@ -263,17 +265,19 @@ func replicateFootnoteDefinition(name string, content string) string {
 
 func replicateLink(link Link) string {
 	if link.Title != "" {
-		return "[" + link.Name + ` "` + link.Title + `"](` + link.URL + ")"
+		return "[" + link.Text.String() + `](` + link.URL + ` "` + link.Title + `")`
 	}
-	return "[" + link.Name + "](" + link.URL + ")"
+	return "[" + link.Text.String() + "](" + link.URL + ")"
 }
 
-func replicateTitle(title string) string {
-	return "# " + title
+func replicateTitle(title HTMLString) string {
+	return "# " + title.Markdown()
 }
 
-func replicateMetadata(metadata map[string]interface{}) (string, error) {
-	yamlBytes, err := yaml.Marshal(metadata)
+func replicateMetadata(metadata WorkMetadata) (string, error) {
+	metadataOut := make(map[string]interface{})
+	mapstructure.Decode(metadata, &metadataOut)
+	yamlBytes, err := yaml.Marshal(metadataOut)
 	if err != nil {
 		return "", err
 	}
@@ -297,16 +301,13 @@ func replicateMediaAttributesString(attributes MediaAttributes) string {
 // TODO: configure whether to use >[]() syntax: never, or only for non-images
 func replicateMediaEmbed(media MediaEmbedDeclaration) string {
 	if media.Title != "" {
-		return "![" + media.Alt + " " + replicateMediaAttributesString(media.Attributes) + ` "` + media.Title + `"](` + media.Source + ")"
+		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.Source), media.Title)
 	}
-	return "![" + media.Alt + "](" + media.Source + ")"
+	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.Source))
 }
 
 func replicateParagraph(p Paragraph) (string, error) {
-	markdown, err := htmlToMarkdown(p.Content)
-	if err != nil {
-		return "", err
-	}
+	markdown := p.Content.Markdown()
 	if strings.TrimSpace(markdown) == "" {
 		markdown = "<p></p>"
 	}
@@ -319,8 +320,12 @@ func replicateParagraph(p Paragraph) (string, error) {
 	return result, nil
 }
 
-func htmlToMarkdown(html string) (string, error) {
+func (html HTMLString) Markdown() string {
 	// TODO: configurable domain for translating relative to absolute URLS from ortfodb.yaml
 	converter := html2md.NewConverter("", true, nil)
-	return converter.ConvertString(html)
+	result, err := converter.ConvertString(string(html))
+	if err != nil {
+		return html.String()
+	}
+	return result
 }

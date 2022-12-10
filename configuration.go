@@ -2,7 +2,6 @@ package ortfodb
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -28,7 +27,7 @@ type MakeGIFsConfiguration struct {
 
 type MakeThumbnailsConfiguration struct {
 	Enabled          bool
-	Sizes            []uint16
+	Sizes            []int
 	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
 }
@@ -91,7 +90,7 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 			if err != nil {
 				panic(err)
 			}
-			ioutil.WriteFile("ortfodb.yaml", []byte(defaultConfig), 0o644)
+			os.WriteFile("ortfodb.yaml", []byte(defaultConfig), 0o644)
 			return DefaultConfiguration(), nil
 		}
 	}
@@ -146,7 +145,7 @@ func DefaultConfiguration() Configuration {
 		},
 		MakeThumbnails: MakeThumbnailsConfiguration{
 			Enabled:          true,
-			Sizes:            []uint16{100, 400, 600, 1200},
+			Sizes:            []int{100, 400, 600, 1200},
 			FileNameTemplate: "<media directory>/<work id>/<media id>@<size>.webp",
 		},
 		Media: struct{ At string }{

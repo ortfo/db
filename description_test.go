@@ -34,12 +34,13 @@ HAHA![^1]
 
 `)
 
-	expected := ParsedDescription{
-		Metadata: map[string]interface{}{
-			"some":  "metadata",
-			"right": "here",
-		},
-		Title: map[string]string{
+	expected := ParsedWork{
+		Metadata: WorkMetadata{
+			AdditionalMetadata: map[string]interface{}{
+				"some":  "metadata",
+				"right": "here",
+			}},
+		Title: map[string]HTMLString{
 			"fr": "A title",
 			"en": "Another title",
 		},
@@ -85,7 +86,7 @@ HAHA![^1]
 }
 
 func TestImageCaptions(t *testing.T) {
-	_, _, actual, _, _, _ := ParseSingleLanguageDescription(`![some alt text "right “there" “here”](https://example.com/source "the title “here”")`)
+	_, _, actual, _, _, _, _ := ParseSingleLanguageDescription(`![some alt text "right “there" “here”](https://example.com/source "the title “here”")`)
 	expected := []MediaEmbedDeclaration{
 		{
 			Alt:    `some alt text “right “there” “here”`,

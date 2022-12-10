@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,13 +17,16 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+type Works map[string]AnalyzedWork
+
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
 	Config *Configuration
 	// ID of the work currently being processed.
 	CurrentWorkID         string
 	DatabaseDirectory     string
-	PreviousBuiltDatabase []Work
+	OutputDatabaseFile    string
+	PreviousBuiltDatabase []AnalyzedWork
 	Flags                 Flags
 	Progress              struct {
 		Current int
@@ -54,7 +56,7 @@ type Flags struct {
 type Project struct {
 	ID             string
 	DescriptionRaw string
-	Description    ParsedDescription
+	Description    ParsedWork
 	Ctx            *RunContext
 }
 
@@ -84,9 +86,10 @@ func (ctx *RunContext) ReleaseBuildLock(outputFilename string) {
 
 func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (RunContext, error) {
 	ctx := RunContext{
-		Config:            &config,
-		Flags:             flags,
-		DatabaseDirectory: databaseDirectory,
+		Config:             &config,
+		Flags:              flags,
+		DatabaseDirectory:  databaseDirectory,
+		OutputDatabaseFile: outputFilename,
 	}
 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
@@ -94,13 +97,14 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		if !os.IsNotExist(err) {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
 		}
-		ctx.PreviousBuiltDatabase = []Work{}
+		ctx.PreviousBuiltDatabase = []AnalyzedWork{}
 	} else {
 		// TODO unmarshal with respect to snake_case -> CamelCase conversion, we are using non-annotated struct fields' data currently.
+		setJSONNamingStrategy(lowerCaseWithUnderscores)
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
-			ctx.PreviousBuiltDatabase = []Work{}
+			ctx.PreviousBuiltDatabase = []AnalyzedWork{}
 		}
 	}
 
@@ -150,7 +154,7 @@ func BuildSome(include string, databaseDirectory string, outputFilename string, 
 
 	defer ctx.ReleaseBuildLock(outputFilename)
 	ctx.Progress.Total = 1
-	works := make([]Work, 0)
+	works := make(map[string]AnalyzedWork)
 	workDirectories, err := ctx.ComputeProgressTotal()
 	if err != nil {
 		return fmt.Errorf("while computing total number of works to build: %w", err)
@@ -174,9 +178,9 @@ func BuildSome(include string, databaseDirectory string, outputFilename string, 
 			if err != nil {
 				ctx.LogError("while building %s: %s", workID, err)
 			}
-			works = append(works, newWork)
+			works[workID] = newWork
 		} else if presentBefore {
-			works = append(works, oldWork)
+			works[workID] = oldWork
 		} else {
 			ctx.LogInfo("Skipped building of work %s, as it is neither included in %s nor formerly present in %s.", workID, include, outputFilename)
 		}
@@ -187,7 +191,7 @@ func BuildSome(include string, databaseDirectory string, outputFilename string, 
 	return nil
 }
 
-func (ctx *RunContext) WriteDatabase(works []Work, flags Flags, outputFilename string) {
+func (ctx *RunContext) WriteDatabase(works Works, flags Flags, outputFilename string) {
 	// Compile the database
 	var worksJSON []byte
 	json := jsoniter.ConfigFastest
@@ -225,6 +229,9 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		if !dirEntry.IsDir() {
 			continue
 		}
+		if dirEntry.Name() == "../" || dirEntry.Name() == "./" {
+			continue
+		}
 		// Compute the description file's path
 		var descriptionFilename string
 		if ctx.Flags.Scattered {
@@ -244,8 +251,45 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 	return
 }
 
+func ContentBlockByID(id string, allLanguagesParagraphs map[string][]Paragraph, allLanguagesMediae map[string][]Media, allLanguagesLinks map[string][]Link) (block ContentBlock, ok bool) {
+	for _, paragraphs := range allLanguagesParagraphs {
+		for _, paragraph := range paragraphs {
+			if paragraph.ID == id {
+				return ContentBlock{
+					Type:      "paragraph",
+					Paragraph: paragraph,
+				}, true
+			}
+		}
+	}
+
+	for _, mediae := range allLanguagesMediae {
+		for _, media := range mediae {
+			if media.ID == id {
+				return ContentBlock{
+					Type:  "media",
+					Media: media,
+				}, true
+			}
+		}
+	}
+
+	for _, links := range allLanguagesLinks {
+		for _, link := range links {
+			if link.ID == id {
+				return ContentBlock{
+					Type: "link",
+					Link: link,
+				}, true
+			}
+		}
+	}
+
+	return ContentBlock{}, false
+}
+
 // Build builds a single work given the database & output folders, as wells as a work ID
-func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, workID string) (Work, error) {
+func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, workID string) (AnalyzedWork, error) {
 	// Compute the description file's path
 	var descriptionFilename string
 	if ctx.Flags.Scattered {
@@ -258,9 +302,9 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 	ctx.CurrentWorkID = workID
 
 	// Parse the description
-	descriptionRaw, err := ioutil.ReadFile(descriptionFilename)
+	descriptionRaw, err := os.ReadFile(descriptionFilename)
 	if err != nil {
-		return Work{}, err
+		return AnalyzedWork{}, err
 	}
 
 	ctx.Status(StepDescription, ProgressDetails{
@@ -284,13 +328,13 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 
 	// Extract colors
 	metadata := description.Metadata
-	if _, ok := metadata["colors"]; ctx.Config.ExtractColors.Enabled && !ok {
-		if sourceOfChosenThumbnail, ok := metadata["thumbnail"]; ok {
+	if ctx.Config.ExtractColors.Enabled && metadata.Colors.Empty() {
+		if metadata.Thumbnail != "" {
 		outer:
 			for _, ms := range analyzedMediae {
 				for _, m := range ms {
-					if m.Source == sourceOfChosenThumbnail {
-						metadata["colors"] = m.ExtractedColors
+					if m.RelativeSource == metadata.Thumbnail {
+						metadata.Colors = m.Colors
 						break outer
 					}
 				}
@@ -298,25 +342,48 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 		} else {
 			for _, ms := range analyzedMediae {
 				if len(ms) > 0 {
-					metadata["colors"] = ms[0].ExtractedColors
+					metadata.Colors = ms[0].Colors
 					break
 				}
 			}
 		}
 	}
 
+	localizedContent := make(map[string]LocalizedWorkContent)
+
+	// TODO check that all parts (title, mediae, ...) have the same language keys
+
+	for lang := range description.Paragraphs {
+		layout, err := ResolveLayout(description, lang)
+		if err != nil {
+			return AnalyzedWork{}, fmt.Errorf("while resolving %s layout of %s: %w", lang, workID, err)
+		}
+
+		blocks := []ContentBlock{}
+		for _, blockID := range description.ContentBlocksOrders[lang] {
+			block, ok := ContentBlockByID(blockID, description.Paragraphs, analyzedMediae, description.Links)
+			if !ok {
+				ctx.LogError("Could not find block with ID " + blockID)
+				continue
+			}
+			blocks = append(blocks, block)
+		}
+
+		localizedContent[lang] = LocalizedWorkContent{
+			Layout:    layout,
+			Title:     description.Title[lang],
+			Footnotes: description.Footnotes[lang],
+			Blocks:    blocks,
+		}
+	}
 	ctx.UpdateBuildMetadata()
 	ctx.WriteBuildMetadata()
 
 	// Return the finished work
-	return Work{
-		ID:         workID,
-		Metadata:   metadata,
-		Title:      description.Title,
-		Paragraphs: description.Paragraphs,
-		Media:      analyzedMediae,
-		Links:      description.Links,
-		Footnotes:  description.Footnotes,
+	return AnalyzedWork{
+		ID:        workID,
+		Metadata:  metadata,
+		Localized: localizedContent,
 	}, nil
 }
 
