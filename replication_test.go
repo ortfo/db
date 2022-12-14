@@ -32,50 +32,44 @@ Some paragraph, an empty one is below, beware!
 
 HAHA!`)
 
-	actual, err := ReplicateDescription(ParsedWork{
+	actual, err := ReplicateDescription(AnalyzedWork{
 		Metadata: WorkMetadata{AdditionalMetadata: map[string]interface{}{
 			"some":  "metadata",
 			"right": "here",
 		},
 			Aliases: []string{"alias1", "alias2"},
 		},
-		Title: map[string]HTMLString{
-			"fr": HTMLString("A title"),
-			"en": HTMLString("Another title"),
-		},
-		Paragraphs: map[string][]Paragraph{
+		Content: map[string]LocalizedWorkContent{
 			"fr": {
-				{
-					ID:      "",
-					Content: "<p>Some paragraph, an empty one is below, beware!</p>",
-				},
-				{
-					ID:      "",
-					Content: "<p></p>",
+				Title: "A title",
+				Blocks: []ContentBlock{
+					{
+						Paragraph: Paragraph{
+							Content: "Some paragraph, an empty one is below, beware!",
+						},
+					},
+					{
+						Paragraph: Paragraph{
+							Content: "",
+						},
+					},
 				},
 			},
 			"en": {
-				{
-					ID:      "",
-					Content: "<p></p>",
-				},
-				{
-					ID:      "",
-					Content: "<p>HAHA!</p>",
+				Title: "Another title",
+				Blocks: []ContentBlock{
+					{
+						Paragraph: Paragraph{
+							Content: "",
+						},
+					},
+					{
+						Paragraph: Paragraph{
+							Content: "HAHA!",
+						},
+					},
 				},
 			},
-		},
-		MediaEmbedDeclarations: map[string][]MediaEmbedDeclaration{
-			"fr": {},
-			"en": {},
-		},
-		Links: map[string][]Link{
-			"fr": {},
-			"en": {},
-		},
-		Footnotes: map[string]Footnotes{
-			"fr": {},
-			"en": {},
 		},
 	})
 

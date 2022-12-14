@@ -92,60 +92,6 @@ func ReplicateOne(targetDatabase string, work AnalyzedWork) error {
 	return nil
 }
 
-// EmbedDeclaration returns the embed declaration associated with a fully analyzed media.
-// It just drops properties acquired during analysis, basically.
-func (media *Media) EmbedDeclaration() MediaEmbedDeclaration {
-	return MediaEmbedDeclaration{
-		Alt:        media.Alt,
-		Title:      media.Title,
-		Source:     media.RelativeSource,
-		Attributes: media.Attributes,
-	}
-}
-
-// ParsedDescription turns a fully analyzed Work into a ParsedDescription by dropping analysis data from media, turning them into embed declarations.
-// All other properties present in ParsedDescription are kept as is from the Work.
-func (work *AnalyzedWork) ParsedDescription() ParsedWork {
-	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
-	paragraphs := make(map[string][]Paragraph)
-	links := make(map[string][]Link)
-	orders := make(map[string][]string)
-	title := make(map[string]HTMLString)
-	footnotes := make(map[string]Footnotes)
-
-	for language, localized := range work.Localized {
-		mediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0)
-		paragraphs[language] = make([]Paragraph, 0)
-		links[language] = make([]Link, 0)
-		orders[language] = make([]string, 0)
-		title[language] = localized.Title
-		footnotes[language] = localized.Footnotes
-
-		for _, block := range localized.Blocks {
-			switch block.Type {
-			case "media":
-				mediaEmbedDeclarations[language] = append(mediaEmbedDeclarations[language], block.Media.EmbedDeclaration())
-			case "paragraph":
-				paragraphs[language] = append(paragraphs[language], block.Paragraph)
-			case "link":
-				links[language] = append(links[language], block.Link)
-			}
-			orders[language] = append(orders[language], block.ID())
-		}
-
-	}
-
-	return ParsedWork{
-		Metadata:               work.Metadata,
-		Title:                  title,
-		Paragraphs:             paragraphs,
-		MediaEmbedDeclarations: mediaEmbedDeclarations,
-		Links:                  links,
-		Footnotes:              footnotes,
-		ContentBlocksOrders:    orders,
-	}
-}
-
 // ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
 func ReplicateDescription(work AnalyzedWork) (string, error) {
 	var result string
@@ -157,7 +103,7 @@ func ReplicateDescription(work AnalyzedWork) (string, error) {
 	result += yamlHeader + "\n"
 	// TODO get rid of "default" language behavior
 	// if a file has NO language markers, auto-insert ":: (machine's language)" before parsing.
-	for language := range work.Localized {
+	for language := range work.Content {
 		result += replicateLanguageMarker(language) + "\n\n"
 		replicatedBlock, err := replicateLocalizedBlock(work, language)
 		if err != nil {
@@ -171,7 +117,7 @@ func ReplicateDescription(work AnalyzedWork) (string, error) {
 func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error) {
 	var result string
 	end := "\n\n"
-	content := work.Localized[language]
+	content := work.Content[language]
 	// Abbreviations will be stored here to declare them in the markdown
 	abbreviations := make(Abbreviations)
 	// Start with the title
@@ -184,7 +130,7 @@ func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error)
 		fmt.Printf("replicating %s block #%s", block.Type, block.ID())
 		switch block.Type {
 		case "media":
-			result += replicateMediaEmbed(block.Media.EmbedDeclaration()) + end
+			result += replicateMediaEmbed(block.Media) + end
 		case "link":
 			result += replicateLink(block.Link) + end
 		case "paragraph":
@@ -299,11 +245,11 @@ func replicateMediaAttributesString(attributes MediaAttributes) string {
 }
 
 // TODO: configure whether to use >[]() syntax: never, or only for non-images
-func replicateMediaEmbed(media MediaEmbedDeclaration) string {
+func replicateMediaEmbed(media Media) string {
 	if media.Title != "" {
-		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.Source), media.Title)
+		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource), media.Title)
 	}
-	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.Source))
+	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource))
 }
 
 func replicateParagraph(p Paragraph) (string, error) {

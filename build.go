@@ -77,11 +77,12 @@ func AcquireBuildLock(outputFilename string) error {
 	}
 }
 
-func (ctx *RunContext) ReleaseBuildLock(outputFilename string) {
+func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
 	err := os.Remove(buildLockFilepath(outputFilename))
 	if err != nil {
 		ctx.LogError("could not release build lockfile %s: %s", buildLockFilepath(outputFilename), err)
 	}
+	return err
 }
 
 func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (RunContext, error) {
@@ -91,6 +92,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		DatabaseDirectory:  databaseDirectory,
 		OutputDatabaseFile: outputFilename,
 	}
+	ctx.Spinner = ctx.CreateSpinner(outputFilename)
 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
 	if err != nil {
@@ -108,7 +110,6 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		}
 	}
 
-	ctx.Spinner = ctx.CreateSpinner(outputFilename)
 	if !flags.Silent {
 		err := ctx.Spinner.Start()
 		if err != nil {
@@ -310,70 +311,55 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 	ctx.Status(StepDescription, ProgressDetails{
 		File: descriptionFilename,
 	})
-	description := ctx.ParseDescription(string(descriptionRaw))
+	metadata, localizedBlocks, title, footnotes, _ := ctx.ParseDescription(string(descriptionRaw))
 
 	// Handle mediae
-	analyzedMediae := make(map[string][]Media)
-	for lang, mediae := range description.MediaEmbedDeclarations {
-		analyzedMediae[lang] = []Media{}
-		for _, media := range mediae {
-			analyzed, err := ctx.HandleMedia(workID, media, lang)
+	analyzedMediae := make([]Media, 0)
+	for lang, blocks := range localizedBlocks {
+		for i, block := range blocks {
+			if block.Type != "media" {
+				continue
+			}
+			analyzed, err := ctx.HandleMedia(workID, block.Media, lang)
 			if err != nil {
 				ctx.LogError(err.Error())
 				continue
 			}
-			analyzedMediae[lang] = append(analyzedMediae[lang], analyzed)
+			localizedBlocks[lang][i].Media = analyzed
+			analyzedMediae = append(analyzedMediae, analyzed)
 		}
 	}
 
 	// Extract colors
-	metadata := description.Metadata
 	if ctx.Config.ExtractColors.Enabled && metadata.Colors.Empty() {
 		if metadata.Thumbnail != "" {
 		outer:
-			for _, ms := range analyzedMediae {
-				for _, m := range ms {
-					if m.RelativeSource == metadata.Thumbnail {
-						metadata.Colors = m.Colors
-						break outer
-					}
+			for _, m := range analyzedMediae {
+				if m.RelativeSource == metadata.Thumbnail {
+					metadata.Colors = m.Colors
+					break outer
 				}
 			}
 		} else {
-			for _, ms := range analyzedMediae {
-				if len(ms) > 0 {
-					metadata.Colors = ms[0].Colors
-					break
-				}
+			if len(analyzedMediae) > 0 {
+				metadata.Colors = analyzedMediae[0].Colors
 			}
 		}
 	}
 
 	localizedContent := make(map[string]LocalizedWorkContent)
 
-	// TODO check that all parts (title, mediae, ...) have the same language keys
-
-	for lang := range description.Paragraphs {
-		layout, err := ResolveLayout(description, lang)
+	for lang := range localizedBlocks {
+		layout, err := ResolveLayout(metadata, lang, localizedBlocks[lang])
 		if err != nil {
 			return AnalyzedWork{}, fmt.Errorf("while resolving %s layout of %s: %w", lang, workID, err)
 		}
 
-		blocks := []ContentBlock{}
-		for _, blockID := range description.ContentBlocksOrders[lang] {
-			block, ok := ContentBlockByID(blockID, description.Paragraphs, analyzedMediae, description.Links)
-			if !ok {
-				ctx.LogError("Could not find block with ID " + blockID)
-				continue
-			}
-			blocks = append(blocks, block)
-		}
-
 		localizedContent[lang] = LocalizedWorkContent{
 			Layout:    layout,
-			Title:     description.Title[lang],
-			Footnotes: description.Footnotes[lang],
-			Blocks:    blocks,
+			Title:     title[lang],
+			Footnotes: footnotes[lang],
+			Blocks:    localizedBlocks[lang],
 		}
 	}
 	ctx.UpdateBuildMetadata()
@@ -381,9 +367,9 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 
 	// Return the finished work
 	return AnalyzedWork{
-		ID:        workID,
-		Metadata:  metadata,
-		Localized: localizedContent,
+		ID:       workID,
+		Metadata: metadata,
+		Content:  localizedContent,
 	}, nil
 }
 

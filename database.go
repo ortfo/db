@@ -1,10 +1,10 @@
 package ortfodb
 
-func FindMedia(works []AnalyzedWork, mediaEmbed MediaEmbedDeclaration) (found bool, media Media) {
+func FindMedia(works []AnalyzedWork, mediaEmbed Media) (found bool, media Media) {
 	for _, w := range works {
-		for _, wsl := range w.Localized {
+		for _, wsl := range w.Content {
 			for _, b := range wsl.Blocks {
-				if b.Type == "media" && b.RelativeSource == mediaEmbed.Source {
+				if b.Type == "media" && b.RelativeSource == mediaEmbed.RelativeSource {
 					return true, b.Media
 				}
 			}
@@ -22,10 +22,12 @@ func FindWork(works []AnalyzedWork, id string) (found bool, work AnalyzedWork) {
 	return
 }
 
-func (work AnalyzedWork) Languages() []string {
-	langs := make([]string, 0, len(work.Localized))
-	for lang := range work.Localized {
-		langs = append(langs, lang)
+// FirstParagraph returns the first paragraph content block of the given work in the given language
+func (work AnalyzedWork) FirstParagraph(lang string) (found bool, paragraph ContentBlock) {
+	for _, block := range work.Content[lang].Blocks {
+		if block.Type == "paragraph" {
+			return true, block
+		}
 	}
-	return langs
+	return
 }

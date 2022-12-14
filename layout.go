@@ -6,9 +6,9 @@ import (
 )
 
 // ResolveLayout returns a layout, given the parsed description.
-func ResolveLayout(description ParsedWork, language string) (Layout, error) {
+func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock) (Layout, error) {
 	layout := make([][]LayoutCell, 0)
-	userProvided := description.Metadata.AdditionalMetadata["layout"]
+	userProvided := metadata.AdditionalMetadata["layout"]
 	// Handle case where the layout is explicitly specified.
 	if userProvided != "" && userProvided != nil {
 		// User-provided layout uses block types and indices to refer to blocks. We need to convert those to block IDs.
@@ -17,7 +17,7 @@ func ResolveLayout(description ParsedWork, language string) (Layout, error) {
 				layoutLine := make([]LayoutCell, 0)
 				switch line.(type) {
 				case string:
-					cell, err := ResolveBlockID(description, language, line.(string))
+					cell, err := ResolveBlockID(blocks, language, line.(string))
 					if err != nil {
 						return layout, fmt.Errorf("while resolving block reference %q to ID: %w", line.(string), err)
 					}
@@ -26,7 +26,7 @@ func ResolveLayout(description ParsedWork, language string) (Layout, error) {
 				case []interface{}:
 					for _, cell := range line.([]interface{}) {
 						if val, ok := cell.(string); ok {
-							cell, err := ResolveBlockID(description, language, val)
+							cell, err := ResolveBlockID(blocks, language, val)
 							if err != nil {
 								return layout, fmt.Errorf("while resolving block reference %q to ID: %w", val, err)
 							}
@@ -38,26 +38,51 @@ func ResolveLayout(description ParsedWork, language string) (Layout, error) {
 				layout = append(layout, layoutLine)
 			}
 		}
+	} else {
+		// If no layout is specified, we use the default layout.
+		for _, block := range blocks {
+			layout = append(layout, []LayoutCell{LayoutCell(block.ID())})
+		}
 	}
 	return layout, nil
 }
 
 // ResolveBlockID returns the ID of a block, given its ref (user-facing content block references comprising of a content block type shorthand and an index). This index is 1-based.
-func ResolveBlockID(description ParsedWork, language string, blockRef string) (string, error) {
+func ResolveBlockID(blocks []ContentBlock, language string, blockRef string) (string, error) {
 	typ, indexStr := blockRef[0:1], blockRef[1:]
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
 		return "", fmt.Errorf("invalid content block reference: %w", err)
 	}
 
-	switch typ {
-	case "p":
-		return description.Paragraphs[language][index-1].ID, nil
-	case "m":
-		return description.MediaEmbedDeclarations[language][index-1].ID, nil
-	case "l":
-		return description.Links[language][index-1].ID, nil
+	currentParagraphIndex := 0
+	currentMediaEmbedIndex := 0
+	currentLinkIndex := 0
+
+	if typ != "p" && typ != "m" && typ != "l" {
+		return "", fmt.Errorf("invalid content block reference: %s is not one of p, m, l", typ)
 	}
 
-	return "", fmt.Errorf("invalid content block reference: %s is not one of p, m, l", typ)
+	for _, block := range blocks {
+		switch block.Type {
+		case "paragraph":
+			currentParagraphIndex++
+			if currentParagraphIndex == index && typ == "p" {
+				return block.ID(), nil
+			}
+		case "media":
+			currentMediaEmbedIndex++
+			if currentMediaEmbedIndex == index && typ == "m" {
+				return block.ID(), nil
+			}
+		case "link":
+			currentLinkIndex++
+			if currentLinkIndex == index && typ == "l" {
+				return block.ID(), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("invalid content block reference: %s%d does not exist", typ, index)
+
 }

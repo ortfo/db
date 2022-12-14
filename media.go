@@ -80,6 +80,7 @@ type Media struct {
 	Colors         ColorPalette                    `json:"extracted_colors"`
 	Thumbnails     ThumbnailsMap                   `json:"thumbnails"`
 	Attributes     MediaAttributes                 `json:"attributes"`
+	Analyzed       bool                            `json:"analyzed"` // whether the media has been analyzed
 }
 
 // GetImageDimensions returns an ImageDimensions object, given a pointer to a file.
@@ -142,17 +143,18 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 }
 
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
-func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmbedDeclaration) (usedCache bool, media Media, err error) {
+// TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
+func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, media Media, err error) {
 	ctx.Status(StepMediaAnalysis, ProgressDetails{
 		Resolution: 0,
-		File:       string(embedDeclaration.Source),
+		File:       string(embedDeclaration.RelativeSource),
 	})
 	// Compute absolute filepath to media
 	var filename string
-	if !filepath.IsAbs(string(embedDeclaration.Source)) {
-		filename, _ = filepath.Abs(filepath.Join(ctx.PathToWorkFolder(workID), string(embedDeclaration.Source)))
+	if !filepath.IsAbs(string(embedDeclaration.RelativeSource)) {
+		filename, _ = filepath.Abs(filepath.Join(ctx.PathToWorkFolder(workID), string(embedDeclaration.RelativeSource)))
 	} else {
-		filename = string(embedDeclaration.Source)
+		filename = string(embedDeclaration.RelativeSource)
 	}
 	file, err := os.Open(filename)
 	if err != nil {
@@ -226,8 +228,8 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmb
 		Anchor:         slugify.Marshal(filepathBaseNoExt(filename), true),
 		Alt:            embedDeclaration.Alt,
 		Title:          embedDeclaration.Title,
-		RelativeSource: embedDeclaration.Source,
-		DistSource:     MediaRootRelativeFilePath(embedDeclaration.Source.RelativeToMediaRoot(ctx, workID)),
+		RelativeSource: embedDeclaration.RelativeSource,
+		DistSource:     MediaRootRelativeFilePath(embedDeclaration.RelativeSource.RelativeToMediaRoot(ctx, workID)),
 		Attributes:     embedDeclaration.Attributes,
 		ContentType:    contentType,
 		Dimensions:     dimensions,
@@ -238,7 +240,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration MediaEmb
 	return false, analyzedMedia, nil
 }
 
-func (ctx *RunContext) UseCache(filename string, embedDeclaration MediaEmbedDeclaration) (used bool, media Media) {
+func (ctx *RunContext) UseCache(filename string, embedDeclaration Media) (used bool, media Media) {
 	if ctx.Flags.NoCache {
 		return
 	}
@@ -334,7 +336,7 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 	return
 }
 
-func (ctx *RunContext) HandleMedia(workID string, embedDeclaration MediaEmbedDeclaration, language string) (Media, error) {
+func (ctx *RunContext) HandleMedia(workID string, embedDeclaration Media, language string) (Media, error) {
 	usedCache, media, err := ctx.AnalyzeMediaFile(workID, embedDeclaration)
 	if err != nil {
 		return Media{}, fmt.Errorf("while analyzing media: %w", err)

@@ -66,8 +66,8 @@ func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
 }
 
 // ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription.
-func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedWork {
-	metadata, markdownRaw := ParseYAMLHeader(markdownRaw)
+func (ctx *RunContext) ParseDescription(markdownRaw string) (metadata WorkMetadata, blocks map[string][]ContentBlock, title map[string]HTMLString, footnotes map[string]Footnotes, abbreviations map[string]Abbreviations) {
+	metadata, markdownRaw = ParseYAMLHeader(markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
 	localized := len(localizedRawBlocks) > 0
@@ -78,30 +78,19 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) ParsedWork {
 		allLanguages = make([]string, 1)
 		allLanguages[0] = "default" // TODO: make this configurable
 	}
-	paragraphs := make(map[string][]Paragraph)
-	mediaEmbedDeclarations := make(map[string][]MediaEmbedDeclaration)
-	links := make(map[string][]Link)
-	title := make(map[string]HTMLString)
-	footnotes := make(map[string]Footnotes)
-	abbreviations := make(map[string]Abbreviations)
-	orders := make(map[string][]string)
+	blocks = make(map[string][]ContentBlock)
+	title = make(map[string]HTMLString)
+	footnotes = make(map[string]Footnotes)
+	abbreviations = make(map[string]Abbreviations)
 	for _, language := range allLanguages {
 		// Unlocalized stuff appears the same in every language.
 		raw := notLocalizedRaw
 		if localized {
 			raw += localizedRawBlocks[language]
 		}
-		title[language], paragraphs[language], mediaEmbedDeclarations[language], links[language], footnotes[language], abbreviations[language], orders[language] = ParseSingleLanguageDescription(raw)
+		title[language], blocks[language], footnotes[language], abbreviations[language] = ParseSingleLanguageDescription(raw)
 	}
-	return ParsedWork{
-		Metadata:               metadata,
-		Paragraphs:             paragraphs,
-		Links:                  links,
-		Title:                  title,
-		MediaEmbedDeclarations: mediaEmbedDeclarations,
-		Footnotes:              footnotes,
-		ContentBlocksOrders:    orders,
-	}
+	return
 }
 
 // Abbreviations represents the abbreviations declared in a description.md file.
@@ -129,9 +118,9 @@ type Link struct {
 
 // AnalyzedWork represents a complete work, with analyzed mediae.
 type AnalyzedWork struct {
-	ID        string                          `json:"id"`
-	Metadata  WorkMetadata                    `json:"metadata"`
-	Localized map[string]LocalizedWorkContent `json:"localized"`
+	ID       string                          `json:"id"`
+	Metadata WorkMetadata                    `json:"metadata"`
+	Content  map[string]LocalizedWorkContent `json:"content"`
 }
 
 type WorkMetadata struct {
@@ -147,31 +136,6 @@ type WorkMetadata struct {
 	WIP                bool                            `json:"wip"`
 	Private            bool                            `json:"private"`
 	AdditionalMetadata map[string]interface{}          `json:"additional_metadata" mapstructure:",remain"`
-}
-
-// Parsed returns a parsed work from the analyzed work, dropping analysis information.
-func (w AnalyzedWork) Parsed() (p ParsedWork) {
-	p.Metadata = w.Metadata
-	for language, localized := range w.Localized {
-		p.Paragraphs[language] = make([]Paragraph, 0, len(localized.Blocks))
-		p.MediaEmbedDeclarations[language] = make([]MediaEmbedDeclaration, 0, len(localized.Blocks))
-		p.Links[language] = make([]Link, 0, len(localized.Blocks))
-		p.Title[language] = localized.Title
-		p.Footnotes[language] = localized.Footnotes
-		p.ContentBlocksOrders[language] = make([]string, 0, len(localized.Blocks))
-		for _, block := range localized.Blocks {
-			switch block.Type {
-			case "paragraph":
-				p.Paragraphs[language] = append(p.Paragraphs[language], block.Paragraph)
-			case "media":
-				p.MediaEmbedDeclarations[language] = append(p.MediaEmbedDeclarations[language], block.Media.EmbedDeclaration())
-			case "link":
-				p.Links[language] = append(p.Links[language], block.Link)
-			}
-			p.ContentBlocksOrders[language] = append(p.ContentBlocksOrders[language], block.ID())
-		}
-	}
-	return
 }
 
 type TitleStyle string
@@ -248,7 +212,7 @@ func (b ContentBlock) ID() string {
 	case "link":
 		return b.Link.ID
 	default:
-		panic("unknown content block type")
+		panic("unknown content block type '" + string(b.Type) + "'")
 	}
 }
 
@@ -277,17 +241,6 @@ type Layout [][]LayoutCell
 // LayoutCell is a single cell in the layout. It corresponds to the content block's ID.
 type LayoutCell string
 
-// MediaEmbedDeclaration represents media embeds. (abusing the ![]() syntax to extend it to any file).
-// Only stores the info extracted from the syntax, no filesystem interactions.
-type MediaEmbedDeclaration struct {
-	Anchor     string
-	ID         string
-	Alt        string
-	Title      string
-	Source     ThisOrtfoFolderRelativeFilePath
-	Attributes MediaAttributes
-}
-
 // MediaAttributes stores which HTML attributes should be added to the media.
 type MediaAttributes struct {
 	Loop        bool // Controlled with attribute character ~ (adds)
@@ -298,15 +251,7 @@ type MediaAttributes struct {
 }
 
 // ParsedWork represents a work, but without analyzed media. All it contains is information from the description.md file.
-type ParsedWork struct {
-	Metadata               WorkMetadata
-	Title                  map[string]HTMLString
-	Paragraphs             map[string][]Paragraph
-	MediaEmbedDeclarations map[string][]MediaEmbedDeclaration
-	Links                  map[string][]Link
-	Footnotes              map[string]Footnotes
-	ContentBlocksOrders    map[string][]string // nanoids of the content blocks
-}
+type ParsedWork AnalyzedWork
 
 // SplitOnLanguageMarkers returns two values:
 //  1. the text before any language markers
@@ -334,18 +279,15 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 // ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
 // order contains an array of nanoids that represent the order of the content blocks as they are in the original file.
-func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, paragraphs []Paragraph, mediae []MediaEmbedDeclaration, links []Link, footnotes Footnotes, abbreviations Abbreviations, order []string) {
+func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, blocks []ContentBlock, footnotes Footnotes, abbreviations Abbreviations) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := MarkdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
-	paragraphs = make([]Paragraph, 0)
-	mediae = make([]MediaEmbedDeclaration, 0)
-	links = make([]Link, 0)
+	blocks = make([]ContentBlock, 0)
 	footnotes = make(Footnotes)
 	abbreviations = make(Abbreviations)
 	paragraphLike := make([]soup.Root, 0)
 	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
-	order = make([]string, 0)
 	idGenerator, _ := nanoid.Standard(5)
 	for _, element := range htmlTree.Find("body").Children() {
 		// Check if it's a paragraph-like tag
@@ -363,25 +305,27 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, parag
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			// A media embed
 			alt, attributes := ExtractAttributesFromAlt(firstChild.Attrs()["alt"])
-			mediae = append(mediae, MediaEmbedDeclaration{
-				Anchor:     slugify.Marshal(firstChild.Attrs()["src"]),
-				ID:         id,
-				Alt:        alt,
-				Title:      firstChild.Attrs()["title"],
-				Source:     ThisOrtfoFolderRelativeFilePath(firstChild.Attrs()["src"]),
-				Attributes: attributes,
-			})
-			order = append(order, id)
+			blocks = append(blocks, ContentBlock{
+				Type: "media",
+				Media: Media{
+					Anchor:         slugify.Marshal(firstChild.Attrs()["src"]),
+					ID:             id,
+					Alt:            alt,
+					Title:          firstChild.Attrs()["title"],
+					RelativeSource: ThisOrtfoFolderRelativeFilePath(firstChild.Attrs()["src"]),
+					Attributes:     attributes,
+				}})
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			// An isolated link
-			links = append(links, Link{
-				ID:     id,
-				Anchor: slugify.Marshal(firstChild.FullText(), true),
-				Text:   innerHTML(firstChild),
-				Title:  firstChild.Attrs()["title"],
-				URL:    firstChild.Attrs()["href"],
-			})
-			order = append(order, id)
+			blocks = append(blocks, ContentBlock{
+				Type: "link",
+				Link: Link{
+					ID:     id,
+					Anchor: slugify.Marshal(firstChild.FullText(), true),
+					Text:   innerHTML(firstChild),
+					Title:  firstChild.Attrs()["title"],
+					URL:    firstChild.Attrs()["href"],
+				}})
 		} else if regexpMatches(PatternAbbreviationDefinition, string(innerHTML(paragraph))) {
 			// An abbreviation definition
 			groups := regexpGroups(PatternAbbreviationDefinition, string(innerHTML(paragraph)))
@@ -391,12 +335,13 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, parag
 			continue
 		} else {
 			// A paragraph (anything else)
-			paragraphs = append(paragraphs, Paragraph{
-				ID:      id,
-				Anchor:  paragraph.Attrs()["id"],
-				Content: HTMLString(paragraph.HTML()),
-			})
-			order = append(order, id)
+			blocks = append(blocks, ContentBlock{
+				Type: "paragraph",
+				Paragraph: Paragraph{
+					ID:      id,
+					Anchor:  paragraph.Attrs()["id"],
+					Content: HTMLString(paragraph.HTML()),
+				}})
 		}
 	}
 	if h1 := htmlTree.Find("h1"); h1.Error == nil {
@@ -409,14 +354,17 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, parag
 			}
 		}
 	}
-	processedParagraphs := make([]Paragraph, 0, len(paragraphs))
-	for _, paragraph := range paragraphs {
-		if strings.HasPrefix(string(paragraph.Content), "<pre>") && strings.HasSuffix(string(paragraph.Content), "</pre>") {
+	for i, block := range blocks {
+		if block.Type != "paragraph" {
+			continue
+		}
+		if strings.HasPrefix(string(block.Content), "<pre>") && strings.HasSuffix(string(block.Content), "</pre>") {
 			// Dont insert <abbr>s while in <pre> text
 			continue
 		}
-		processedParagraphs = append(processedParagraphs, ReplaceAbbreviations(paragraph, abbreviations))
+		blocks[i].Paragraph = ReplaceAbbreviations(block.Paragraph, abbreviations)
 	}
+
 	return
 }
 

@@ -9,7 +9,7 @@ import (
 func TestParseDescriptionEmptyParagraphsAreAdded(t *testing.T) {
 	ctx := RunContext{}
 
-	actual := ctx.ParseDescription(`---
+	metadata, title, blocks, footnotes, abbreviations := ctx.ParseDescription(`---
 some: metadata
 right: here
 ---
@@ -34,55 +34,57 @@ HAHA![^1]
 
 `)
 
-	expected := ParsedWork{
-		Metadata: WorkMetadata{
-			AdditionalMetadata: map[string]interface{}{
-				"some":  "metadata",
-				"right": "here",
-			}},
-		Title: map[string]HTMLString{
-			"fr": "A title",
-			"en": "Another title",
-		},
-		Paragraphs: map[string][]Paragraph{
-			"fr": {
-				{
+	assert.Equal(t, WorkMetadata{
+		AdditionalMetadata: map[string]interface{}{
+			"some":  "metadata",
+			"right": "here",
+		}}, metadata)
+	assert.Equal(t, map[string]HTMLString{
+		"fr": "A title",
+		"en": "Another title",
+	}, title)
+	assert.Equal(t,
+	assert.Equal(t, map[string][]ContentBlock{
+		"fr": {
+			ContentBlock{
+				Type: "paragraph",
+				Paragraph: {
 					ID:      "",
 					Content: "<p>Some paragraph, an empty one is below, beware!</p>",
 				},
-				{
+			},
+			ContentBlock{
+				Type: "paragraph",
+				Paragraph: {
 					ID:      "",
 					Content: "<p></p>",
 				},
 			},
-			"en": {
-				{
+		},
+		"en": {
+			ContentBlock{
+				Type: "paragraph",
+				Paragraph: {
 					ID:      "",
 					Content: "<p></p>",
 				},
-				{
+			},
+			ContentBlock{
+				Type: "paragraph",
+				Paragraph: {
 					ID:      "",
 					Content: "<p>HAHA!<sup class=\"footnote-ref\" id=\"fnref:1\"><a href=\"#fn:1\">1</a></sup></p>",
 				},
 			},
 		},
-		MediaEmbedDeclarations: map[string][]MediaEmbedDeclaration{
-			"fr": {},
-			"en": {},
+	}, blocks)
+	assert.Equal(t, map[string]Footnotes{
+		"fr": {},
+		"en": {
+			"1": "By the way, this shouldn’t have trailing <br/>’s!",
 		},
-		Links: map[string][]Link{
-			"fr": {},
-			"en": {},
-		},
-		Footnotes: map[string]Footnotes{
-			"fr": {},
-			"en": {
-				"1": "By the way, this shouldn’t have trailing <br/>’s!",
-			},
-		},
-	}
+	}, footnotes)
 
-	assert.Equal(t, expected, actual)
 }
 
 func TestImageCaptions(t *testing.T) {
