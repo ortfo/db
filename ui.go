@@ -125,6 +125,9 @@ func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 
 // LogDebug logs debug information.
 func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
+	if os.Getenv("DEBUG") == "" {
+		return
+	}
 	ctx.Spinner.Pause()
 	colorstring.Fprintf(os.Stderr, "\r[magenta]debug[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
