@@ -48,9 +48,11 @@ type ProgressDetails struct {
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
 func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
+	ctx.mu.Lock()
 	ctx.Progress.Step = step
 	ctx.Progress.Resolution = details.Resolution
 	ctx.Progress.File = details.File
+	ctx.mu.Unlock()
 
 	ctx.UpdateSpinner()
 	err := ctx.WriteProgressFile()
@@ -61,7 +63,9 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 
 // IncrementProgress increments the number of processed works and writes the progress to a file if --write-progress is set.
 func (ctx *RunContext) IncrementProgress() error {
+	ctx.mu.Lock()
 	ctx.Progress.Current++
+	ctx.mu.Unlock()
 
 	ctx.UpdateSpinner()
 	return ctx.WriteProgressFile()

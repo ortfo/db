@@ -60,7 +60,9 @@ func RunCommandReplicate(args docopt.Opts) error {
 // ReplicateAll recreates a database inside targetDatabase containing all the works in works.
 func ReplicateAll(ctx RunContext, targetDatabase string, works []AnalyzedWork) error {
 	for _, work := range works {
+		ctx.mu.Lock()
 		ctx.CurrentWorkID = work.ID
+		ctx.mu.Unlock()
 		// ctx.Status() TODO
 		err := ReplicateOne(targetDatabase, work)
 		if err != nil {

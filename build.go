@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"path"
@@ -23,6 +24,8 @@ type Works map[string]AnalyzedWork
 
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
+	mu sync.Mutex
+
 	Config *Configuration
 	// ID of the work currently being processed.
 	CurrentWorkID         string
@@ -88,7 +91,7 @@ func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
 	return err
 }
 
-func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (RunContext, error) {
+func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (*RunContext, error) {
 	ctx := RunContext{
 		Config:             &config,
 		Flags:              flags,
@@ -135,13 +138,13 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 
 	err = os.MkdirAll(config.Media.At, 0o755)
 	if err != nil {
-		return ctx, fmt.Errorf("while creating the media output directory: %w", err)
+		return &ctx, fmt.Errorf("while creating the media output directory: %w", err)
 	}
 	if err := AcquireBuildLock(outputFilename); err != nil {
-		return ctx, fmt.Errorf("another ortfo build is in progress (could not acquire build lock): %w", err)
+		return &ctx, fmt.Errorf("another ortfo build is in progress (could not acquire build lock): %w", err)
 	}
 
-	return ctx, nil
+	return &ctx, nil
 }
 
 // BuildAll builds the database at outputFilename from databaseDirectory.
@@ -152,12 +155,15 @@ func (ctx *RunContext) BuildAll(databaseDirectory string, outputFilename string,
 
 func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Works, error) {
 	defer ctx.ReleaseBuildLock(outputFilename)
+	ctx.mu.Lock()
 	ctx.Progress.Total = 1
+	ctx.mu.Unlock()
 	works := make(map[string]AnalyzedWork)
 	workDirectories, err := ctx.ComputeProgressTotal()
 	if err != nil {
 		return Works{}, fmt.Errorf("while computing total number of works to build: %w", err)
 	}
+
 
 	for _, dirEntry := range workDirectories {
 		workID := dirEntry.Name()
@@ -176,7 +182,9 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 			descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
 
 			// Update the UI
+			ctx.mu.Lock()
 			ctx.CurrentWorkID = workID
+			ctx.mu.Unlock()
 			ctx.Status(StepDescription, ProgressDetails{
 				File: descriptionFilename,
 			})
@@ -193,7 +201,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 			if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
 				// Skip it!
-				ctx.LogInfo("Skipped building of %s, as its description file %s has not changed since the last build.", workID, descriptionFilename)
+				ctx.LogInfo("Build skipped: description file unmodified")
 				works[workID] = oldWork
 			} else {
 				// Build it
@@ -212,7 +220,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 		} else if presentBefore {
 			works[workID] = oldWork
 		} else {
-			ctx.LogInfo("Skipped building of %s, as it is neither included in %s nor formerly present in %s.", workID, include, outputFilename)
+			ctx.LogDebug("Build skipped: not included by %s, not present in previous database file.", include)
 		}
 		ctx.IncrementProgress()
 	}
@@ -281,7 +289,9 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		workDirectories = append(workDirectories, dirEntry)
 	}
 
+	ctx.mu.Lock()
 	ctx.Progress.Total = len(workDirectories)
+	ctx.mu.Unlock()
 	return
 }
 
@@ -413,5 +423,7 @@ func (ctx *RunContext) WriteBuildMetadata() error {
 
 // UpdateBuildMetadata updates metadata about the latest build.
 func (ctx *RunContext) UpdateBuildMetadata() {
+	ctx.mu.Lock()
 	ctx.BuildMetadata.PreviousBuildDate = time.Now()
+	ctx.mu.Unlock()
 }
