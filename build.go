@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"path"
@@ -21,12 +22,14 @@ type Works map[string]AnalyzedWork
 
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
+	mu sync.Mutex
+
 	Config *Configuration
 	// ID of the work currently being processed.
 	CurrentWorkID         string
 	DatabaseDirectory     string
 	OutputDatabaseFile    string
-	PreviousBuiltDatabase []AnalyzedWork
+	PreviousBuiltDatabase Works
 	Flags                 Flags
 	Progress              struct {
 		Current int
@@ -60,27 +63,28 @@ type Project struct {
 	Ctx            *RunContext
 }
 
-func buildLockFilepath(outputFilename string) string {
-	return filepath.Join(filepath.Dir(outputFilename), ".ortfomk-build-lock")
+// BuildLockFilepath returns the path to the lock file for the given output database file.
+func BuildLockFilepath(outputFilename string) string {
+	return filepath.Join(filepath.Dir(outputFilename), ".ortfodb-build-lock")
 }
 
 // AcquireBuildLock ensures that only one process touches the output database file at the same time.
 // An error is returned if the lock could not be acquired
 func AcquireBuildLock(outputFilename string) error {
-	if _, err := os.Stat(buildLockFilepath(outputFilename)); os.IsNotExist(err) {
-		os.WriteFile(buildLockFilepath(outputFilename), []byte(""), 0o644)
+	if _, err := os.Stat(BuildLockFilepath(outputFilename)); os.IsNotExist(err) {
+		os.WriteFile(BuildLockFilepath(outputFilename), []byte(""), 0o644)
 		return nil
 	} else if err == nil {
-		return fmt.Errorf("file %s exists", buildLockFilepath(outputFilename))
+		return fmt.Errorf("file %s exists", BuildLockFilepath(outputFilename))
 	} else {
-		return fmt.Errorf("while checking if file %s exists: %w", buildLockFilepath(outputFilename), err)
+		return fmt.Errorf("while checking if file %s exists: %w", BuildLockFilepath(outputFilename), err)
 	}
 }
 
 func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
-	err := os.Remove(buildLockFilepath(outputFilename))
+	err := os.Remove(BuildLockFilepath(outputFilename))
 	if err != nil {
-		ctx.LogError("could not release build lockfile %s: %s", buildLockFilepath(outputFilename), err)
+		ctx.LogError("could not release build lockfile %s: %s", BuildLockFilepath(outputFilename), err)
 	}
 	return err
 }
@@ -97,16 +101,16 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
+			ctx.LogError("No previously built database file %s to use: %s", outputFilename, err.Error())
 		}
-		ctx.PreviousBuiltDatabase = []AnalyzedWork{}
+		ctx.PreviousBuiltDatabase = Works{}
 	} else {
 		// TODO unmarshal with respect to snake_case -> CamelCase conversion, we are using non-annotated struct fields' data currently.
 		setJSONNamingStrategy(lowerCaseWithUnderscores)
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
-			ctx.PreviousBuiltDatabase = []AnalyzedWork{}
+			ctx.PreviousBuiltDatabase = Works{}
 		}
 	}
 
@@ -143,41 +147,36 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 
 // BuildAll builds the database at outputFilename from databaseDirectory.
 // Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration.
-func BuildAll(databaseDirectory string, outputFilename string, flags Flags, config Configuration) error {
-	return BuildSome("*", databaseDirectory, outputFilename, flags, config)
+func (ctx *RunContext) BuildAll(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Works, error) {
+	return ctx.BuildSome("*", databaseDirectory, outputFilename, flags, config)
 }
 
-func BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) error {
-	ctx, err := PrepareBuild(databaseDirectory, outputFilename, flags, config)
-	if err != nil {
-		return err
-	}
-
+func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Works, error) {
 	defer ctx.ReleaseBuildLock(outputFilename)
 	ctx.Progress.Total = 1
 	works := make(map[string]AnalyzedWork)
 	workDirectories, err := ctx.ComputeProgressTotal()
 	if err != nil {
-		return fmt.Errorf("while computing total number of works to build: %w", err)
+		return Works{}, fmt.Errorf("while computing total number of works to build: %w", err)
 	}
 
 	for _, dirEntry := range workDirectories {
 		workID := dirEntry.Name()
-		presentBefore, oldWork := FindWork(ctx.PreviousBuiltDatabase, workID)
+		oldWork, presentBefore := ctx.PreviousBuiltDatabase[workID]
 		var included bool
 		if include == "*" {
 			included = true
 		} else {
 			included, err = filepath.Match(include, workID)
 			if err != nil {
-
-				return fmt.Errorf("while testing include-works pattern %q: %w", include, err)
+				return Works{}, fmt.Errorf("while testing include-works pattern %q: %w", include, err)
 			}
 		}
 		if included {
 			newWork, err := ctx.Build(databaseDirectory, outputFilename, workID)
+			newWork.Metadata.BuiltAt = time.Now().String()
 			if err != nil {
-				ctx.LogError("while building %s: %s", workID, err)
+				return works, fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)
 			}
 			works[workID] = newWork
 		} else if presentBefore {
@@ -188,19 +187,23 @@ func BuildSome(include string, databaseDirectory string, outputFilename string, 
 		ctx.IncrementProgress()
 	}
 
-	ctx.WriteDatabase(works, flags, outputFilename)
-	return nil
+	return works, nil
 }
 
-func (ctx *RunContext) WriteDatabase(works Works, flags Flags, outputFilename string) {
+func (ctx *RunContext) WriteDatabase(works Works, flags Flags, outputFilename string, partial bool) {
+	worksWithMetadata := make(map[string]interface{})
+	for k, v := range works {
+		worksWithMetadata[k] = v
+	}
+	worksWithMetadata["#meta"] = struct{ Partial bool }{Partial: partial}
 	// Compile the database
 	var worksJSON []byte
 	json := jsoniter.ConfigFastest
 	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	if ctx.Flags.Minified {
-		worksJSON, _ = json.Marshal(works)
+		worksJSON, _ = json.Marshal(worksWithMetadata)
 	} else {
-		worksJSON, _ = json.MarshalIndent(works, "", "    ")
+		worksJSON, _ = json.MarshalIndent(worksWithMetadata, "", "    ")
 	}
 
 	// Output it
@@ -252,52 +255,27 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 	return
 }
 
-func ContentBlockByID(id string, allLanguagesParagraphs map[string][]Paragraph, allLanguagesMediae map[string][]Media, allLanguagesLinks map[string][]Link) (block ContentBlock, ok bool) {
-	for _, paragraphs := range allLanguagesParagraphs {
-		for _, paragraph := range paragraphs {
-			if paragraph.ID == id {
-				return ContentBlock{
-					Type:      "paragraph",
-					Paragraph: paragraph,
-				}, true
-			}
+func ContentBlockByID(id string, blocks []ContentBlock) (block ContentBlock, ok bool) {
+	for _, block := range blocks {
+		if block.ID == id {
+			return block, true
 		}
 	}
-
-	for _, mediae := range allLanguagesMediae {
-		for _, media := range mediae {
-			if media.ID == id {
-				return ContentBlock{
-					Type:  "media",
-					Media: media,
-				}, true
-			}
-		}
-	}
-
-	for _, links := range allLanguagesLinks {
-		for _, link := range links {
-			if link.ID == id {
-				return ContentBlock{
-					Type: "link",
-					Link: link,
-				}, true
-			}
-		}
-	}
-
 	return ContentBlock{}, false
+}
+
+func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID string) string {
+	// Compute the description file's path
+	if ctx.Flags.Scattered {
+		return path.Join(databaseDirectory, workID, ctx.Config.ScatteredModeFolder, "description.md")
+	} else {
+		return path.Join(databaseDirectory, workID, "description.md")
+	}
 }
 
 // Build builds a single work given the database & output folders, as wells as a work ID
 func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, workID string) (AnalyzedWork, error) {
-	// Compute the description file's path
-	var descriptionFilename string
-	if ctx.Flags.Scattered {
-		descriptionFilename = path.Join(databaseDirectory, workID, ctx.Config.ScatteredModeFolder, "description.md")
-	} else {
-		descriptionFilename = path.Join(databaseDirectory, workID, "description.md")
-	}
+	descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
 
 	// Update the UI
 	ctx.CurrentWorkID = workID
@@ -320,11 +298,12 @@ func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, wo
 			if block.Type != "media" {
 				continue
 			}
-			analyzed, err := ctx.HandleMedia(workID, block.Media, lang)
+			ctx.LogDebug("Handling media %#v", block.Media)
+			analyzed, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
 			if err != nil {
-				ctx.LogError(err.Error())
-				continue
+				return AnalyzedWork{}, err
 			}
+
 			localizedBlocks[lang][i].Media = analyzed
 			analyzedMediae = append(analyzedMediae, analyzed)
 		}

@@ -61,7 +61,9 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 
 // IncrementProgress increments the number of processed works and writes the progress to a file if --write-progress is set.
 func (ctx *RunContext) IncrementProgress() error {
+	ctx.mu.Lock()
 	ctx.Progress.Current++
+	ctx.mu.Unlock()
 
 	ctx.UpdateSpinner()
 	return ctx.WriteProgressFile()

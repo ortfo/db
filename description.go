@@ -1,6 +1,8 @@
 package ortfodb
 
 import (
+	"crypto/md5"
+	"encoding/base64"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -11,11 +13,9 @@ import (
 	"github.com/anaskhan96/soup"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/mitchellh/mapstructure"
-
-	"github.com/jaevor/go-nanoid"
 	"github.com/k3a/html2text"
 	"github.com/metal3d/go-slugify"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -88,7 +88,7 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) (metadata WorkMetada
 		if localized {
 			raw += localizedRawBlocks[language]
 		}
-		title[language], blocks[language], footnotes[language], abbreviations[language] = ParseSingleLanguageDescription(raw)
+		title[language], blocks[language], footnotes[language], abbreviations[language] = ctx.ParseSingleLanguageDescription(raw)
 	}
 	return
 }
@@ -101,7 +101,6 @@ type Footnotes map[string]HTMLString
 
 // Paragraph represents a paragraph declaration in a description.md file.
 type Paragraph struct {
-	ID      string     `json:"id"`
 	Index   int        `json:"index"`
 	Anchor  string     `json:"anchor"`
 	Content HTMLString `json:"content"` // html
@@ -109,7 +108,6 @@ type Paragraph struct {
 
 // Link represents an (isolated) link declaration in a description.md file.
 type Link struct {
-	ID     string     `json:"id"`
 	Anchor string     `json:"anchor"`
 	Text   HTMLString `json:"text"`
 	Title  string     `json:"title"`
@@ -124,18 +122,19 @@ type AnalyzedWork struct {
 }
 
 type WorkMetadata struct {
-	Aliases            []string                        `json:"aliases"`
-	Finished           string                          `json:"finished"`
-	Started            string                          `json:"started"`
-	MadeWith           []string                        `json:"made_with"`
-	Tags               []string                        `json:"tags"`
-	Thumbnail          ThisOrtfoFolderRelativeFilePath `json:"thumbnail"`
-	TitleStyle         TitleStyle                      `json:"title_style"`
-	Colors             ColorPalette                    `json:"colors"`
-	PageBackground     string                          `json:"page background"`
-	WIP                bool                            `json:"wip"`
-	Private            bool                            `json:"private"`
-	AdditionalMetadata map[string]interface{}          `json:"additional_metadata" mapstructure:",remain"`
+	BuiltAt            string                        `json:"built_at"`
+	Aliases            []string                      `json:"aliases"`
+	Finished           string                        `json:"finished"`
+	Started            string                        `json:"started"`
+	MadeWith           []string                      `json:"made_with"`
+	Tags               []string                      `json:"tags"`
+	Thumbnail          FilePathInsidePortfolioFolder `json:"thumbnail"`
+	TitleStyle         TitleStyle                    `json:"title_style"`
+	Colors             ColorPalette                  `json:"colors"`
+	PageBackground     string                        `json:"page background"`
+	WIP                bool                          `json:"wip"`
+	Private            bool                          `json:"private"`
+	AdditionalMetadata map[string]interface{}        `json:"additional_metadata" mapstructure:",remain"`
 }
 
 type TitleStyle string
@@ -148,6 +147,7 @@ type LocalizedWorkContent struct {
 }
 
 type ContentBlock struct {
+	ID   string
 	Type ContentBlockType
 	Media
 	Paragraph
@@ -160,7 +160,6 @@ func (b ContentBlock) AsMedia() Media {
 	}
 
 	return Media{
-		ID:             b.Media.ID,
 		Anchor:         b.Media.Anchor,
 		Alt:            b.Alt,
 		Title:          b.Media.Title,
@@ -183,7 +182,6 @@ func (b ContentBlock) AsLink() Link {
 	}
 
 	return Link{
-		ID:     b.Link.ID,
 		Anchor: b.Link.Anchor,
 		Text:   b.Text,
 		Title:  b.Link.Title,
@@ -197,32 +195,21 @@ func (b ContentBlock) AsParagraph() Paragraph {
 	}
 
 	return Paragraph{
-		ID:      b.Paragraph.ID,
 		Anchor:  b.Paragraph.Anchor,
 		Content: b.Content,
 	}
 }
 
-func (b ContentBlock) ID() string {
-	switch b.Type {
-	case "media":
-		return b.Media.ID
-	case "paragraph":
-		return b.Paragraph.ID
-	case "link":
-		return b.Link.ID
-	default:
-		panic("unknown content block type '" + string(b.Type) + "'")
-	}
-}
+type ThumbnailsMap map[int]FilePathInsideMediaRoot
 
-type ThumbnailsMap map[int]MediaRootRelativeFilePath
+// FilePathInsidePortfolioFolder is a path relative to the scattered mode folder inside of a work directory. (example ../image.jpeg for an image in the work's directory, just outside of the portfolio-specific folder)
+type FilePathInsidePortfolioFolder string
 
-type ThisOrtfoFolderRelativeFilePath string
-type MediaRootRelativeFilePath string
+// FilePathInsideMediaRoot is a path relative to the media root directory.
+type FilePathInsideMediaRoot string
 
-func (f ThisOrtfoFolderRelativeFilePath) Absolute(ctx *RunContext, workID string) string {
-	result, _ := filepath.Abs(filepath.Join(ctx.DatabaseDirectory, "..", string(f)))
+func (f FilePathInsidePortfolioFolder) Absolute(ctx *RunContext, workID string) string {
+	result, _ := filepath.Abs(filepath.Join(ctx.DatabaseDirectory, workID, ctx.Config.ScatteredModeFolder, string(f)))
 	return result
 }
 
@@ -276,10 +263,25 @@ func SplitOnLanguageMarkers(markdownRaw string) (string, map[string]string) {
 	return before, markdownRawPerLanguage
 }
 
+// generatedID returns the ID of the content block. It is only as unique as the data it is based on.
+func (b ContentBlock) generateID() string {
+	var dataToUse string
+	switch b.Type {
+	case "media":
+		dataToUse = string(b.Media.RelativeSource)
+	case "paragraph":
+		dataToUse = string(b.AsParagraph().Content)
+	case "link":
+		dataToUse = b.Link.URL
+	}
+	hash := md5.Sum([]byte(string(b.Type) + dataToUse))
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(hash[:])[:10]
+}
+
 // ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
 // order contains an array of nanoids that represent the order of the content blocks as they are in the original file.
-func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, blocks []ContentBlock, footnotes Footnotes, abbreviations Abbreviations) {
+func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, blocks []ContentBlock, footnotes Footnotes, abbreviations Abbreviations) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
 	htmlRaw := MarkdownToHTML(markdownRaw)
 	htmlTree := soup.HTMLParse(htmlRaw)
@@ -288,7 +290,6 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, block
 	abbreviations = make(Abbreviations)
 	paragraphLike := make([]soup.Root, 0)
 	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
-	idGenerator, _ := nanoid.Standard(5)
 	for _, element := range htmlTree.Find("body").Children() {
 		// Check if it's a paragraph-like tag
 		if strings.Contains(paragraphLikeTagNames, element.NodeValue) {
@@ -298,34 +299,37 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, block
 	for _, paragraph := range paragraphLike {
 		childrenCount := len(paragraph.Children())
 		firstChild := soup.Root{}
-		id := idGenerator()
 		if childrenCount >= 1 {
 			firstChild = paragraph.Children()[0]
 		}
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			// A media embed
 			alt, attributes := ExtractAttributesFromAlt(firstChild.Attrs()["alt"])
-			blocks = append(blocks, ContentBlock{
+			block := ContentBlock{
 				Type: "media",
 				Media: Media{
 					Anchor:         slugify.Marshal(firstChild.Attrs()["src"]),
-					ID:             id,
 					Alt:            alt,
 					Title:          firstChild.Attrs()["title"],
-					RelativeSource: ThisOrtfoFolderRelativeFilePath(firstChild.Attrs()["src"]),
+					RelativeSource: FilePathInsidePortfolioFolder(firstChild.Attrs()["src"]),
 					Attributes:     attributes,
-				}})
+				},
+			}
+			block.ID = block.generateID()
+			blocks = append(blocks, block)
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			// An isolated link
-			blocks = append(blocks, ContentBlock{
+			block := ContentBlock{
 				Type: "link",
 				Link: Link{
-					ID:     id,
 					Anchor: slugify.Marshal(firstChild.FullText(), true),
 					Text:   innerHTML(firstChild),
 					Title:  firstChild.Attrs()["title"],
 					URL:    firstChild.Attrs()["href"],
-				}})
+				},
+			}
+			block.ID = block.generateID()
+			blocks = append(blocks, block)
 		} else if regexpMatches(PatternAbbreviationDefinition, string(innerHTML(paragraph))) {
 			// An abbreviation definition
 			groups := regexpGroups(PatternAbbreviationDefinition, string(innerHTML(paragraph)))
@@ -335,13 +339,15 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, block
 			continue
 		} else {
 			// A paragraph (anything else)
-			blocks = append(blocks, ContentBlock{
+			block := ContentBlock{
 				Type: "paragraph",
 				Paragraph: Paragraph{
-					ID:      id,
 					Anchor:  paragraph.Attrs()["id"],
 					Content: HTMLString(paragraph.HTML()),
-				}})
+				},
+			}
+			block.ID = block.generateID()
+			blocks = append(blocks, block)
 		}
 	}
 	if h1 := htmlTree.Find("h1"); h1.Error == nil {
@@ -365,6 +371,7 @@ func ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, block
 		blocks[i].Paragraph = ReplaceAbbreviations(block.Paragraph, abbreviations)
 	}
 
+	ctx.LogDebug("Parsed description into blocks: %#v", blocks)
 	return
 }
 

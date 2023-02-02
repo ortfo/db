@@ -127,7 +127,7 @@ func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error)
 	// Then, for each block (ordered by the layout)
 	spew.Dump(work)
 	for _, block := range content.Blocks {
-		fmt.Printf("replicating %s block #%s", block.Type, block.ID())
+		fmt.Printf("replicating %s block #%s", block.Type, block.ID)
 		switch block.Type {
 		case "media":
 			result += replicateMediaEmbed(block.Media) + end
@@ -258,8 +258,8 @@ func replicateParagraph(p Paragraph) (string, error) {
 		markdown = "<p></p>"
 	}
 	var result string
-	if p.ID != "" {
-		result = "{#" + p.ID + "}\n" + markdown
+	if p.Anchor != "" {
+		result = "{#" + p.Anchor + "}\n" + markdown
 	} else {
 		result = markdown
 	}

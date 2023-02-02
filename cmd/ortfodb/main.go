@@ -2,9 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime/pprof"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
@@ -13,8 +16,8 @@ import (
 
 const CLIUsage = `
 Usage:
-  ortfodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
-  ortfodb [options] <database> build <include-works> <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   ortfodb [options] <database> add <fullname> [<metadata-item>...]
   ortfodb [options] <database> validate
@@ -64,10 +67,10 @@ Commands:
     Make sure that everything is OK in the database:
     Each one of these checks are configurable and deactivable in ortfodb.yaml:validate.checks,
     the step name is the one in [square brackets] at the beginning of these lines.
-    1. [schema compliance] validate compliance to schema for ortfodb.yaml 
+    1. [schema compliance] validate compliance to schema for ortfodb.yaml
     2. [work folder names] check work folder names for url-unsafe characters or case-insensitively non-unique folder names
     3. for each work directory:
-        a. [yaml header] check YAML header for unknown keys 
+        a. [yaml header] check YAML header for unknown keys
         b. [title presence] check presence of work title
         c. [title uniqueness] check uniqueness (case-insensitive) of work title
         d. [tags presence] check if at least one tag is present
@@ -144,8 +147,15 @@ func main() {
 	if err := dispatchCommand(args); err != nil {
 		// Start with leading \n because previous lines will have \r\033[K in front
 		colorstring.Println("\n[red][bold]An error occured[reset]")
-		colorstring.Println("\t[red]" + err.Error())
+		printError(err)
 		os.Exit(1)
+	}
+}
+
+func printError(err error) {
+	errorFragments := strings.Split(err.Error(), ": ")
+	for i, fragment := range errorFragments {
+		colorstring.Println("[red]" + strings.Repeat(" ", i) + fragment)
 	}
 }
 
@@ -155,6 +165,7 @@ func dispatchCommand(args docopt.Opts) error {
 		return err
 	}
 	if val, _ := args.Bool("replicate"); val {
+		handleControlC(args, ortfodb.RunContext{})
 		err := ortfodb.RunCommandReplicate(args)
 		return err
 	}
@@ -187,5 +198,41 @@ func RunCommandBuild(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	return ortfodb.BuildAll(databaseDirectory, outputFilename, flags, config)
+	context, err := ortfodb.PrepareBuild(databaseDirectory, outputFilename, flags, config)
+	handleControlC(args, context)
+	if err != nil {
+		return err
+	}
+	includeWorksPattern, _ := args.String("<include-works>")
+	if includeWorksPattern == "" {
+		includeWorksPattern = "*"
+	}
+	works, err := context.BuildSome(includeWorksPattern, databaseDirectory, outputFilename, flags, config)
+	if len(works) > 0 {
+		context.WriteDatabase(works, flags, outputFilename, err != nil)
+	}
+	return err
+}
+
+func handleControlC(args docopt.Opts, context ortfodb.RunContext) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		for range sig {
+			context.Spinner.StopFailCharacter("️⚠")
+			context.Spinner.StopFailColors("fgYellow")
+			if context.Progress.Current > 0 {
+				context.Spinner.StopFailMessage(colorstring.Color(fmt.Sprintf("Cancelled. Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)))
+			} else {
+				context.Spinner.StopFailMessage("Cancelled.")
+			}
+			context.Spinner.StopFail()
+			toFilepath, argError := args.String("<to-filepath>")
+			buildLockFilepath := ortfodb.BuildLockFilepath(toFilepath)
+			if _, err := os.Stat(buildLockFilepath); err == nil && argError == nil {
+				os.Remove(buildLockFilepath)
+			}
+			os.Exit(1)
+		}
+	}()
 }

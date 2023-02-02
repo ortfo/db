@@ -41,7 +41,7 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 	} else {
 		// If no layout is specified, we use the default layout.
 		for _, block := range blocks {
-			layout = append(layout, []LayoutCell{LayoutCell(block.ID())})
+			layout = append(layout, []LayoutCell{LayoutCell(block.ID)})
 		}
 	}
 	return layout, nil
@@ -55,31 +55,16 @@ func ResolveBlockID(blocks []ContentBlock, language string, blockRef string) (st
 		return "", fmt.Errorf("invalid content block reference: %w", err)
 	}
 
-	currentParagraphIndex := 0
-	currentMediaEmbedIndex := 0
-	currentLinkIndex := 0
+	currentIndexByType := map[ContentBlockType]int{"paragraph": 0, "media": 0, "link": 0}
 
 	if typ != "p" && typ != "m" && typ != "l" {
 		return "", fmt.Errorf("invalid content block reference: %s is not one of p, m, l", typ)
 	}
 
 	for _, block := range blocks {
-		switch block.Type {
-		case "paragraph":
-			currentParagraphIndex++
-			if currentParagraphIndex == index && typ == "p" {
-				return block.ID(), nil
-			}
-		case "media":
-			currentMediaEmbedIndex++
-			if currentMediaEmbedIndex == index && typ == "m" {
-				return block.ID(), nil
-			}
-		case "link":
-			currentLinkIndex++
-			if currentLinkIndex == index && typ == "l" {
-				return block.ID(), nil
-			}
+		currentIndexByType[block.Type]++
+		if currentIndexByType[block.Type] == index && string(block.Type)[0:1] == typ {
+			return block.ID, nil
 		}
 	}
 

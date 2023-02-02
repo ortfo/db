@@ -37,6 +37,10 @@ func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string)
 type Spinner interface {
 	Start() error
 	Stop() error
+	StopFail() error
+	StopFailColors(colors ...string) error
+	StopFailCharacter(char string)
+	StopFailMessage(message string)
 	Message(string)
 	Pause() error
 	Unpause() error
@@ -45,11 +49,15 @@ type Spinner interface {
 type dummySpinner struct {
 }
 
-func (d dummySpinner) Start() error   { return nil }
-func (d dummySpinner) Stop() error    { return nil }
-func (d dummySpinner) Message(string) {}
-func (d dummySpinner) Pause() error   { return nil }
-func (d dummySpinner) Unpause() error { return nil }
+func (d dummySpinner) Start() error                          { return nil }
+func (d dummySpinner) Stop() error                           { return nil }
+func (d dummySpinner) StopFail() error                       { return nil }
+func (d dummySpinner) StopFailColors(colors ...string) error { return nil }
+func (d dummySpinner) StopFailCharacter(char string)         {}
+func (d dummySpinner) StopFailMessage(message string)        {}
+func (d dummySpinner) Message(string)                        {}
+func (d dummySpinner) Pause() error                          { return nil }
+func (d dummySpinner) Unpause() error                        { return nil }
 
 func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 	writer := os.Stdout
@@ -63,7 +71,7 @@ func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 		Writer:            writer,
 		Frequency:         100 * time.Millisecond,
 		Suffix:            " ",
-		Message:           "  0% │ Warming up",
+		Message:           "  0% Warming up",
 		CharSet:           yacspin.CharSets[14],
 		Colors:            []string{"fgCyan"},
 		StopCharacter:     "✓",
@@ -71,7 +79,7 @@ func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 		StopMessage:       colorstring.Color(fmt.Sprintf("Database written to [bold]./%s[reset]", outputFilename)),
 		StopFailCharacter: "✗",
 		StopFailColors:    []string{"fgRed"},
-		ShowCursor: true, // XXX temporary, as currently the cursors is not shown back when the user Ctrl-Cs
+		ShowCursor:        true, // XXX temporary, as currently the cursors is not shown back when the user Ctrl-Cs
 	})
 
 	if err != nil {
@@ -108,9 +116,16 @@ func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Unpause()
 }
 
-// LogWarning logs infos.
+// LogInfo logs infos.
 func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
 	colorstring.Fprintf(os.Stderr, "\r[blue]info [reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	ctx.Spinner.Unpause()
+}
+
+// LogDebug logs debug information.
+func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
+	ctx.Spinner.Pause()
+	colorstring.Fprintf(os.Stderr, "\r[magenta]debug[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }

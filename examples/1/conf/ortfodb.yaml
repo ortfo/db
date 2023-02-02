@@ -4,7 +4,7 @@ extract colors:
 make thumbnails:
   enabled: true
   sizes: [100, 400, 600, 1200]
-  file name template: <media directory>/<work id>/<media id>@<size>.webp
+  file name template: <media directory>/<work id>/<block id>@<size>.webp
 
 media:
   at: out/media

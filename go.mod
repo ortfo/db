@@ -31,7 +31,6 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/gen2brain/go-fitz v1.19.0
 	github.com/hullerob/go.farbfeld v0.0.0-20181222022525-3661193c725f
-	github.com/jaevor/go-nanoid v1.3.0
 	github.com/jbuchbinder/gopnm v0.0.0-20220507095634-e31f54490ce0
 	github.com/k3a/html2text v1.1.0
 	github.com/kr/pretty v0.3.0 // indirect

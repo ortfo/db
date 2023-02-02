@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"time"
 
 	// Supported formats
 	_ "image/gif"
@@ -38,8 +39,9 @@ import (
 	"github.com/tcolgate/mp3"
 )
 
-func (p MediaRootRelativeFilePath) Absolute(ctx *RunContext) string {
+func (p FilePathInsideMediaRoot) Absolute(ctx *RunContext) string {
 	result, _ := filepath.Abs(filepath.Join(ctx.Config.Media.At, string(p)))
+	ctx.LogDebug("absolute of filepath(inside media root): %s -> %s", p, result)
 	return result
 }
 
@@ -51,8 +53,8 @@ func (p MediaRootRelativeFilePath) Absolute(ctx *RunContext) string {
 //	output:  ./[work id]/[scattered mode folder]/[file path]
 //	         -----------------------------------------------
 //	         part of the path
-func (p ThisOrtfoFolderRelativeFilePath) RelativeToMediaRoot(ctx *RunContext, workID string) MediaRootRelativeFilePath {
-	return MediaRootRelativeFilePath(filepath.Join(workID, ctx.Config.ScatteredModeFolder, string(p)))
+func (p FilePathInsidePortfolioFolder) RelativeToMediaRoot(ctx *RunContext, workID string) FilePathInsideMediaRoot {
+	return FilePathInsideMediaRoot(filepath.Join(workID, ctx.Config.ScatteredModeFolder, string(p)))
 }
 
 // ImageDimensions represents metadata about a media as it's extracted from its file.
@@ -64,23 +66,23 @@ type ImageDimensions struct {
 
 // Media represents a media object inserted in the work object's media array.
 type Media struct {
-	ID             string                          `json:"id"`
-	Index          int                             `json:"index"`
-	Anchor         string                          `json:"anchor"`
-	Alt            string                          `json:"alt"`
-	Title          string                          `json:"title"`
-	RelativeSource ThisOrtfoFolderRelativeFilePath `json:"relative_source"`
-	DistSource     MediaRootRelativeFilePath       `json:"dist_source"`
-	ContentType    string                          `json:"content_type"`
-	Size           int                             `json:"size"` // in bytes
-	Dimensions     ImageDimensions                 `json:"dimensions"`
-	Online         bool                            `json:"online"`
-	Duration       float64                         `json:"duration"` // in seconds
-	HasSound       bool                            `json:"has_sound"`
-	Colors         ColorPalette                    `json:"extracted_colors"`
-	Thumbnails     ThumbnailsMap                   `json:"thumbnails"`
-	Attributes     MediaAttributes                 `json:"attributes"`
-	Analyzed       bool                            `json:"analyzed"` // whether the media has been analyzed
+	Index             int                           `json:"index"`
+	Anchor            string                        `json:"anchor"`
+	Alt               string                        `json:"alt"`
+	Title             string                        `json:"title"`
+	RelativeSource    FilePathInsidePortfolioFolder `json:"relative_source"`
+	DistSource        FilePathInsideMediaRoot       `json:"dist_source"`
+	ContentType       string                        `json:"content_type"`
+	Size              int                           `json:"size"` // in bytes
+	Dimensions        ImageDimensions               `json:"dimensions"`
+	Online            bool                          `json:"online"`
+	Duration          float64                       `json:"duration"` // in seconds
+	HasSound          bool                          `json:"has_sound"`
+	Colors            ColorPalette                  `json:"extracted_colors"`
+	Thumbnails        ThumbnailsMap                 `json:"thumbnails"`
+	ThumbnailsBuiltAt string                        `json:"thumbnails_built_at"`
+	Attributes        MediaAttributes               `json:"attributes"`
+	Analyzed          bool                          `json:"analyzed"` // whether the media has been analyzed
 }
 
 // GetImageDimensions returns an ImageDimensions object, given a pointer to a file.
@@ -145,6 +147,7 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 // TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, media Media, err error) {
+	ctx.LogDebug("Analyzing media %#v", embedDeclaration)
 	ctx.Status(StepMediaAnalysis, ProgressDetails{
 		Resolution: 0,
 		File:       string(embedDeclaration.RelativeSource),
@@ -173,6 +176,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	} else {
 		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration)
 		if usedCache && cachedAnalysis.ContentType != "" {
+			ctx.LogDebug("Reusing cached analysis %#v", cachedAnalysis)
 			return true, cachedAnalysis, nil
 		}
 
@@ -224,12 +228,11 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	}
 
 	analyzedMedia := Media{
-		ID:             embedDeclaration.ID,
 		Anchor:         slugify.Marshal(filepathBaseNoExt(filename), true),
 		Alt:            embedDeclaration.Alt,
 		Title:          embedDeclaration.Title,
 		RelativeSource: embedDeclaration.RelativeSource,
-		DistSource:     MediaRootRelativeFilePath(embedDeclaration.RelativeSource.RelativeToMediaRoot(ctx, workID)),
+		DistSource:     FilePathInsideMediaRoot(embedDeclaration.RelativeSource.RelativeToMediaRoot(ctx, workID)),
 		Attributes:     embedDeclaration.Attributes,
 		ContentType:    contentType,
 		Dimensions:     dimensions,
@@ -237,6 +240,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		Size:           int(fileInfo.Size()),
 		HasSound:       hasSound,
 	}
+	ctx.LogDebug("Analyzed to %#v (no cache used)", analyzedMedia)
 	return false, analyzedMedia, nil
 }
 
@@ -336,7 +340,7 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 	return
 }
 
-func (ctx *RunContext) HandleMedia(workID string, embedDeclaration Media, language string) (Media, error) {
+func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclaration Media, language string) (Media, error) {
 	usedCache, media, err := ctx.AnalyzeMediaFile(workID, embedDeclaration)
 	if err != nil {
 		return Media{}, fmt.Errorf("while analyzing media: %w", err)
@@ -360,6 +364,9 @@ func (ctx *RunContext) HandleMedia(workID string, embedDeclaration Media, langua
 			err = recurcopy.CopyDirectory(absolutePathSource, absolutePathDestination)
 		} else {
 			content, err = os.ReadFile(absolutePathSource)
+			if err != nil {
+				return Media{}, fmt.Errorf("could not read file %s: %w", absolutePathSource, err)
+			}
 			err = os.WriteFile(absolutePathDestination, content, 0777)
 		}
 
@@ -370,17 +377,19 @@ func (ctx *RunContext) HandleMedia(workID string, embedDeclaration Media, langua
 
 	// Make thumbnail
 	var filenameForColorExtraction string
-	media.Thumbnails = make(map[int]MediaRootRelativeFilePath)
+	media.Thumbnails = make(map[int]FilePathInsideMediaRoot)
 	if !media.Thumbnailable() || !ctx.Config.MakeThumbnails.Enabled {
 		if strings.HasPrefix(media.ContentType, "image/") {
 			filenameForColorExtraction = absolutePathDestination
 		}
 	} else {
-		smallestThumbSize := ctx.Config.MakeThumbnails.Sizes[0]
+		smallestThumbSize := ctx.Config.MakeThumbnails.Sizes[0] // XXX what?? is it sorted?
 		for _, size := range ctx.Config.MakeThumbnails.Sizes {
-			saveTo := ctx.ComputeOutputThumbnailFilename(media, workID, size, language)
+			ctx.LogDebug("Making thumbnail for %s#%s", media.RelativeSource, blockID)
+			saveTo := ctx.ComputeOutputThumbnailFilename(media, blockID, workID, size, language)
 
-			if _, err := os.Stat(string(saveTo)); err == nil && usedCache {
+			if _, err := os.Stat(string(saveTo.Absolute(ctx))); err == nil && usedCache {
+				ctx.LogDebug("Skipping thumbnail creation for %s#%s because it already exists", media.RelativeSource, blockID)
 				media.Thumbnails[size] = saveTo
 				continue
 			}
@@ -404,7 +413,7 @@ func (ctx *RunContext) HandleMedia(workID string, embedDeclaration Media, langua
 				return media, fmt.Errorf("while making thumbnail for %s: %w", workID, err)
 			}
 			media.Thumbnails[size] = saveTo
-
+			media.ThumbnailsBuiltAt = time.Now().String()
 		}
 	}
 

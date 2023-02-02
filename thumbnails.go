@@ -36,6 +36,7 @@ func (m Media) Thumbnailable() bool {
 // It returns the path where the thumbnail has been written to.
 // saveTo should be relative to cwd.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string) error {
+	ctx.LogDebug("Making thumbnail for %s at size %d to %s", media.DistSource.Absolute(ctx), targetSize, saveTo)
 	if media.ContentType == "image/gif" {
 		return ctx.makeGifThumbnail(media, targetSize, saveTo)
 	}
@@ -161,9 +162,9 @@ func run(command string, args ...string) error {
 
 	// Hook up stderr/out to a writer so that we can capture the output
 	var stdBuffer bytes.Buffer
-	stdWriter := io.MultiWriter(os.Stdout, &stdBuffer)
-	proc.Stdout = stdWriter
-	proc.Stderr = stdWriter
+	// stdWriter := io.MultiWriter(os.Stdout, &stdBuffer)
+	proc.Stdout = &stdBuffer
+	proc.Stderr = &stdBuffer
 
 	// Run the proc
 	err := proc.Run()
@@ -189,18 +190,19 @@ func run(command string, args ...string) error {
 //	<project id>          the project’s id
 //	<media directory>     the value of media.at in the configuration
 //	<basename>            the media’s basename (with the extension)
-//	<media id>            the media’s id
+//	<block id>            the media’s id
 //	<size>                the current thumbnail size
 //	<extension>           the media’s extension
 //	<lang>                the current language.
-func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, projectID string, targetSize int, lang string) MediaRootRelativeFilePath {
+func (ctx *RunContext) ComputeOutputThumbnailFilename(media Media, blockID string, projectID string, targetSize int, lang string) FilePathInsideMediaRoot {
 	computed := ctx.Config.MakeThumbnails.FileNameTemplate
 	computed = strings.ReplaceAll(computed, "<project id>", projectID)
 	computed = strings.ReplaceAll(computed, "<work id>", projectID)
 	computed = strings.ReplaceAll(computed, "<basename>", path.Base(media.DistSource.Absolute(ctx)))
-	computed = strings.ReplaceAll(computed, "<media id>", media.ID)
+	computed = strings.ReplaceAll(computed, "<block id>", blockID)
 	computed = strings.ReplaceAll(computed, "<size>", fmt.Sprint(targetSize))
 	computed = strings.ReplaceAll(computed, "<extension>", strings.Replace(filepath.Ext(media.DistSource.Absolute(ctx)), ".", "", 1))
 	computed = strings.ReplaceAll(computed, "<lang>", lang)
-	return MediaRootRelativeFilePath(computed)
+	computed = strings.ReplaceAll(computed, "<media directory>", ctx.Config.Media.At)
+	return FilePathInsideMediaRoot(computed)
 }

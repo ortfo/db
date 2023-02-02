@@ -1,6 +1,6 @@
 package ortfodb
 
-func FindMedia(works []AnalyzedWork, mediaEmbed Media) (found bool, media Media) {
+func FindMedia(works Works, mediaEmbed Media) (found bool, media Media) {
 	for _, w := range works {
 		for _, wsl := range w.Content {
 			for _, b := range wsl.Blocks {
@@ -8,15 +8,6 @@ func FindMedia(works []AnalyzedWork, mediaEmbed Media) (found bool, media Media)
 					return true, b.Media
 				}
 			}
-		}
-	}
-	return
-}
-
-func FindWork(works []AnalyzedWork, id string) (found bool, work AnalyzedWork) {
-	for _, w := range works {
-		if w.ID == id {
-			return true, w
 		}
 	}
 	return

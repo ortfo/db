@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -181,4 +182,14 @@ func noDuplicates[T comparable](s []T) []T {
 		}
 	}
 	return result
+}
+
+func handleControlC(action func()) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			action()
+		}
+	}()
 }

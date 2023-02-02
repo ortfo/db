@@ -146,7 +146,7 @@ func DefaultConfiguration() Configuration {
 		MakeThumbnails: MakeThumbnailsConfiguration{
 			Enabled:          true,
 			Sizes:            []int{100, 400, 600, 1200},
-			FileNameTemplate: "<media directory>/<work id>/<media id>@<size>.webp",
+			FileNameTemplate: "<media directory>/<work id>/<block id>@<size>.webp",
 		},
 		Media: struct{ At string }{
 			At: "media/",
