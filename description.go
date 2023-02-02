@@ -116,13 +116,14 @@ type Link struct {
 
 // AnalyzedWork represents a complete work, with analyzed mediae.
 type AnalyzedWork struct {
-	ID       string                          `json:"id"`
-	Metadata WorkMetadata                    `json:"metadata"`
-	Content  map[string]LocalizedWorkContent `json:"content"`
+	ID              string                          `json:"id"`
+	BuiltAt         string                          `json:"built_at"`
+	DescriptionHash string                          `json:"description_hash"`
+	Metadata        WorkMetadata                    `json:"metadata"`
+	Content         map[string]LocalizedWorkContent `json:"content"`
 }
 
 type WorkMetadata struct {
-	BuiltAt            string                        `json:"built_at"`
 	Aliases            []string                      `json:"aliases"`
 	Finished           string                        `json:"finished"`
 	Started            string                        `json:"started"`

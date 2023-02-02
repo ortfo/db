@@ -4,6 +4,8 @@
 package ortfodb
 
 import (
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -173,16 +175,47 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 			}
 		}
 		if included {
-			newWork, err := ctx.Build(databaseDirectory, outputFilename, workID)
-			newWork.Metadata.BuiltAt = time.Now().String()
+			// Get description file name
+			descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
+
+			// Update the UI
+			ctx.CurrentWorkID = workID
+			ctx.Status(StepDescription, ProgressDetails{
+				File: descriptionFilename,
+			})
+
+			// Get the description's contents
+			descriptionRaw, err := os.ReadFile(descriptionFilename)
 			if err != nil {
-				return works, fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)
+				return Works{}, fmt.Errorf("while reading description file %s: %w", descriptionFilename, err)
 			}
-			works[workID] = newWork
+
+			// Compare with hash of work in old database, to determine if we can skip it
+			hash := md5.Sum(descriptionRaw)
+			newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
+
+			if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
+				// Skip it!
+				ctx.LogInfo("Skipped building of %s, as its description file %s has not changed since the last build.", workID, descriptionFilename)
+				works[workID] = oldWork
+			} else {
+				// Build it
+				newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
+				if err != nil {
+					return works, fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)
+				}
+
+				// Set meta-info
+				newWork.BuiltAt = time.Now().String()
+				newWork.DescriptionHash = newDescriptionHash
+
+				// Update in database
+				works[workID] = newWork
+			}
 		} else if presentBefore {
 			works[workID] = oldWork
 		} else {
-			ctx.LogInfo("Skipped building of work %s, as it is neither included in %s nor formerly present in %s.", workID, include, outputFilename)
+			ctx.LogInfo("Skipped building of %s, as it is neither included in %s nor formerly present in %s.", workID, include, outputFilename)
 		}
 		ctx.IncrementProgress()
 	}
@@ -274,21 +307,7 @@ func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID stri
 }
 
 // Build builds a single work given the database & output folders, as wells as a work ID
-func (ctx *RunContext) Build(databaseDirectory string, outputFilename string, workID string) (AnalyzedWork, error) {
-	descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
-
-	// Update the UI
-	ctx.CurrentWorkID = workID
-
-	// Parse the description
-	descriptionRaw, err := os.ReadFile(descriptionFilename)
-	if err != nil {
-		return AnalyzedWork{}, err
-	}
-
-	ctx.Status(StepDescription, ProgressDetails{
-		File: descriptionFilename,
-	})
+func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (AnalyzedWork, error) {
 	metadata, localizedBlocks, title, footnotes, _ := ctx.ParseDescription(string(descriptionRaw))
 
 	// Handle mediae
