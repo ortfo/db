@@ -112,14 +112,14 @@ func (ctx *RunContext) UpdateSpinner() {
 // LogError logs non-fatal errors.
 func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\r[red]error[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(os.Stderr, "\033[2K\r[red]error[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
 // LogInfo logs infos.
 func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\r[blue]info [reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(os.Stderr, "\033[2K\r[blue]info [reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
@@ -129,6 +129,6 @@ func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
 		return
 	}
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\r[magenta]debug[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(os.Stderr, "\033[2K\r[magenta]debug[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
