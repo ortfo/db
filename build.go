@@ -12,7 +12,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"path"
@@ -24,8 +23,6 @@ type Works map[string]AnalyzedWork
 
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
-	mu sync.Mutex
-
 	Config *Configuration
 	// ID of the work currently being processed.
 	CurrentWorkID         string
