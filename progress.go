@@ -65,6 +65,7 @@ func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
 func (ctx *RunContext) IncrementProgress() error {
 	ctx.mu.Lock()
 	ctx.Progress.Current++
+	ctx.LogDebug("progress: %d/%d", ctx.Progress.Current, ctx.Progress.Total)
 	ctx.mu.Unlock()
 
 	ctx.UpdateSpinner()
@@ -77,7 +78,6 @@ func (ctx *RunContext) WriteProgressFile() error {
 		return nil
 	}
 
-	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	progressDataJSON, err := jsoniter.Marshal(ctx.ProgressFileData())
 	if err != nil {
 		return err

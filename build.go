@@ -12,15 +12,93 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"sync"
 	"time"
 
 	"path"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mitchellh/mapstructure"
 )
 
-type Works map[string]AnalyzedWork
+type Database map[string]AnalyzedWork
+
+type DatabaseMeta struct {
+	Partial bool
+}
+
+// Works gets the mapping of all works (without the #meta "pseudo-work").
+func (w Database) Works() map[string]AnalyzedWork {
+	works := make(map[string]AnalyzedWork)
+	for id, work := range w {
+		if id == "#meta" {
+			continue
+		}
+		works[id] = work
+	}
+	return works
+}
+
+// WorksByDate gets all the works sorted by date, with most recent works first.
+func (w Database) WorksByDate() []AnalyzedWork {
+	works := w.Works()
+	worksByDate := make([]AnalyzedWork, 0)
+	for _, work := range works {
+		worksByDate = append(worksByDate, work)
+	}
+	sort.Slice(worksByDate, func(i, j int) bool {
+		iDate := worksByDate[i].Metadata.CreatedAt()
+		jDate := worksByDate[j].Metadata.CreatedAt()
+
+		// if one on them has 9999 as a year, put it at the end instead
+		if iDate.Year() == 9999 {
+			return false
+		}
+		if jDate.Year() == 9999 {
+			return true
+		}
+
+		return iDate.After(jDate)
+	})
+	return worksByDate
+}
+
+// Meta gets the database meta information
+func (w Database) Meta() DatabaseMeta {
+	for id, metaWork := range w {
+		if id == "#meta" {
+			return DatabaseMeta{Partial: metaWork.Partial}
+		}
+	}
+	panic("no meta work found, database has no meta information (no #meta top-level key found)")
+}
+
+// Partial returns true if the database results from a partial build.
+func (w Database) Partial() bool {
+	return w.Meta().Partial
+}
+
+func (w Database) Languages() []string {
+	langs := make([]string, 0)
+	for _, work := range w {
+		for lang := range work.Content {
+			// Check if lang is already in langs
+			alreadyInLangs := false
+			for _, l := range langs {
+				if l == lang {
+					alreadyInLangs = true
+					break
+				}
+			}
+			if !alreadyInLangs {
+				langs = append(langs, lang)
+			}
+		}
+	}
+	return langs
+}
 
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
@@ -31,7 +109,7 @@ type RunContext struct {
 	CurrentWorkID         string
 	DatabaseDirectory     string
 	OutputDatabaseFile    string
-	PreviousBuiltDatabase Works
+	PreviousBuiltDatabase Database
 	Flags                 Flags
 	Progress              struct {
 		Current int
@@ -55,6 +133,7 @@ type Flags struct {
 	Config       string
 	ProgressFile string
 	NoCache      bool
+	WorkersCount int
 }
 
 // Project represents a project.
@@ -100,19 +179,19 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 	}
 	ctx.Spinner = ctx.CreateSpinner(outputFilename)
 
+	ctx.LogDebug("Running with configuration %#v", &config)
+
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			ctx.LogError("No previously built database file %s to use: %s", outputFilename, err.Error())
 		}
-		ctx.PreviousBuiltDatabase = Works{}
+		ctx.PreviousBuiltDatabase = Database{}
 	} else {
-		// TODO unmarshal with respect to snake_case -> CamelCase conversion, we are using non-annotated struct fields' data currently.
-		setJSONNamingStrategy(lowerCaseWithUnderscores)
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
-			ctx.PreviousBuiltDatabase = Works{}
+			ctx.PreviousBuiltDatabase = Database{}
 		}
 	}
 
@@ -149,95 +228,177 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 
 // BuildAll builds the database at outputFilename from databaseDirectory.
 // Use LoadConfiguration (and ValidateConfiguration if desired) to get a Configuration.
-func (ctx *RunContext) BuildAll(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Works, error) {
+func (ctx *RunContext) BuildAll(databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
 	return ctx.BuildSome("*", databaseDirectory, outputFilename, flags, config)
 }
 
-func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Works, error) {
+func directoriesLeftToBuild(all []string, built []string) []string {
+	remaining := make([]string, 0)
+	for _, dir := range all {
+		found := false
+		for _, builtDir := range built {
+			if dir == builtDir {
+				found = true
+				break
+			}
+		}
+		if !found {
+			remaining = append(remaining, dir)
+		}
+	}
+	return remaining
+}
+
+func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
 	defer ctx.ReleaseBuildLock(outputFilename)
+
+	type builtItem struct {
+		err      error
+		work     AnalyzedWork
+		workID   string
+		reuseOld bool
+	}
+
+	// Initialize progress total to one to prevent division by zero.
 	ctx.mu.Lock()
 	ctx.Progress.Total = 1
 	ctx.mu.Unlock()
-	works := make(map[string]AnalyzedWork)
+
+	// Initialize stuff
+	works := ctx.PreviousBuiltDatabase
 	workDirectories, err := ctx.ComputeProgressTotal()
 	if err != nil {
-		return Works{}, fmt.Errorf("while computing total number of works to build: %w", err)
+		return Database{}, fmt.Errorf("while computing total number of works to build: %w", err)
 	}
-
-
+	workDirectoriesNames := make([]string, 0)
 	for _, dirEntry := range workDirectories {
-		workID := dirEntry.Name()
-		oldWork, presentBefore := ctx.PreviousBuiltDatabase[workID]
-		var included bool
-		if include == "*" {
-			included = true
-		} else {
-			included, err = filepath.Match(include, workID)
-			if err != nil {
-				return Works{}, fmt.Errorf("while testing include-works pattern %q: %w", include, err)
-			}
-		}
-		if included {
-			// Get description file name
-			descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
+		workDirectoriesNames = append(workDirectoriesNames, dirEntry.Name())
+	}
+	workDirectoriesChannel := make(chan os.DirEntry, len(workDirectories))
+	builtChannel := make(chan builtItem)
+	builtDirectories := make([]string, 0)
 
-			// Update the UI
-			ctx.mu.Lock()
-			ctx.CurrentWorkID = workID
-			ctx.mu.Unlock()
-			ctx.Status(StepDescription, ProgressDetails{
-				File: descriptionFilename,
-			})
-
-			// Get the description's contents
-			descriptionRaw, err := os.ReadFile(descriptionFilename)
-			if err != nil {
-				return Works{}, fmt.Errorf("while reading description file %s: %w", descriptionFilename, err)
-			}
-
-			// Compare with hash of work in old database, to determine if we can skip it
-			hash := md5.Sum(descriptionRaw)
-			newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
-
-			if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
-				// Skip it!
-				ctx.LogInfo("Build skipped: description file unmodified")
-				works[workID] = oldWork
-			} else {
-				// Build it
-				newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
-				if err != nil {
-					return works, fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)
-				}
-
-				// Set meta-info
-				newWork.BuiltAt = time.Now().String()
-				newWork.DescriptionHash = newDescriptionHash
-
-				// Update in database
-				works[workID] = newWork
-			}
-		} else if presentBefore {
-			works[workID] = oldWork
-		} else {
-			ctx.LogDebug("Build skipped: not included by %s, not present in previous database file.", include)
-		}
-		ctx.IncrementProgress()
+	if flags.WorkersCount <= 0 {
+		flags.WorkersCount = runtime.NumCPU()
 	}
 
+	// Build works in parallel
+	// worker count divided by two because each worker has two workers for thumbnail generation
+	for i := 0; i < flags.WorkersCount/2; i++ {
+		i := i
+		ctx.LogDebug("worker #%d: starting", i)
+		go func() {
+			ctx.LogDebug("worker #%d: starting", i)
+			for {
+				dirEntry := <-workDirectoriesChannel
+				workID := dirEntry.Name()
+				ctx.LogDebug("worker #%d: starting with work %s", i, workID)
+				oldWork, presentBefore := ctx.PreviousBuiltDatabase[workID]
+				var included bool
+				if include == "*" {
+					included = true
+				} else {
+					included, err = filepath.Match(include, workID)
+					if err != nil {
+						builtChannel <- builtItem{err: fmt.Errorf("while testing include-works pattern %q: %w", include, err)}
+						continue
+					}
+				}
+				if included {
+					// Get description file name
+					descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
+
+					// Update the UI
+					ctx.mu.Lock()
+					ctx.CurrentWorkID = workID
+					ctx.mu.Unlock()
+					ctx.Status(StepDescription, ProgressDetails{
+						File: descriptionFilename,
+					})
+
+					// Get the description's contents
+					descriptionRaw, err := os.ReadFile(descriptionFilename)
+					if err != nil {
+						builtChannel <- builtItem{err: fmt.Errorf("while reading description file %s: %w", descriptionFilename, err)}
+						continue
+					}
+
+					// Compare with hash of work in old database, to determine if we can skip it
+					hash := md5.Sum(descriptionRaw)
+					newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
+
+					if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
+						// Skip it!
+						ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
+					} else {
+						// Build it
+						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
+						if err != nil {
+							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
+							continue
+						}
+
+						// Set meta-info
+						newWork.BuiltAt = time.Now().String()
+						newWork.DescriptionHash = newDescriptionHash
+
+						// Update in database
+						ctx.LogDebug("worker #%d: sending freshly built work %s", i, workID)
+						builtChannel <- builtItem{work: newWork, workID: workID}
+						continue
+					}
+				} else if presentBefore {
+					// Nothing to do, old work will be kept as-is.
+					ctx.LogDebug("worker #%d: nothing to do for work %s", i, workID)
+				} else {
+					ctx.LogDebug("worker #%d: Build skipped: not included by %s, not present in previous database file.", i, include)
+				}
+				ctx.LogDebug("worker #%d: reusing old work %s", i, workID)
+				builtChannel <- builtItem{reuseOld: true, workID: workID}
+			}
+		}()
+	}
+
+	ctx.LogDebug("main: filling work directories")
+	for _, workDirectory := range workDirectories {
+		workDirectoriesChannel <- workDirectory
+	}
+
+	// Collect all newly-built works
+	ctx.LogDebug("main: collecting results")
+	for len(builtDirectories) < len(workDirectories) {
+		result := <-builtChannel
+		ctx.IncrementProgress()
+		ctx.LogDebug("main: got result %v", result)
+		if result.err != nil {
+			ctx.LogDebug("main: got error, returning early")
+			return Database{}, result.err
+		}
+		if !result.reuseOld {
+			ctx.LogDebug("main: updating work %s", result.workID)
+			works[result.workID] = result.work
+		}
+		ctx.WriteDatabase(works, flags, outputFilename, true)
+		builtDirectories = append(builtDirectories, result.workID)
+		ctx.LogDebug("main: built dirs: %d out of %d", len(builtDirectories), len(workDirectories))
+		ctx.LogDebug("main: left to build: %v", directoriesLeftToBuild(workDirectoriesNames, builtDirectories))
+	}
 	return works, nil
+
 }
 
-func (ctx *RunContext) WriteDatabase(works Works, flags Flags, outputFilename string, partial bool) {
+func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename string, partial bool) {
+	ctx.LogDebug("Writing database (partial=%v) to %s", partial, outputFilename)
 	worksWithMetadata := make(map[string]interface{})
-	for k, v := range works {
-		worksWithMetadata[k] = v
+	err := mapstructure.Decode(works, &worksWithMetadata)
+	if err != nil {
+		ctx.LogError("while converting works to map: %s", err.Error())
+		return
 	}
 	worksWithMetadata["#meta"] = struct{ Partial bool }{Partial: partial}
 	// Compile the database
 	var worksJSON []byte
 	json := jsoniter.ConfigFastest
-	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	if ctx.Flags.Minified {
 		worksJSON, _ = json.Marshal(worksWithMetadata)
 	} else {
@@ -254,7 +415,9 @@ func (ctx *RunContext) WriteDatabase(works Works, flags Flags, outputFilename st
 		}
 	}
 
-	ctx.Spinner.Stop()
+	if !partial {
+		ctx.Spinner.Stop()
+	}
 }
 
 func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, err error) {
@@ -283,6 +446,7 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		}
 		// If it's not there, this directory is not a project worth scanning.
 		if _, err := os.Stat(descriptionFilename); os.IsNotExist(err) {
+			ctx.LogDebug("skipping %s as it has no description file: %s does not exist", dirEntry.Name(), descriptionFilename)
 			continue
 		}
 

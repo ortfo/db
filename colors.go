@@ -12,9 +12,9 @@ import (
 
 // ColorPalette reprensents the object in a Work's metadata.colors.
 type ColorPalette struct {
-	Primary   string
-	Secondary string
-	Tertiary  string
+	Primary   string `json:"primary"`
+	Secondary string `json:"secondary"`
+	Tertiary  string `json:"tertiary"`
 }
 
 func (colors ColorPalette) Empty() bool {

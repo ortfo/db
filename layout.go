@@ -5,6 +5,77 @@ import (
 	"strconv"
 )
 
+// lcm returns the least common multiple of all the provided integers
+func lcm(integers ...int) int {
+	if len(integers) < 2 {
+		return integers[0]
+	}
+	var greater int
+	// choose the greater number
+	if integers[0] > integers[1] {
+		greater = integers[0]
+	} else {
+		greater = integers[1]
+	}
+
+	for {
+		if (greater%integers[0] == 0) && (greater%integers[1] == 0) {
+			break
+		}
+		greater += 1
+	}
+	if len(integers) == 2 {
+		return greater
+	}
+	return lcm(append(integers[2:], greater)...)
+}
+
+// Normalize returns a normalized layout where every row has the same number of cells.
+func (layout Layout) Normalize() (normalized Layout) {
+	normalized = make(Layout, 0)
+
+	// Determine the common width
+	width := 1
+	for _, row := range layout {
+		width = lcm(width, len(row))
+	}
+
+	// Normalize every row
+	for _, row := range layout {
+		repeatFactor := width / len(row)
+		normalizedRow := make([]LayoutCell, 0)
+		for i := 0; i < width; i++ {
+			// Spread rows evenly
+			cell := row[i/repeatFactor]
+			normalizedRow = append(normalizedRow, cell)
+		}
+		normalized = append(normalized, normalizedRow)
+	}
+
+	return
+}
+
+// Return a unique list of all the block IDs in the layout.
+func (layout Layout) BlockIDs() (blockIDs []string) {
+	blockIDs = make([]string, 0)
+	for _, row := range layout {
+		for _, cell := range row {
+			// Check if the block ID is already in the list
+			alreadyInList := false
+			for _, blockID := range blockIDs {
+				if blockID == string(cell) {
+					alreadyInList = true
+					break
+				}
+			}
+			if !alreadyInList {
+				blockIDs = append(blockIDs, string(cell))
+			}
+		}
+	}
+	return blockIDs
+}
+
 // ResolveLayout returns a layout, given the parsed description.
 func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock) (Layout, error) {
 	layout := make([][]LayoutCell, 0)

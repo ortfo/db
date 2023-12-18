@@ -1,6 +1,6 @@
 package ortfodb
 
-func FindMedia(works Works, mediaEmbed Media) (found bool, media Media) {
+func FindMedia(works Database, mediaEmbed Media) (found bool, media Media) {
 	for _, w := range works {
 		for _, wsl := range w.Content {
 			for _, b := range wsl.Blocks {

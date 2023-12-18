@@ -21,7 +21,6 @@ func RunCommandReplicate(args docopt.Opts) error {
 	// TODO: validate database.json
 	var parsedDatabase []AnalyzedWork
 	json := jsoniter.ConfigFastest
-	setJSONNamingStrategy(lowerCaseWithUnderscores)
 	databaseFilepath, err := args.String("<from-filepath>")
 	if err != nil {
 		return err

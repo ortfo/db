@@ -95,6 +95,7 @@ func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 
 func (ctx *RunContext) UpdateSpinner() {
 	var message string
+	ctx.mu.Lock()
 	switch ctx.Progress.Step {
 	case StepColorExtraction:
 		message = fmt.Sprintf("Extracting colors from [magenta]%s[reset]", ctx.Progress.File)
@@ -107,6 +108,7 @@ func (ctx *RunContext) UpdateSpinner() {
 	}
 	fullMessage := colorstring.Color(fmt.Sprintf("[light_blue]%3d%%[reset] [bold]%s[dim]:[reset] %s…", ctx.ProgressFileData().Percent, ctx.CurrentWorkID, message))
 	ctx.Spinner.Message(fullMessage)
+	ctx.mu.Unlock()
 }
 
 // LogError logs non-fatal errors.

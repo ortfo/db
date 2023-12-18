@@ -41,7 +41,6 @@ import (
 
 func (p FilePathInsideMediaRoot) Absolute(ctx *RunContext) string {
 	result, _ := filepath.Abs(filepath.Join(ctx.Config.Media.At, string(p)))
-	ctx.LogDebug("absolute of filepath(inside media root): %s -> %s", p, result)
 	return result
 }
 
@@ -59,9 +58,9 @@ func (p FilePathInsidePortfolioFolder) RelativeToMediaRoot(ctx *RunContext, work
 
 // ImageDimensions represents metadata about a media as it's extracted from its file.
 type ImageDimensions struct {
-	Width       int     `json:"width"`        // Width in pixels
-	Height      int     `json:"height"`       // Height in pixels
-	AspectRatio float32 `json:"aspect_ratio"` // width / height
+	Width       int     `json:"width"`       // Width in pixels
+	Height      int     `json:"height"`      // Height in pixels
+	AspectRatio float32 `json:"aspectRatio"` // width / height
 }
 
 // Media represents a media object inserted in the work object's media array.
@@ -70,17 +69,17 @@ type Media struct {
 	Anchor            string                        `json:"anchor"`
 	Alt               string                        `json:"alt"`
 	Title             string                        `json:"title"`
-	RelativeSource    FilePathInsidePortfolioFolder `json:"relative_source"`
-	DistSource        FilePathInsideMediaRoot       `json:"dist_source"`
-	ContentType       string                        `json:"content_type"`
+	RelativeSource    FilePathInsidePortfolioFolder `json:"relativeSource"`
+	DistSource        FilePathInsideMediaRoot       `json:"distSource"`
+	ContentType       string                        `json:"contentType"`
 	Size              int                           `json:"size"` // in bytes
 	Dimensions        ImageDimensions               `json:"dimensions"`
 	Online            bool                          `json:"online"`
 	Duration          float64                       `json:"duration"` // in seconds
-	HasSound          bool                          `json:"has_sound"`
-	Colors            ColorPalette                  `json:"extracted_colors"`
+	HasSound          bool                          `json:"hasSound"`
+	Colors            ColorPalette                  `json:"colors"`
 	Thumbnails        ThumbnailsMap                 `json:"thumbnails"`
-	ThumbnailsBuiltAt string                        `json:"thumbnails_built_at"`
+	ThumbnailsBuiltAt string                        `json:"thumbnailsBuiltAt"`
 	Attributes        MediaAttributes               `json:"attributes"`
 	Analyzed          bool                          `json:"analyzed"` // whether the media has been analyzed
 }
@@ -239,6 +238,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		Duration:       float64(duration),
 		Size:           int(fileInfo.Size()),
 		HasSound:       hasSound,
+		Analyzed:       true,
 	}
 	ctx.LogDebug("Analyzed to %#v (no cache used)", analyzedMedia)
 	return false, analyzedMedia, nil
@@ -250,12 +250,12 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration Media) (used b
 	}
 	stat, err := os.Stat(filename)
 	if err != nil {
-		ctx.LogInfo("Cache miss for %s: file not found: %s", filename, err)
+		ctx.LogDebug("Cache miss for %s: file not found: %s", filename, err)
 		return
 	}
 
 	if stat.ModTime().After(ctx.BuildMetadata.PreviousBuildDate) {
-		ctx.LogInfo("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
+		ctx.LogDebug("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
 		return
 	}
 
@@ -263,7 +263,7 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration Media) (used b
 		return true, analyzedMedia
 	}
 
-	ctx.LogInfo("Cache miss for %s: media not found in previous database build", filename)
+	ctx.LogDebug("Cache miss for %s: media not found in previous database build", filename)
 	return
 
 }
@@ -383,37 +383,67 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 			filenameForColorExtraction = absolutePathDestination
 		}
 	} else {
+		type result struct {
+			size    int
+			err     error
+			skipped bool
+		}
+		sizesChan := make(chan int, len(ctx.Config.MakeThumbnails.Sizes))
+		resultsChan := make(chan result)
+		builtSizes := 0
 		smallestThumbSize := ctx.Config.MakeThumbnails.Sizes[0] // XXX what?? is it sorted?
 		for _, size := range ctx.Config.MakeThumbnails.Sizes {
-			ctx.LogDebug("Making thumbnail for %s#%s", media.RelativeSource, blockID)
-			saveTo := ctx.ComputeOutputThumbnailFilename(media, blockID, workID, size, language)
+			sizesChan <- size
+		}
 
-			if _, err := os.Stat(string(saveTo.Absolute(ctx))); err == nil && usedCache {
-				ctx.LogDebug("Skipping thumbnail creation for %s#%s because it already exists", media.RelativeSource, blockID)
-				media.Thumbnails[size] = saveTo
-				continue
+		for i := 0; i < 2; i++ {
+			go func() {
+				for {
+					size := <-sizesChan
+					ctx.LogDebug("Making thumbnail for %s#%s", media.RelativeSource, blockID)
+					saveTo := ctx.ComputeOutputThumbnailFilename(media, blockID, workID, size, language)
+
+					if _, err := os.Stat(string(saveTo.Absolute(ctx))); err == nil && usedCache {
+						ctx.LogDebug("Skipping thumbnail creation for %s#%s because it already exists", media.RelativeSource, blockID)
+						resultsChan <- result{size: size, skipped: true}
+						return
+					}
+
+					if size < smallestThumbSize {
+						smallestThumbSize = size
+						filenameForColorExtraction = saveTo.Absolute(ctx)
+					}
+
+					// Create potentially missing directories
+					os.MkdirAll(filepath.Dir(saveTo.Absolute(ctx)), 0777)
+
+					ctx.Status(StepThumbnails, ProgressDetails{
+						Resolution: int(size),
+						File:       string(media.DistSource),
+					})
+
+					// Make the thumbnail
+					err := ctx.MakeThumbnail(media, size, saveTo.Absolute(ctx))
+					if err != nil {
+						resultsChan <- result{err: fmt.Errorf("while making thumbnail for %s: %w", workID, err)}
+						return
+					}
+					ctx.LogDebug("Made thumbnail %s", saveTo)
+					resultsChan <- result{size: size}
+				}
+			}()
+		}
+
+		for builtSizes < len(ctx.Config.MakeThumbnails.Sizes) {
+			result := <-resultsChan
+			if result.err != nil {
+				return media, result.err
 			}
-
-			if size < smallestThumbSize {
-				smallestThumbSize = size
-				filenameForColorExtraction = saveTo.Absolute(ctx)
+			if !result.skipped {
+				media.Thumbnails[result.size] = ctx.ComputeOutputThumbnailFilename(media, blockID, workID, result.size, language)
+				media.ThumbnailsBuiltAt = time.Now().String()
 			}
-
-			// Create potentially missing directories
-			os.MkdirAll(filepath.Dir(saveTo.Absolute(ctx)), 0777)
-
-			ctx.Status(StepThumbnails, ProgressDetails{
-				Resolution: int(size),
-				File:       string(media.DistSource),
-			})
-
-			// Make the thumbnail
-			err := ctx.MakeThumbnail(media, size, saveTo.Absolute(ctx))
-			if err != nil {
-				return media, fmt.Errorf("while making thumbnail for %s: %w", workID, err)
-			}
-			media.Thumbnails[size] = saveTo
-			media.ThumbnailsBuiltAt = time.Now().String()
+			builtSizes++
 		}
 	}
 

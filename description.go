@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"gopkg.in/yaml.v2"
@@ -16,6 +17,7 @@ import (
 	"github.com/k3a/html2text"
 	"github.com/metal3d/go-slugify"
 	"github.com/mitchellh/mapstructure"
+	"github.com/relvacode/iso8601"
 )
 
 const (
@@ -53,7 +55,9 @@ func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
 		parsedYAMLPart = make(map[string]interface{})
 	}
 
-	metadata := WorkMetadata{}
+	metadata := WorkMetadata{
+		MadeWith: []string{},
+	}
 	for key, value := range parsedYAMLPart {
 		if strings.Contains(key, " ") {
 			parsedYAMLPart[strings.ReplaceAll(key, " ", "_")] = value
@@ -61,6 +65,18 @@ func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
 		}
 	}
 	mapstructure.Decode(parsedYAMLPart, &metadata)
+	if len(metadata.MadeWith) == 0 {
+		for key, value := range metadata.AdditionalMetadata {
+			if key == "using" || key == "made_with" {
+				switch typedValue := value.(type) {
+				case []string:
+					metadata.MadeWith = typedValue
+				default:
+
+				}
+			}
+		}
+	}
 
 	return metadata, markdownPart
 }
@@ -75,8 +91,8 @@ func (ctx *RunContext) ParseDescription(markdownRaw string) (metadata WorkMetada
 	if localized {
 		allLanguages = mapKeys(localizedRawBlocks)
 	} else {
-		allLanguages = make([]string, 1)
-		allLanguages[0] = "default" // TODO: make this configurable
+		// TODO: make this configurable
+		allLanguages = []string{"default"}
 	}
 	blocks = make(map[string][]ContentBlock)
 	title = make(map[string]HTMLString)
@@ -117,42 +133,100 @@ type Link struct {
 // AnalyzedWork represents a complete work, with analyzed mediae.
 type AnalyzedWork struct {
 	ID              string                          `json:"id"`
-	BuiltAt         string                          `json:"built_at"`
-	DescriptionHash string                          `json:"description_hash"`
+	BuiltAt         string                          `json:"builtAt"`
+	DescriptionHash string                          `json:"descriptionHash"`
 	Metadata        WorkMetadata                    `json:"metadata"`
 	Content         map[string]LocalizedWorkContent `json:"content"`
+	Partial         bool                            `json:"Partial"`
+}
+
+func (w AnalyzedWork) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
+	firstMatch := FilePathInsideMediaRoot("")
+	for _, block := range w.Content[language].Blocks {
+		if !block.Type.IsMedia() {
+			continue
+		}
+
+		if firstMatch == FilePathInsideMediaRoot("") {
+			firstMatch = block.Media.Thumbnails[size]
+		}
+
+		if block.Media.RelativeSource == w.Metadata.Thumbnail {
+			return block.Media.Thumbnails[size]
+		}
+	}
+	return firstMatch
 }
 
 type WorkMetadata struct {
 	Aliases            []string                      `json:"aliases"`
 	Finished           string                        `json:"finished"`
 	Started            string                        `json:"started"`
-	MadeWith           []string                      `json:"made_with"`
+	MadeWith           []string                      `json:"madeWith" yaml:"made_with"`
 	Tags               []string                      `json:"tags"`
 	Thumbnail          FilePathInsidePortfolioFolder `json:"thumbnail"`
-	TitleStyle         TitleStyle                    `json:"title_style"`
+	TitleStyle         TitleStyle                    `json:"titleStyle" yaml:"title style"`
 	Colors             ColorPalette                  `json:"colors"`
-	PageBackground     string                        `json:"page background"`
+	PageBackground     string                        `json:"pageBackground" yaml:"page background"`
 	WIP                bool                          `json:"wip"`
 	Private            bool                          `json:"private"`
-	AdditionalMetadata map[string]interface{}        `json:"additional_metadata" mapstructure:",remain"`
+	AdditionalMetadata map[string]interface{}        `mapstructure:",remain" json:"additionalMetadata"`
+}
+
+func (m WorkMetadata) CreatedAt() time.Time {
+	var creationDate string
+	if m.AdditionalMetadata["created"] != nil {
+		creationDate = m.AdditionalMetadata["created"].(string)
+	} else if m.Finished != "" {
+		creationDate = m.Finished
+	} else {
+		creationDate = m.Started
+	}
+	if creationDate == "" {
+		return time.Date(9999, time.January, 1, 0, 0, 0, 0, time.Local)
+	}
+	parsedDate, err := parsePossiblyInterderminateDate(creationDate)
+	if err != nil {
+		panic(err)
+	}
+	return parsedDate
+}
+
+func parsePossiblyInterderminateDate(datestring string) (time.Time, error) {
+	return iso8601.ParseString(
+		strings.ReplaceAll(
+			strings.Replace(datestring, "????", "9999", 1), "?", "1",
+		),
+	)
 }
 
 type TitleStyle string
 
 type LocalizedWorkContent struct {
-	Layout    Layout
-	Blocks    []ContentBlock
-	Title     HTMLString
-	Footnotes Footnotes
+	Layout    Layout         `json:"layout"`
+	Blocks    []ContentBlock `json:"blocks"`
+	Title     HTMLString     `json:"title"`
+	Footnotes Footnotes      `json:"footnotes"`
 }
 
 type ContentBlock struct {
-	ID   string
-	Type ContentBlockType
+	ID   string           `json:"id"`
+	Type ContentBlockType `json:"type"`
 	Media
 	Paragraph
 	Link
+}
+
+func (b ContentBlock) Anchor() string {
+	switch b.Type {
+	case "media":
+		return b.Media.Anchor
+	case "paragraph":
+		return b.Paragraph.Anchor
+	case "link":
+		return b.Link.Anchor
+	}
+	return ""
 }
 
 func (b ContentBlock) AsMedia() Media {
@@ -214,6 +288,10 @@ func (f FilePathInsidePortfolioFolder) Absolute(ctx *RunContext, workID string) 
 	return result
 }
 
+func (f FilePathInsideMediaRoot) Prod(origin string) string {
+	return origin + string(f)
+}
+
 type HTMLString string
 
 func (s HTMLString) String() string {
@@ -223,6 +301,22 @@ func (s HTMLString) String() string {
 // ContentBlockType is one of "paragraph", "media" or "link"
 type ContentBlockType string
 
+func (t ContentBlockType) String() string {
+	return string(t)
+}
+
+func (t ContentBlockType) IsParagraph() bool {
+	return string(t) == "paragraph"
+}
+
+func (t ContentBlockType) IsMedia() bool {
+	return string(t) == "media"
+}
+
+func (t ContentBlockType) IsLink() bool {
+	return string(t) == "link"
+}
+
 // Layout is a 2D array of content block IDs
 type Layout [][]LayoutCell
 
@@ -231,11 +325,11 @@ type LayoutCell string
 
 // MediaAttributes stores which HTML attributes should be added to the media.
 type MediaAttributes struct {
-	Loop        bool // Controlled with attribute character ~ (adds)
-	Autoplay    bool // Controlled with attribute character > (adds)
-	Muted       bool // Controlled with attribute character > (adds)
-	Playsinline bool // Controlled with attribute character = (adds)
-	Controls    bool // Controlled with attribute character = (removes)
+	Loop        bool `json:"loop"`        // Controlled with attribute character ~ (adds)
+	Autoplay    bool `json:"autoplay"`    // Controlled with attribute character > (adds)
+	Muted       bool `json:"muted"`       // Controlled with attribute character > (adds)
+	Playsinline bool `json:"playsinline"` // Controlled with attribute character = (adds)
+	Controls    bool `json:"controls"`    // Controlled with attribute character = (removes)
 }
 
 // ParsedWork represents a work, but without analyzed media. All it contains is information from the description.md file.

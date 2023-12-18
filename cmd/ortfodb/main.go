@@ -30,6 +30,7 @@ Options:
   -s --silent                 Do not write to stdout
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
   --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
+  --workers=<count>  	      Use <count> workers to build the database. Defaults to the number of CPU cores.
   --write-progress=<filepath> Write build progress to <filepath>. See Build Progress section for more information.
 
 Examples:
@@ -165,7 +166,7 @@ func dispatchCommand(args docopt.Opts) error {
 		return err
 	}
 	if val, _ := args.Bool("replicate"); val {
-		handleControlC(args, ortfodb.RunContext{})
+		handleControlC(args, &ortfodb.RunContext{})
 		err := ortfodb.RunCommandReplicate(args)
 		return err
 	}
@@ -188,6 +189,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	flags.Silent, _ = args.Bool("--silent")
 	flags.ProgressFile, _ = args.String("--write-progress")
 	flags.NoCache, _ = args.Bool("--no-cache")
+	flags.WorkersCount, _ = args.Int("--workers")
 	databaseDirectory, _ := args.String("<database>")
 	databaseDirectory, err := filepath.Abs(databaseDirectory)
 	if err != nil {
@@ -214,7 +216,7 @@ func RunCommandBuild(args docopt.Opts) error {
 	return err
 }
 
-func handleControlC(args docopt.Opts, context ortfodb.RunContext) {
+func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 	go func() {
