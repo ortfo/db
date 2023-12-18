@@ -49,7 +49,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 		Config: &Configuration{},
 	}
 	defer fmt.Print("\033[2K\r\n")
-	err = ReplicateAll(ctx, targetDatabasePath, parsedDatabase)
+	err = ReplicateAll(&ctx, targetDatabasePath, parsedDatabase)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 }
 
 // ReplicateAll recreates a database inside targetDatabase containing all the works in works.
-func ReplicateAll(ctx RunContext, targetDatabase string, works []AnalyzedWork) error {
+func ReplicateAll(ctx *RunContext, targetDatabase string, works []AnalyzedWork) error {
 	for _, work := range works {
 		ctx.mu.Lock()
 		ctx.CurrentWorkID = work.ID
@@ -135,7 +135,7 @@ func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error)
 		case "link":
 			result += replicateLink(block.Link) + end
 		case "paragraph":
-			replicatedParagraph, err := replicateParagraph(block.Paragraph)
+			replicatedParagraph, err := replicateParagraph(block.Anchor, block.Paragraph)
 			if err != nil {
 				return "", err
 			}
@@ -247,20 +247,20 @@ func replicateMediaAttributesString(attributes MediaAttributes) string {
 
 // TODO: configure whether to use >[]() syntax: never, or only for non-images
 func replicateMediaEmbed(media Media) string {
-	if media.Title != "" {
-		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource), media.Title)
+	if media.Caption != "" {
+		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource), media.Caption)
 	}
 	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource))
 }
 
-func replicateParagraph(p Paragraph) (string, error) {
+func replicateParagraph(anchor string, p Paragraph) (string, error) {
 	markdown := p.Content.Markdown()
 	if strings.TrimSpace(markdown) == "" {
 		markdown = "<p></p>"
 	}
 	var result string
-	if p.Anchor != "" {
-		result = "{#" + p.Anchor + "}\n" + markdown
+	if anchor != "" {
+		result = "{#" + anchor + "}\n" + markdown
 	} else {
 		result = markdown
 	}

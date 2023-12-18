@@ -489,12 +489,13 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 				continue
 			}
 			ctx.LogDebug("Handling media %#v", block.Media)
-			analyzed, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
+			analyzed, anchor, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
 			if err != nil {
 				return AnalyzedWork{}, err
 			}
 
 			localizedBlocks[lang][i].Media = analyzed
+			localizedBlocks[lang][i].Anchor = anchor
 			analyzedMediae = append(analyzedMediae, analyzed)
 		}
 	}

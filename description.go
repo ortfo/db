@@ -117,17 +117,14 @@ type Footnotes map[string]HTMLString
 
 // Paragraph represents a paragraph declaration in a description.md file.
 type Paragraph struct {
-	Index   int        `json:"index"`
-	Anchor  string     `json:"anchor"`
 	Content HTMLString `json:"content"` // html
 }
 
 // Link represents an (isolated) link declaration in a description.md file.
 type Link struct {
-	Anchor string     `json:"anchor"`
-	Text   HTMLString `json:"text"`
-	Title  string     `json:"title"`
-	URL    string     `json:"url"`
+	Text  HTMLString `json:"text"`
+	Title string     `json:"title"`
+	URL   string     `json:"url"`
 }
 
 // AnalyzedWork represents a complete work, with analyzed mediae.
@@ -140,29 +137,70 @@ type AnalyzedWork struct {
 	Partial         bool                            `json:"Partial"`
 }
 
-func (w AnalyzedWork) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
-	firstMatch := FilePathInsideMediaRoot("")
+func (w AnalyzedWork) ThumbnailBlock(language string) Media {
+	firstMatch := Media{}
 	for _, block := range w.Content[language].Blocks {
 		if !block.Type.IsMedia() {
 			continue
 		}
 
-		if firstMatch == FilePathInsideMediaRoot("") {
-			firstMatch = block.Media.Thumbnails[size]
+		if firstMatch.DistSource == "" {
+			firstMatch = block.Media
 		}
 
 		if block.Media.RelativeSource == w.Metadata.Thumbnail {
-			return block.Media.Thumbnails[size]
+			return block.Media
 		}
 	}
 	return firstMatch
+}
+
+func (w AnalyzedWork) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
+	return w.ThumbnailBlock(language).Thumbnails.Closest(size)
+}
+
+func (w AnalyzedWork) Colors(language string) ColorPalette {
+	if !w.Metadata.Colors.Empty() {
+		return w.Metadata.Colors
+	}
+
+	thumb := w.ThumbnailBlock(language)
+
+	if !thumb.Colors.Empty() {
+		return thumb.Colors
+	}
+
+	for _, block := range w.Content[language].Blocks {
+		if !block.Type.IsMedia() {
+			continue
+		}
+		if block.AsMedia().Colors.Empty() {
+			continue
+		}
+		return block.AsMedia().Colors
+	}
+
+	return ColorPalette{}
+}
+
+func (thumbnails ThumbnailsMap) Closest(size int) FilePathInsideMediaRoot {
+	if len(thumbnails) == 0 {
+		return ""
+	}
+	var closest int
+	for thumbnailSize := range thumbnails {
+		if thumbnailSize > closest && thumbnailSize <= size {
+			closest = thumbnailSize
+		}
+	}
+	return thumbnails[closest]
 }
 
 type WorkMetadata struct {
 	Aliases            []string                      `json:"aliases"`
 	Finished           string                        `json:"finished"`
 	Started            string                        `json:"started"`
-	MadeWith           []string                      `json:"madeWith" yaml:"made_with"`
+	MadeWith           []string                      `json:"madeWith" yaml:"made with"`
 	Tags               []string                      `json:"tags"`
 	Thumbnail          FilePathInsidePortfolioFolder `json:"thumbnail"`
 	TitleStyle         TitleStyle                    `json:"titleStyle" yaml:"title style"`
@@ -210,23 +248,13 @@ type LocalizedWorkContent struct {
 }
 
 type ContentBlock struct {
-	ID   string           `json:"id"`
-	Type ContentBlockType `json:"type"`
+	ID     string           `json:"id"`
+	Type   ContentBlockType `json:"type"`
+	Anchor string           `json:"anchor"`
+	Index  int              `json:"index"`
 	Media
 	Paragraph
 	Link
-}
-
-func (b ContentBlock) Anchor() string {
-	switch b.Type {
-	case "media":
-		return b.Media.Anchor
-	case "paragraph":
-		return b.Paragraph.Anchor
-	case "link":
-		return b.Link.Anchor
-	}
-	return ""
 }
 
 func (b ContentBlock) AsMedia() Media {
@@ -235,9 +263,8 @@ func (b ContentBlock) AsMedia() Media {
 	}
 
 	return Media{
-		Anchor:         b.Media.Anchor,
 		Alt:            b.Alt,
-		Title:          b.Media.Title,
+		Caption:        b.Caption,
 		DistSource:     b.DistSource,
 		RelativeSource: b.RelativeSource,
 		ContentType:    b.ContentType,
@@ -257,10 +284,9 @@ func (b ContentBlock) AsLink() Link {
 	}
 
 	return Link{
-		Anchor: b.Link.Anchor,
-		Text:   b.Text,
-		Title:  b.Link.Title,
-		URL:    b.URL,
+		Text:  b.Text,
+		Title: b.Link.Title,
+		URL:   b.URL,
 	}
 }
 
@@ -270,7 +296,6 @@ func (b ContentBlock) AsParagraph() Paragraph {
 	}
 
 	return Paragraph{
-		Anchor:  b.Paragraph.Anchor,
 		Content: b.Content,
 	}
 }
@@ -288,8 +313,8 @@ func (f FilePathInsidePortfolioFolder) Absolute(ctx *RunContext, workID string) 
 	return result
 }
 
-func (f FilePathInsideMediaRoot) Prod(origin string) string {
-	return origin + string(f)
+func (f FilePathInsideMediaRoot) URL(origin string) string {
+	return origin + "/" + string(f)
 }
 
 type HTMLString string
@@ -401,11 +426,11 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 			// A media embed
 			alt, attributes := ExtractAttributesFromAlt(firstChild.Attrs()["alt"])
 			block := ContentBlock{
-				Type: "media",
+				Type:   "media",
+				Anchor: slugify.Marshal(firstChild.Attrs()["src"]),
 				Media: Media{
-					Anchor:         slugify.Marshal(firstChild.Attrs()["src"]),
 					Alt:            alt,
-					Title:          firstChild.Attrs()["title"],
+					Caption:        firstChild.Attrs()["title"],
 					RelativeSource: FilePathInsidePortfolioFolder(firstChild.Attrs()["src"]),
 					Attributes:     attributes,
 				},
@@ -415,12 +440,12 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		} else if childrenCount == 1 && firstChild.NodeValue == "a" {
 			// An isolated link
 			block := ContentBlock{
-				Type: "link",
+				Type:   "link",
+				Anchor: slugify.Marshal(firstChild.FullText(), true),
 				Link: Link{
-					Anchor: slugify.Marshal(firstChild.FullText(), true),
-					Text:   innerHTML(firstChild),
-					Title:  firstChild.Attrs()["title"],
-					URL:    firstChild.Attrs()["href"],
+					Text:  innerHTML(firstChild),
+					Title: firstChild.Attrs()["title"],
+					URL:   firstChild.Attrs()["href"],
 				},
 			}
 			block.ID = block.generateID()
@@ -435,9 +460,9 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		} else {
 			// A paragraph (anything else)
 			block := ContentBlock{
-				Type: "paragraph",
+				Type:   "paragraph",
+				Anchor: paragraph.Attrs()["id"],
 				Paragraph: Paragraph{
-					Anchor:  paragraph.Attrs()["id"],
 					Content: HTMLString(paragraph.HTML()),
 				},
 			}
@@ -459,7 +484,7 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		if block.Type != "paragraph" {
 			continue
 		}
-		if strings.HasPrefix(string(block.Content), "<pre>") && strings.HasSuffix(string(block.Content), "</pre>") {
+		if strings.HasPrefix(string(block.Paragraph.Content), "<pre>") && strings.HasSuffix(string(block.Paragraph.Content), "</pre>") {
 			// Dont insert <abbr>s while in <pre> text
 			continue
 		}
