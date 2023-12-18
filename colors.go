@@ -3,10 +3,8 @@ package ortfodb
 import (
 	"image"
 	"os"
-	"strings"
 
 	"github.com/EdlinOrg/prominentcolor"
-	"github.com/gabriel-vasile/mimetype"
 	_ "golang.org/x/image/webp"
 )
 
@@ -19,46 +17,6 @@ type ColorPalette struct {
 
 func (colors ColorPalette) Empty() bool {
 	return colors.Primary == "" && colors.Secondary == "" && colors.Tertiary == ""
-}
-
-// StepExtractColors executes the step "extract colors" and returns a metadata object with the colors entry modified accordingly.
-// TODO cache that too, when I move extracted colors to a proper field of Media.
-func (ctx *RunContext) StepExtractColors(metadata map[string]interface{}, mediaPaths []string) map[string]interface{} {
-	// Do not overwrite manually-set colors metadata entry
-	if _, ok := metadata["colors"]; !ok {
-		// Get only image filepaths
-		imageFilepaths := filterSlice(mediaPaths, func(item string) bool {
-			contentType, err := mimetype.DetectFile(item)
-			return err == nil && strings.HasPrefix(contentType.String(), "image/")
-		})
-		// Extract colors from them
-		extractFromFile := selectFileToExtractColorsFrom(imageFilepaths, ctx.Config.ExtractColors.DefaultFiles)
-		if extractFromFile != "" {
-			ctx.Status(StepColorExtraction, ProgressDetails{
-				File: extractFromFile,
-			})
-			extractedColors, err := ExtractColors(extractFromFile)
-			if err == nil {
-				metadata["colors"] = extractedColors
-			}
-		}
-	}
-	return metadata
-}
-
-func selectFileToExtractColorsFrom(files []string, defaultFiles []string) string {
-	if len(files) == 0 {
-		return ""
-	}
-	if len(files) == 1 {
-		return files[0]
-	}
-	for _, filename := range files {
-		if stringInSlice(defaultFiles, filename) {
-			return filename
-		}
-	}
-	return files[0]
 }
 
 // ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.
@@ -86,9 +44,12 @@ func kmeans(img image.Image) (ColorPalette, error) {
 	for _, centroid := range centroids {
 		colors = append(colors, centroid.AsString())
 	}
+	if len(colors) < 3 {
+		return ColorPalette{}, nil
+	}
 	return ColorPalette{
-		Primary:   colors[0],
-		Secondary: colors[1],
-		Tertiary:  colors[2],
+		Primary:   "#" + colors[0],
+		Secondary: "#" + colors[1],
+		Tertiary:  "#" + colors[2],
 	}, nil
 }
