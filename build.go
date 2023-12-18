@@ -65,6 +65,22 @@ func (w Database) WorksByDate() []AnalyzedWork {
 	return worksByDate
 }
 
+// GroupWorksByYear groups works by year, with most recent years first.
+func (w Database) GroupWorksByYear() [][]AnalyzedWork {
+	worksByDate := w.WorksByDate()
+	worksByYear := make([][]AnalyzedWork, 0)
+	currentYear := 0
+	for _, work := range worksByDate {
+		year := work.Metadata.CreatedAt().Year()
+		if year != currentYear {
+			currentYear = year
+			worksByYear = append(worksByYear, make([]AnalyzedWork, 0))
+		}
+		worksByYear[len(worksByYear)-1] = append(worksByYear[len(worksByYear)-1], work)
+	}
+	return worksByYear
+}
+
 // Meta gets the database meta information
 func (w Database) Meta() DatabaseMeta {
 	for id, metaWork := range w {
