@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -17,6 +18,7 @@ import (
 const CLIUsage = `
 Usage:
   ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] <inside> blog to <to-filepath>
   ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   ortfodb [options] <database> add <fullname> [<metadata-item>...]
@@ -165,6 +167,10 @@ func dispatchCommand(args docopt.Opts) error {
 		err := RunCommandBuild(args)
 		return err
 	}
+	if val, _ := args.Bool("blog"); val {
+		err := RunCommandBlog(args)
+		return err
+	}
 	if val, _ := args.Bool("replicate"); val {
 		handleControlC(args, &ortfodb.RunContext{})
 		err := ortfodb.RunCommandReplicate(args)
@@ -214,6 +220,27 @@ func RunCommandBuild(args docopt.Opts) error {
 		context.WriteDatabase(works, flags, outputFilename, err != nil)
 	}
 	return err
+}
+
+func RunCommandBlog(args docopt.Opts) error {
+	inside, _ := args.String("<inside>")
+	output, _ := args.String("<to-filepath>")
+
+	blog, err := ortfodb.BuildBlog(inside)
+	if err != nil {
+		return fmt.Errorf("while building blog: %w", err)
+	}
+
+	jsoned, err := json.MarshalIndent(blog, "", "    ")
+	if err != nil {
+		return fmt.Errorf("while encoding blog to json: %w", err)
+	}
+
+	err = os.WriteFile(output, jsoned, 0o644)
+	if err != nil {
+		return fmt.Errorf("while writing json blog to file: %w", err)
+	}
+	return nil
 }
 
 func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {

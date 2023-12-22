@@ -29,7 +29,7 @@ const (
 )
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns the rest of the content (all except the YAML header).
-func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
+func ParseYAMLHeader[Metadata interface{}](descriptionRaw string) (Metadata, string) {
 	var inYAMLHeader bool
 	var rawYAMLPart string
 	var markdownPart string
@@ -55,9 +55,7 @@ func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
 		parsedYAMLPart = make(map[string]interface{})
 	}
 
-	metadata := WorkMetadata{
-		MadeWith: []string{},
-	}
+	var metadata Metadata
 	for key, value := range parsedYAMLPart {
 		if strings.Contains(key, " ") {
 			parsedYAMLPart[strings.ReplaceAll(key, " ", "_")] = value
@@ -65,25 +63,12 @@ func ParseYAMLHeader(descriptionRaw string) (WorkMetadata, string) {
 		}
 	}
 	mapstructure.Decode(parsedYAMLPart, &metadata)
-	if len(metadata.MadeWith) == 0 {
-		for key, value := range metadata.AdditionalMetadata {
-			if key == "using" || key == "made_with" {
-				switch typedValue := value.(type) {
-				case []string:
-					metadata.MadeWith = typedValue
-				default:
-
-				}
-			}
-		}
-	}
-
 	return metadata, markdownPart
 }
 
 // ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription.
-func (ctx *RunContext) ParseDescription(markdownRaw string) (metadata WorkMetadata, blocks map[string][]ContentBlock, title map[string]HTMLString, footnotes map[string]Footnotes, abbreviations map[string]Abbreviations) {
-	metadata, markdownRaw = ParseYAMLHeader(markdownRaw)
+func ParseDescription[Metadata interface{}](ctx *RunContext, markdownRaw string) (metadata Metadata, blocks map[string][]ContentBlock, title map[string]HTMLString, footnotes map[string]Footnotes, abbreviations map[string]Abbreviations) {
+	metadata, markdownRaw = ParseYAMLHeader[Metadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
 	localized := len(localizedRawBlocks) > 0
@@ -129,12 +114,12 @@ type Link struct {
 
 // AnalyzedWork represents a complete work, with analyzed mediae.
 type AnalyzedWork struct {
-	ID              string                          `json:"id"`
-	BuiltAt         string                          `json:"builtAt"`
-	DescriptionHash string                          `json:"descriptionHash"`
-	Metadata        WorkMetadata                    `json:"metadata"`
-	Content         map[string]LocalizedWorkContent `json:"content"`
-	Partial         bool                            `json:"Partial"`
+	ID              string                      `json:"id"`
+	BuiltAt         string                      `json:"builtAt"`
+	DescriptionHash string                      `json:"descriptionHash"`
+	Metadata        WorkMetadata                `json:"metadata"`
+	Content         map[string]LocalizedContent `json:"content"`
+	Partial         bool                        `json:"Partial"`
 }
 
 func (w AnalyzedWork) ThumbnailBlock(language string) Media {
@@ -240,7 +225,7 @@ func parsePossiblyInterderminateDate(datestring string) (time.Time, error) {
 
 type TitleStyle string
 
-type LocalizedWorkContent struct {
+type LocalizedContent struct {
 	Layout    Layout         `json:"layout"`
 	Blocks    []ContentBlock `json:"blocks"`
 	Title     HTMLString     `json:"title"`

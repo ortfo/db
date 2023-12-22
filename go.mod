@@ -6,6 +6,7 @@ require (
 	github.com/EdlinOrg/prominentcolor v1.0.0
 	github.com/JohannesKaufmann/html-to-markdown v1.3.3
 	github.com/anaskhan96/soup v1.2.5
+	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/gomarkdown/markdown v0.0.0-20220419181919-412bcf14cd2e

@@ -62,6 +62,7 @@ func (w Database) WorksByDate() []AnalyzedWork {
 
 		return iDate.After(jDate)
 	})
+
 	return worksByDate
 }
 
@@ -495,7 +496,7 @@ func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID stri
 
 // Build builds a single work given the database & output folders, as wells as a work ID
 func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (AnalyzedWork, error) {
-	metadata, localizedBlocks, title, footnotes, _ := ctx.ParseDescription(string(descriptionRaw))
+	metadata, localizedBlocks, title, footnotes, _ := ParseDescription[WorkMetadata](ctx, string(descriptionRaw))
 
 	// Handle mediae
 	analyzedMediae := make([]Media, 0)
@@ -533,7 +534,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 		}
 	}
 
-	localizedContent := make(map[string]LocalizedWorkContent)
+	localizedContent := make(map[string]LocalizedContent)
 
 	for lang := range localizedBlocks {
 		layout, err := ResolveLayout(metadata, lang, localizedBlocks[lang])
@@ -541,7 +542,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 			return AnalyzedWork{}, fmt.Errorf("while resolving %s layout of %s: %w", lang, workID, err)
 		}
 
-		localizedContent[lang] = LocalizedWorkContent{
+		localizedContent[lang] = LocalizedContent{
 			Layout:    layout,
 			Title:     title[lang],
 			Footnotes: footnotes[lang],
