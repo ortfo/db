@@ -135,6 +135,14 @@ func mapKeys[T any](m map[string]T) []string {
 	return keys
 }
 
+func mapValues[T any](m map[string]T) []T {
+	values := make([]T, 0)
+	for _, v := range m {
+		values = append(values, v)
+	}
+	return values
+}
+
 // filepathBaseNoExt returns the basename of pth with the extension removed.
 func filepathBaseNoExt(pth string) string {
 	return strings.TrimSuffix(filepath.Base(pth), path.Ext(pth))

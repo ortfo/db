@@ -29,6 +29,14 @@ type DatabaseMeta struct {
 	Partial bool
 }
 
+func (w Database) AsSlice() []AnalyzedWork {
+	works := make([]AnalyzedWork, 0)
+	for _, work := range w {
+		works = append(works, work)
+	}
+	return works
+}
+
 // Works gets the mapping of all works (without the #meta "pseudo-work").
 func (w Database) Works() map[string]AnalyzedWork {
 	works := make(map[string]AnalyzedWork)
@@ -41,9 +49,24 @@ func (w Database) Works() map[string]AnalyzedWork {
 	return works
 }
 
+// WorksSlice gets the slice of all works in the database (without the #meta "pseudo-work")
+func (w Database) WorksSlice() []AnalyzedWork {
+	works := make([]AnalyzedWork, 0)
+	for id, work := range w {
+		if id == "#meta" {
+			continue
+		}
+		works = append(works, work)
+	}
+	return works
+}
+
 // WorksByDate gets all the works sorted by date, with most recent works first.
 func (w Database) WorksByDate() []AnalyzedWork {
-	works := w.Works()
+	return SortWorksByDate(mapValues(w.Works()))
+}
+
+func SortWorksByDate(works []AnalyzedWork) []AnalyzedWork {
 	worksByDate := make([]AnalyzedWork, 0)
 	for _, work := range works {
 		worksByDate = append(worksByDate, work)
