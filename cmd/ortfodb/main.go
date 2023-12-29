@@ -33,7 +33,6 @@ Options:
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
   --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
   --workers=<count>  	      Use <count> workers to build the database. Defaults to the number of CPU cores.
-  --write-progress=<filepath> Write build progress to <filepath>. See Build Progress section for more information.
 
 Examples:
   ortfodb database build database.json
@@ -193,7 +192,6 @@ func RunCommandBuild(args docopt.Opts) error {
 	flags.Minified, _ = args.Bool("--minified")
 	flags.Scattered, _ = args.Bool("--scattered")
 	flags.Silent, _ = args.Bool("--silent")
-	flags.ProgressFile, _ = args.String("--write-progress")
 	flags.NoCache, _ = args.Bool("--no-cache")
 	flags.WorkersCount, _ = args.Int("--workers")
 	databaseDirectory, _ := args.String("<database>")
@@ -250,11 +248,11 @@ func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {
 		for range sig {
 			context.Spinner.StopFailCharacter("️⚠")
 			context.Spinner.StopFailColors("fgYellow")
-			if context.Progress.Current > 0 {
-				context.Spinner.StopFailMessage(colorstring.Color(fmt.Sprintf("Cancelled. Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)))
-			} else {
-				context.Spinner.StopFailMessage("Cancelled.")
-			}
+			// if context.Progress.Current > 0 {
+			context.Spinner.StopFailMessage(colorstring.Color(fmt.Sprintf("Cancelled. Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)))
+			// } else {
+			// 	context.Spinner.StopFailMessage("Cancelled.")
+			// }
 			context.Spinner.StopFail()
 			toFilepath, argError := args.String("<to-filepath>")
 			buildLockFilepath := ortfodb.BuildLockFilepath(toFilepath)

@@ -1,111 +1,105 @@
 package ortfodb
 
 import (
-	"io/ioutil"
-	"math"
+	"fmt"
+	"strings"
+	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/gosuri/uiprogress"
+	"github.com/mitchellh/colorstring"
 )
 
-type BuildStep string
+var progressbar *uiprogress.Bar
+var progressBars *uiprogress.Progress
+var currentlyBuildingWorkIDs []string
+
+type BuildPhase string
 
 const (
-	StepThumbnails      BuildStep = "thumbnails"
-	StepMediaAnalysis   BuildStep = "media analysis"
-	StepDescription     BuildStep = "description"
-	StepColorExtraction BuildStep = "color extraction"
+	PhaseThumbnails    BuildPhase = "Thumbnailing"
+	PhaseMediaAnalysis BuildPhase = "Analyzing"
+	PhaseDescription   BuildPhase = "Parsing"
+	PhaseBuilding      BuildPhase = "Building"
+	PhaseBuilt         BuildPhase = "Built"
+	PhaseSkipped       BuildPhase = "Skipped"
 )
 
-// ProgressFile holds the data that gets written to the progress file as JSON.
-type ProgressFile struct {
-	Total     int
-	Processed int
-	Percent   int
-	Current   struct {
-		ID   string
-		Step BuildStep
-		// The resolution of the thumbnail being generated. 0 when step is not "thumbnails"
-		Resolution int
-		// The file being processed:
-		//
-		// - original media when making thumbnails or during media analysis,
-		//
-		// - media the colors are being extracted from, or
-		//
-		// - the description.md file when parsing description
-		File string
-		// Unused. Only here for consistency with ortfo/mk's --write-progress
-		Language string
-		// Unused. Only here for consistency with ortfo/mk's --write-progress
-		Output string
-	}
+func padPhaseVerb(phase BuildPhase) string {
+	// length of longest phase verb: "Thumbnailing", plus some padding
+	return fmt.Sprintf("%15s", phase)
 }
 
-type ProgressDetails struct {
-	Resolution int
-	File       string
+func StartProgressBar(total int) {
+	if progressbar != nil {
+		panic("progress bar already started")
+	}
+
+	progressBars = uiprogress.New()
+	progressBars.SetRefreshInterval(1 * time.Millisecond)
+	progressbar = progressBars.AddBar(total)
+	progressbar.Empty = ' '
+	progressbar.Fill = '='
+	progressbar.Head = '>'
+	progressbar.Width = 30
+	progressbar.PrependFunc(func(b *uiprogress.Bar) string {
+		return colorstring.Color(
+			fmt.Sprintf(
+				`[magenta][bold]%15s[reset]`,
+				"Building",
+			),
+		)
+	})
+	progressbar.AppendFunc(func(b *uiprogress.Bar) string {
+		// truncatedCurrentlyBuildingWorkIDs := make([]string, 0, len(currentlyBuildingWorkIDs))
+		// for _, id := range currentlyBuildingWorkIDs {
+		// 	if len(id) > 5 {
+		// 		truncatedCurrentlyBuildingWorkIDs = append(truncatedCurrentlyBuildingWorkIDs, id[:5])
+		// 	} else {
+		// 		truncatedCurrentlyBuildingWorkIDs = append(truncatedCurrentlyBuildingWorkIDs, id)
+		// 	}
+		// }
+
+		return fmt.Sprintf("%d/%d", b.Current(), b.Total)
+	})
+	progressBars.Start()
+}
+
+func (ctx *RunContext) IncrementProgress() {
+	progressbar.Incr()
+	if progressbar.CompletedPercent() >= 100 {
+		progressBars.Stop()
+		// Clear progress bar empty line
+		fmt.Print("\r\033[K")
+		colorstring.Printf("[bold][green]%15s[reset] compiling to %s in %s\n", "Finished", ctx.OutputDatabaseFile, progressbar.TimeElapsedString())
+	}
 }
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
-func (ctx *RunContext) Status(step BuildStep, details ProgressDetails) {
-	ctx.mu.Lock()
-	ctx.Progress.Step = step
-	ctx.Progress.Resolution = details.Resolution
-	ctx.Progress.File = details.File
-	ctx.mu.Unlock()
-
-	ctx.UpdateSpinner()
-	err := ctx.WriteProgressFile()
-	if err != nil {
-		ctx.LogError("Couldn't write to progress file: %s", err)
+func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string) {
+	var color string
+	switch phase {
+	case PhaseBuilt:
+		color = "light_green"
+	case PhaseSkipped:
+		color = "dim"
+	default:
+		color = "cyan"
 	}
-}
-
-// IncrementProgress increments the number of processed works and writes the progress to a file if --write-progress is set.
-func (ctx *RunContext) IncrementProgress() error {
-	ctx.mu.Lock()
-	ctx.Progress.Current++
-	ctx.LogDebug("progress: %d/%d", ctx.Progress.Current, ctx.Progress.Total)
-	ctx.mu.Unlock()
-
-	ctx.UpdateSpinner()
-	return ctx.WriteProgressFile()
-}
-
-// WriteProgressFile writes the progress to a file if --write-progress is set.
-func (ctx *RunContext) WriteProgressFile() error {
-	if ctx.Flags.ProgressFile == "" {
-		return nil
+	formattedDetails := ""
+	if len(details) > 0 {
+		formattedDetails = fmt.Sprintf(" [dim]%s[reset]", strings.Join(details, " "))
 	}
+	fmt.Fprintln(progressBars.Bypass(), colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID)))
 
-	progressDataJSON, err := jsoniter.Marshal(ctx.ProgressFileData())
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(ctx.Flags.ProgressFile, progressDataJSON, 0644)
-}
-
-// ProgressFileData returns a ProgressData struct ready to be marshalled to JSON for --write-progress.
-func (ctx *RunContext) ProgressFileData() ProgressFile {
-	return ProgressFile{
-		Total:     ctx.Progress.Total,
-		Processed: ctx.Progress.Current,
-		Percent:   int(math.Floor(float64(ctx.Progress.Current) / float64(ctx.Progress.Total) * 100)),
-		Current: struct {
-			ID         string
-			Step       BuildStep
-			Resolution int
-			File       string
-			Language   string
-			Output     string
-		}{
-			ID:         ctx.CurrentWorkID,
-			Step:       ctx.Progress.Step,
-			Resolution: ctx.Progress.Resolution,
-			File:       ctx.Progress.File,
-			Language:   "",
-			Output:     "",
-		},
+	if phase == PhaseBuilt || phase == PhaseSkipped {
+		for i, id := range currentlyBuildingWorkIDs {
+			if id == workID {
+				currentlyBuildingWorkIDs = append(currentlyBuildingWorkIDs[:i], currentlyBuildingWorkIDs[i+1:]...)
+				break
+			}
+		}
+		ctx.IncrementProgress()
+	} else if phase == PhaseBuilding {
+		currentlyBuildingWorkIDs = append(currentlyBuildingWorkIDs, workID)
 	}
 }

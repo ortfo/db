@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
+	// "time"
 
-	"github.com/mattn/go-isatty"
+	// "github.com/mattn/go-isatty"
 	"github.com/mitchellh/colorstring"
-	"github.com/theckman/yacspin"
+	// "github.com/theckman/yacspin"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -60,68 +60,55 @@ func (d dummySpinner) Pause() error                          { return nil }
 func (d dummySpinner) Unpause() error                        { return nil }
 
 func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
-	writer := os.Stdout
+	// writer := os.Stdout
 
 	// Don't clog stdout if we're not in a tty
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		writer = os.Stderr
-	}
+	// if !isatty.IsTerminal(os.Stdout.Fd()) {
+	// 	writer = os.Stderr
+	// }
 
-	spinner, err := yacspin.New(yacspin.Config{
-		Writer:            writer,
-		Frequency:         100 * time.Millisecond,
-		Suffix:            " ",
-		Message:           "  0% Warming up",
-		CharSet:           yacspin.CharSets[14],
-		Colors:            []string{"fgCyan"},
-		StopCharacter:     "✓",
-		StopColors:        []string{"fgGreen"},
-		StopMessage:       colorstring.Color(fmt.Sprintf("Database written to [bold]./%s[reset]", outputFilename)),
-		StopFailCharacter: "✗",
-		StopFailColors:    []string{"fgRed"},
-		ShowCursor:        true, // XXX temporary, as currently the cursors is not shown back when the user Ctrl-Cs
-	})
-
-	if err != nil {
-		ctx.LogError("Couldn't start spinner: %s", err)
-		return dummySpinner{}
-	}
 	if ctx.Flags.Silent {
 		return dummySpinner{}
 	}
 
-	return spinner
+	return dummySpinner{}
+
+	// spinner, err := yacspin.New(yacspin.Config{
+	// 	Writer:            writer,
+	// 	Frequency:         100 * time.Millisecond,
+	// 	Suffix:            " ",
+	// 	Message:           "  0% Warming up",
+	// 	CharSet:           yacspin.CharSets[14],
+	// 	Colors:            []string{"fgCyan"},
+	// 	StopCharacter:     "✓",
+	// 	StopColors:        []string{"fgGreen"},
+	// 	StopMessage:       colorstring.Color(fmt.Sprintf("Database written to [bold]./%s[reset]", outputFilename)),
+	// 	StopFailCharacter: "✗",
+	// 	StopFailColors:    []string{"fgRed"},
+	// 	ShowCursor:        true, // XXX temporary, as currently the cursors is not shown back when the user Ctrl-Cs
+	// })
+
+	// if err != nil {
+	// 	ctx.LogError("Couldn't start spinner: %s", err)
+	// 	return dummySpinner{}
+	// }
+
+	// return spinner
 }
 
-func (ctx *RunContext) UpdateSpinner() {
-	var message string
-	ctx.mu.Lock()
-	switch ctx.Progress.Step {
-	case StepColorExtraction:
-		message = fmt.Sprintf("Extracting colors from [magenta]%s[reset]", ctx.Progress.File)
-	case StepDescription:
-		message = fmt.Sprintf("Parsing description [magenta]%s[reset]", ctx.Progress.File)
-	case StepMediaAnalysis:
-		message = fmt.Sprintf("Analyzing media [magenta]%s[reset]", ctx.Progress.File)
-	case StepThumbnails:
-		message = fmt.Sprintf("Generating thumbnail for [magenta]%s[reset] at size [magenta]%d[reset]", ctx.Progress.File, ctx.Progress.Resolution)
-	}
-	fullMessage := colorstring.Color(fmt.Sprintf("[light_blue]%3d%%[reset] [bold]%s[dim]:[reset] %s…", ctx.ProgressFileData().Percent, ctx.CurrentWorkID, message))
-	ctx.Spinner.Message(fullMessage)
-	ctx.mu.Unlock()
-}
+
 
 // LogError logs non-fatal errors.
 func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\033[2K\r[red]error[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(progressBars.Bypass(), "[red]          Error[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
 // LogInfo logs infos.
 func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\033[2K\r[blue]info [reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(progressBars.Bypass(), "[blue]           Info[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
@@ -131,6 +118,6 @@ func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
 		return
 	}
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(os.Stderr, "\033[2K\r[magenta]debug[reset] [bold][dim](%s)[reset] %s\n", ctx.CurrentWorkID, fmt.Sprintf(message, fmtArgs...))
+	colorstring.Fprintf(progressBars.Bypass(), "[magenta]          Debug[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }

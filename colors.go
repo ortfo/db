@@ -3,6 +3,7 @@ package ortfodb
 import (
 	"image"
 	"os"
+	"strings"
 
 	"github.com/EdlinOrg/prominentcolor"
 	_ "golang.org/x/image/webp"
@@ -17,6 +18,15 @@ type ColorPalette struct {
 
 func (colors ColorPalette) Empty() bool {
 	return colors.Primary == "" && colors.Secondary == "" && colors.Tertiary == ""
+}
+
+func canExtractColors(contentType string) bool {
+	switch strings.Split(contentType, "/")[1] {
+	case "jpeg", "png", "gif", "webp", "pbm", "ppm", "pgm":
+		return true
+	default:
+		return false
+	}
 }
 
 // ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.

@@ -144,26 +144,13 @@ func (w Database) Languages() []string {
 type RunContext struct {
 	mu sync.Mutex
 
-	Config *Configuration
-	// ID of the work currently being processed.
-	CurrentWorkID         string
+	Config                *Configuration
 	DatabaseDirectory     string
 	OutputDatabaseFile    string
 	PreviousBuiltDatabase Database
 	Flags                 Flags
-	Progress              struct {
-		Current int
-		Total   int
-		// See ProgressFile.Current.Step in progress.go
-		Step BuildStep
-		// See ProgressFile.Current.Resolution in progress.go
-		Resolution int
-		// See ProgressFile.Current.File in progress.go
-		File string
-		Hash string
-	}
-	BuildMetadata BuildMetadata
-	Spinner       Spinner
+	BuildMetadata         BuildMetadata
+	Spinner               Spinner
 }
 
 type Flags struct {
@@ -171,7 +158,6 @@ type Flags struct {
 	Silent       bool
 	Minified     bool
 	Config       string
-	ProgressFile string
 	NoCache      bool
 	WorkersCount int
 }
@@ -299,11 +285,6 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 		reuseOld bool
 	}
 
-	// Initialize progress total to one to prevent division by zero.
-	ctx.mu.Lock()
-	ctx.Progress.Total = 1
-	ctx.mu.Unlock()
-
 	// Initialize stuff
 	works := ctx.PreviousBuiltDatabase
 	workDirectories, err := ctx.ComputeProgressTotal()
@@ -321,6 +302,8 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	if flags.WorkersCount <= 0 {
 		flags.WorkersCount = runtime.NumCPU()
 	}
+
+	StartProgressBar(len(workDirectories))
 
 	// Build works in parallel
 	// worker count divided by two because each worker has two workers for thumbnail generation
@@ -345,16 +328,13 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 					}
 				}
 				if included {
+					ctx.Status(workID, PhaseBuilding)
+
 					// Get description file name
 					descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
 
 					// Update the UI
-					ctx.mu.Lock()
-					ctx.CurrentWorkID = workID
-					ctx.mu.Unlock()
-					ctx.Status(StepDescription, ProgressDetails{
-						File: descriptionFilename,
-					})
+					ctx.Status(workID, PhaseDescription)
 
 					// Get the description's contents
 					descriptionRaw, err := os.ReadFile(descriptionFilename)
@@ -369,14 +349,17 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 					if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
 						// Skip it!
-						ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
+						// ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
+						ctx.Status(workID, PhaseSkipped)
 					} else {
 						// Build it
 						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
 						if err != nil {
+							ctx.LogError("while building %s: %s", workID, err.Error())
 							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
 							continue
 						}
+						ctx.Status(workID, PhaseBuilt)
 
 						// Set meta-info
 						newWork.BuiltAt = time.Now().String()
@@ -408,7 +391,6 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	ctx.LogDebug("main: collecting results")
 	for len(builtDirectories) < len(workDirectories) {
 		result := <-builtChannel
-		ctx.IncrementProgress()
 		ctx.LogDebug("main: got result %v", result)
 		if result.err != nil {
 			ctx.LogDebug("main: got error, returning early")
@@ -493,9 +475,6 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		workDirectories = append(workDirectories, dirEntry)
 	}
 
-	ctx.mu.Lock()
-	ctx.Progress.Total = len(workDirectories)
-	ctx.mu.Unlock()
 	return
 }
 

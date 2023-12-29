@@ -145,10 +145,8 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 // TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, analyzedMedia Media, anchor string, err error) {
 	ctx.LogDebug("Analyzing media %#v", embedDeclaration)
-	ctx.Status(StepMediaAnalysis, ProgressDetails{
-		Resolution: 0,
-		File:       string(embedDeclaration.RelativeSource),
-	})
+	ctx.Status(workID, PhaseMediaAnalysis, string(embedDeclaration.RelativeSource))
+
 	// Compute absolute filepath to media
 	var filename string
 	if !filepath.IsAbs(string(embedDeclaration.RelativeSource)) {
@@ -172,7 +170,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	if fileInfo.IsDir() {
 		contentType = "directory"
 	} else {
-		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration)
+		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration, workID)
 		if usedCache && cachedAnalysis.ContentType != "" {
 			ctx.LogDebug("Reusing cached analysis %#v", cachedAnalysis)
 			return true, cachedAnalysis, anchor, nil
@@ -205,7 +203,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if err != nil {
 			return
 		}
-		if ctx.Config.ExtractColors.Enabled {
+		if ctx.Config.ExtractColors.Enabled && canExtractColors(contentType) {
 			colors, err = ExtractColors(filename)
 			if err != nil {
 				ctx.LogError("Could not extract colors from %s: %s", filename, err)
@@ -251,7 +249,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	return
 }
 
-func (ctx *RunContext) UseCache(filename string, embedDeclaration Media) (used bool, media Media) {
+func (ctx *RunContext) UseCache(filename string, embedDeclaration Media, workID string) (used bool, media Media) {
 	if ctx.Flags.NoCache {
 		return
 	}
@@ -261,12 +259,12 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration Media) (used b
 		return
 	}
 
-	if stat.ModTime().After(ctx.BuildMetadata.PreviousBuildDate) {
-		ctx.LogDebug("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
-		return
-	}
-
-	if found, analyzedMedia := FindMedia(ctx.PreviousBuiltDatabase, embedDeclaration); found {
+	if found, analyzedMedia, builtAt := FindMedia(ctx.PreviousBuiltDatabase, embedDeclaration, workID); found {
+		ctx.LogDebug("cache hit for %s: using cache from embed decl %#v", filename, embedDeclaration)
+		if stat.ModTime().After(builtAt) {
+			ctx.LogDebug("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
+			return
+		}
 		return true, analyzedMedia
 	}
 
@@ -423,10 +421,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 					// Create potentially missing directories
 					os.MkdirAll(filepath.Dir(saveTo.Absolute(ctx)), 0777)
 
-					ctx.Status(StepThumbnails, ProgressDetails{
-						Resolution: int(size),
-						File:       string(media.DistSource),
-					})
+					ctx.Status(workID, PhaseThumbnails, string(media.RelativeSource), fmt.Sprintf("%dpx", size))
 
 					// Make the thumbnail
 					err := ctx.MakeThumbnail(media, size, saveTo.Absolute(ctx))
