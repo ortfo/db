@@ -155,7 +155,6 @@ type RunContext struct {
 	PreviousBuiltDatabase Database
 	Flags                 Flags
 	BuildMetadata         BuildMetadata
-	Spinner               Spinner
 }
 
 type Flags struct {
@@ -208,7 +207,6 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		DatabaseDirectory:  databaseDirectory,
 		OutputDatabaseFile: outputFilename,
 	}
-	ctx.Spinner = ctx.CreateSpinner(outputFilename)
 
 	ctx.LogDebug("Running with configuration %#v", &config)
 
@@ -223,13 +221,6 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		if err != nil {
 			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
 			ctx.PreviousBuiltDatabase = Database{}
-		}
-	}
-
-	if !flags.Silent {
-		err := ctx.Spinner.Start()
-		if err != nil {
-			panic(err)
 		}
 	}
 
@@ -436,10 +427,6 @@ func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename
 		if err != nil {
 			println(err.Error())
 		}
-	}
-
-	if !partial {
-		ctx.Spinner.Stop()
 	}
 }
 
