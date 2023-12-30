@@ -21,7 +21,7 @@ Usage:
   ortfodb [options] <inside> blog to <to-filepath>
   ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  ortfodb [options] <database> add <fullname> [<metadata-item>...]
+  ortfodb [options] <database> add <id> [<metadata-item>...]
   ortfodb [options] <database> validate
 
 Options:
@@ -53,17 +53,18 @@ Commands:
     The reverse operation of 'build'.
     Note that <to-directory> must be an empty directory
 
-  add <name> [<metadata-item>...]
+  add <id> [<metadata-item>...]
     Creates a new description.md in the appropriate folder.
-    <name> is the work's name.
-    You can provide additional metadata items in the form --ITEM_NAME=VALUE,
-    eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md,
+    <id> is the work's slug.
+    You can provide additional metadata items in the form ITEM_NAME:VALUE,
+    eg. 'add phelng tag:program tag:cli' will generate ./phelng/description.md,
     with the following contents:
     ---
-    collection: null
+    tags: [program, cli]
+	made with: []
+	created: ????-??-??
     ---
     # phelng
-    program, cli
 
   validate <database>
     Make sure that everything is OK in the database:
@@ -167,8 +168,8 @@ func dispatchCommand(args docopt.Opts) error {
 		return err
 	}
 	if val, _ := args.Bool("blog"); val {
-		err := RunCommandBlog(args)
-		return err
+		// err := RunCommandBlog(args)
+		return errors.New("command “blog” is not implemented yet")
 	}
 	if val, _ := args.Bool("replicate"); val {
 		handleControlC(args, &ortfodb.RunContext{})
@@ -176,7 +177,7 @@ func dispatchCommand(args docopt.Opts) error {
 		return err
 	}
 	if val, _ := args.Bool("add"); val {
-		return errors.New("command “add” is not implemented yet")
+		return RunCommandAdd(args)
 	}
 	if val, _ := args.Bool("validate"); val {
 		return errors.New("command “validate” is not implemented yet")
@@ -241,19 +242,37 @@ func RunCommandBlog(args docopt.Opts) error {
 	return nil
 }
 
+func RunCommandAdd(args docopt.Opts) error {
+	flags := ortfodb.Flags{}
+	flags.Config, _ = args.String("--config")
+	flags.Minified, _ = args.Bool("--minified")
+	flags.Scattered, _ = args.Bool("--scattered")
+	flags.Silent, _ = args.Bool("--silent")
+	flags.NoCache, _ = args.Bool("--no-cache")
+	flags.WorkersCount, _ = args.Int("--workers")
+	databaseDirectory, _ := args.String("<database>")
+	databaseDirectory, err := filepath.Abs(databaseDirectory)
+	if err != nil {
+		return err
+	}
+	outputFilename, _ := args.String("<to-filepath>")
+	config, err := ortfodb.NewConfiguration(flags.Config, databaseDirectory)
+	if err != nil {
+		return err
+	}
+
+	context, err := ortfodb.PrepareBuild(databaseDirectory, outputFilename, flags, config)
+
+	projectId, _ := args.String("<id>")
+	return context.CreateDescriptionFile(projectId, args["<metadata-item>"].([]string))
+}
+
 func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 	go func() {
 		for range sig {
-			context.Spinner.StopFailCharacter("️⚠")
-			context.Spinner.StopFailColors("fgYellow")
-			// if context.Progress.Current > 0 {
-			context.Spinner.StopFailMessage(colorstring.Color(fmt.Sprintf("Cancelled. Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)))
-			// } else {
-			// 	context.Spinner.StopFailMessage("Cancelled.")
-			// }
-			context.Spinner.StopFail()
+			ortfodb.LogCustom("Cancelled", "yellow", "Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)
 			toFilepath, argError := args.String("<to-filepath>")
 			buildLockFilepath := ortfodb.BuildLockFilepath(toFilepath)
 			if _, err := os.Stat(buildLockFilepath); err == nil && argError == nil {

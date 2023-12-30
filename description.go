@@ -183,18 +183,18 @@ func (thumbnails ThumbnailsMap) Closest(size int) FilePathInsideMediaRoot {
 }
 
 type WorkMetadata struct {
-	Aliases            []string                      `json:"aliases"`
-	Finished           string                        `json:"finished"`
+	Aliases            []string                      `json:"aliases" yaml:",omitempty"`
+	Finished           string                        `json:"finished" yaml:",omitempty"`
 	Started            string                        `json:"started"`
 	MadeWith           []string                      `json:"madeWith" yaml:"made with"`
 	Tags               []string                      `json:"tags"`
-	Thumbnail          FilePathInsidePortfolioFolder `json:"thumbnail"`
-	TitleStyle         TitleStyle                    `json:"titleStyle" yaml:"title style"`
-	Colors             ColorPalette                  `json:"colors"`
-	PageBackground     string                        `json:"pageBackground" yaml:"page background"`
-	WIP                bool                          `json:"wip"`
-	Private            bool                          `json:"private"`
-	AdditionalMetadata map[string]interface{}        `mapstructure:",remain" json:"additionalMetadata"`
+	Thumbnail          FilePathInsidePortfolioFolder `json:"thumbnail" yaml:",omitempty"`
+	TitleStyle         TitleStyle                    `json:"titleStyle" yaml:"title style,omitempty"`
+	Colors             ColorPalette                  `json:"colors" yaml:",omitempty"`
+	PageBackground     string                        `json:"pageBackground" yaml:"page background,omitempty"`
+	WIP                bool                          `json:"wip" yaml:",omitempty"`
+	Private            bool                          `json:"private" yaml:",omitempty"`
+	AdditionalMetadata map[string]interface{}        `mapstructure:",remain" json:"additionalMetadata" yaml:",omitempty"`
 }
 
 func (m WorkMetadata) CreatedAt() time.Time {
