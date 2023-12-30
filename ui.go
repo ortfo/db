@@ -2,8 +2,10 @@ package ortfodb
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
+
 	// "time"
 
 	// "github.com/mattn/go-isatty"
@@ -101,14 +103,22 @@ func (ctx *RunContext) CreateSpinner(outputFilename string) Spinner {
 // LogError logs non-fatal errors.
 func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(progressBars.Bypass(), "[red]          Error[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
+	var writer io.Writer = os.Stderr
+	if progressBars != nil {
+		writer = progressBars.Bypass()
+	}
+	colorstring.Fprintf(writer, "[red]          Error[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
 // LogInfo logs infos.
 func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(progressBars.Bypass(), "[blue]           Info[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
+	var writer io.Writer = os.Stderr
+	if progressBars != nil {
+		writer = progressBars.Bypass()
+	}
+	colorstring.Fprintf(writer, "[blue]           Info[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }
 
@@ -118,6 +128,10 @@ func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
 		return
 	}
 	ctx.Spinner.Pause()
-	colorstring.Fprintf(progressBars.Bypass(), "[magenta]          Debug[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
+	var writer io.Writer = os.Stderr
+	if progressBars != nil {
+	writer = progressBars.Bypass()
+	}
+	colorstring.Fprintf(writer, "[magenta]          Debug[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	ctx.Spinner.Unpause()
 }

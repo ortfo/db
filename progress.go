@@ -18,10 +18,9 @@ type BuildPhase string
 const (
 	PhaseThumbnails    BuildPhase = "Thumbnailing"
 	PhaseMediaAnalysis BuildPhase = "Analyzing"
-	PhaseDescription   BuildPhase = "Parsing"
 	PhaseBuilding      BuildPhase = "Building"
 	PhaseBuilt         BuildPhase = "Built"
-	PhaseSkipped       BuildPhase = "Skipped"
+	PhaseUnchanged     BuildPhase = "Reusing"
 )
 
 func padPhaseVerb(phase BuildPhase) string {
@@ -67,6 +66,7 @@ func StartProgressBar(total int) {
 func (ctx *RunContext) IncrementProgress() {
 	progressbar.Incr()
 	if progressbar.CompletedPercent() >= 100 {
+		progressBars.Bars = nil
 		progressBars.Stop()
 		// Clear progress bar empty line
 		fmt.Print("\r\033[K")
@@ -80,7 +80,7 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	switch phase {
 	case PhaseBuilt:
 		color = "light_green"
-	case PhaseSkipped:
+	case PhaseUnchanged:
 		color = "dim"
 	default:
 		color = "cyan"
@@ -91,7 +91,7 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	}
 	fmt.Fprintln(progressBars.Bypass(), colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID)))
 
-	if phase == PhaseBuilt || phase == PhaseSkipped {
+	if phase == PhaseBuilt || phase == PhaseUnchanged {
 		for i, id := range currentlyBuildingWorkIDs {
 			if id == workID {
 				currentlyBuildingWorkIDs = append(currentlyBuildingWorkIDs[:i], currentlyBuildingWorkIDs[i+1:]...)

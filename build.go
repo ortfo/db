@@ -328,13 +328,8 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 					}
 				}
 				if included {
-					ctx.Status(workID, PhaseBuilding)
-
 					// Get description file name
 					descriptionFilename := ctx.DescriptionFilename(databaseDirectory, workID)
-
-					// Update the UI
-					ctx.Status(workID, PhaseDescription)
 
 					// Get the description's contents
 					descriptionRaw, err := os.ReadFile(descriptionFilename)
@@ -350,8 +345,9 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 					if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
 						// Skip it!
 						// ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
-						ctx.Status(workID, PhaseSkipped)
+						ctx.Status(workID, PhaseUnchanged)
 					} else {
+						ctx.Status(workID, PhaseBuilding)
 						// Build it
 						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
 						if err != nil {

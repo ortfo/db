@@ -145,7 +145,6 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 // TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, analyzedMedia Media, anchor string, err error) {
 	ctx.LogDebug("Analyzing media %#v", embedDeclaration)
-	ctx.Status(workID, PhaseMediaAnalysis, string(embedDeclaration.RelativeSource))
 
 	// Compute absolute filepath to media
 	var filename string
@@ -176,6 +175,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 			return true, cachedAnalysis, anchor, nil
 		}
 
+		ctx.Status(workID, PhaseMediaAnalysis, string(embedDeclaration.RelativeSource))
 		mimeType, err := mimetype.DetectFile(filename)
 		if err != nil {
 			contentType = "application/octet-stream"
