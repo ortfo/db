@@ -71,6 +71,7 @@ func ParseDescription[Metadata interface{}](ctx *RunContext, markdownRaw string)
 	metadata, markdownRaw = ParseYAMLHeader[Metadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
+	ctx.LogDebug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
 	localized := len(localizedRawBlocks) > 0
 	var allLanguages []string
 	if localized {
@@ -114,12 +115,12 @@ type Link struct {
 
 // AnalyzedWork represents a complete work, with analyzed mediae.
 type AnalyzedWork struct {
-	ID              string                      `json:"id"`
-	BuiltAt         string                      `json:"builtAt"`
-	DescriptionHash string                      `json:"descriptionHash"`
-	Metadata        WorkMetadata                `json:"metadata"`
-	Content         map[string]LocalizedContent `json:"content"`
-	Partial         bool                        `json:"Partial"`
+	ID              string             `json:"id"`
+	BuiltAt         string             `json:"builtAt"`
+	DescriptionHash string             `json:"descriptionHash"`
+	Metadata        WorkMetadata       `json:"metadata"`
+	Content         LocalizableContent `json:"content"`
+	Partial         bool               `json:"Partial"`
 }
 
 func (w AnalyzedWork) ThumbnailBlock(language string) Media {
@@ -224,6 +225,20 @@ func parsePossiblyInterderminateDate(datestring string) (time.Time, error) {
 }
 
 type TitleStyle string
+
+type LocalizableContent map[string]LocalizedContent
+
+func (c LocalizableContent) Localize(lang string) LocalizedContent {
+	if len(c) == 0 {
+		return LocalizedContent{}
+	}
+
+	if _, ok := c[lang]; ok {
+		return c[lang]
+	}
+
+	return c["default"]
+}
 
 type LocalizedContent struct {
 	Layout    Layout         `json:"layout"`
