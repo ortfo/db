@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -124,6 +125,10 @@ func (w Database) Languages() []string {
 	langs := make([]string, 0)
 	for _, work := range w {
 		for lang := range work.Content {
+			if lang == "default" {
+				continue
+			}
+			lang = strings.TrimSpace(lang)
 			// Check if lang is already in langs
 			alreadyInLangs := false
 			for _, l := range langs {
