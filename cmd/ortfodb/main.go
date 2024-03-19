@@ -16,7 +16,7 @@ import (
 )
 
 const CLIUsage = `
-ortfo/db v0.1.0
+ortfo/db v0.1.1
 
 Usage:
   ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
