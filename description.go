@@ -125,7 +125,7 @@ type AnalyzedWork struct {
 
 func (w AnalyzedWork) ThumbnailBlock(language string) Media {
 	firstMatch := Media{}
-	for _, block := range w.Content[language].Blocks {
+	for _, block := range w.Content.Localize(language).Blocks {
 		if !block.Type.IsMedia() {
 			continue
 		}
