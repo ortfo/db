@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.2/schemas/database.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.3/schemas/database.schema.json",
   "$ref": "#/$defs/Database",
   "$defs": {
     "AnalyzedWork": {
