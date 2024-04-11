@@ -33,7 +33,7 @@ func RunCommandReplicate(args docopt.Opts) error {
 	if err != nil {
 		return err
 	}
-	validated, validationErrors, err := validateWithJSONSchema(string(content), databaseJSONSchema)
+	validated, validationErrors, err := validateWithJSONSchema(string(content), DatabaseJSONSchema())
 	if err != nil {
 		return err
 	}

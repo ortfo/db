@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.2/schemas/tags.schema.json",
+  "$ref": "#/$defs/tags",
+  "$defs": {
+    "Tag": {
+      "properties": {
+        "singular": {
+          "type": "string"
+        },
+        "plural": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "learn more at": {
+          "type": "string"
+        },
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "detect": {
+          "properties": {
+            "files": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "search": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "made with": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "files",
+            "search",
+            "made with"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "singular",
+        "plural",
+        "description",
+        "learn more at",
+        "aliases",
+        "detect"
+      ]
+    },
+    "tags": {
+      "items": {
+        "$ref": "#/$defs/Tag"
+      },
+      "type": "array"
+    }
+  }
+}

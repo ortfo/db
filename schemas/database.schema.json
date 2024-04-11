@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.2/schemas/database.schema.json",
+  "$ref": "#/$defs/Database",
+  "$defs": {
+    "AnalyzedWork": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "builtat": {
+          "type": "string"
+        },
+        "descriptionhash": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/WorkMetadata"
+        },
+        "content": {
+          "$ref": "#/$defs/LocalizableContent"
+        },
+        "partial": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "builtat",
+        "descriptionhash",
+        "metadata",
+        "content",
+        "partial"
+      ]
+    },
+    "ColorPalette": {
+      "properties": {
+        "primary": {
+          "type": "string"
+        },
+        "secondary": {
+          "type": "string"
+        },
+        "tertiary": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "primary",
+        "secondary",
+        "tertiary"
+      ]
+    },
+    "ContentBlock": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "anchor": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "relativesource": {
+          "type": "string"
+        },
+        "distsource": {
+          "type": "string"
+        },
+        "contenttype": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/ImageDimensions"
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "hassound": {
+          "type": "boolean"
+        },
+        "colors": {
+          "$ref": "#/$defs/ColorPalette"
+        },
+        "thumbnails": {
+          "$ref": "#/$defs/ThumbnailsMap"
+        },
+        "thumbnailsbuiltat": {
+          "type": "string"
+        },
+        "attributes": {
+          "$ref": "#/$defs/MediaAttributes"
+        },
+        "analyzed": {
+          "type": "boolean"
+        },
+        "content": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "anchor",
+        "index",
+        "alt",
+        "caption",
+        "relativesource",
+        "distsource",
+        "contenttype",
+        "size",
+        "dimensions",
+        "online",
+        "duration",
+        "hassound",
+        "colors",
+        "thumbnails",
+        "thumbnailsbuiltat",
+        "attributes",
+        "analyzed",
+        "content",
+        "text",
+        "title",
+        "url"
+      ]
+    },
+    "Database": {
+      "additionalProperties": {
+        "$ref": "#/$defs/AnalyzedWork"
+      },
+      "type": "object"
+    },
+    "Footnotes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "ImageDimensions": {
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "aspectratio": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "aspectratio"
+      ]
+    },
+    "Layout": {
+      "items": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "type": "array"
+    },
+    "LocalizableContent": {
+      "additionalProperties": {
+        "$ref": "#/$defs/LocalizedContent"
+      },
+      "type": "object"
+    },
+    "LocalizedContent": {
+      "properties": {
+        "layout": {
+          "$ref": "#/$defs/Layout"
+        },
+        "blocks": {
+          "items": {
+            "$ref": "#/$defs/ContentBlock"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "footnotes": {
+          "$ref": "#/$defs/Footnotes"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "layout",
+        "blocks",
+        "title",
+        "footnotes"
+      ]
+    },
+    "MediaAttributes": {
+      "properties": {
+        "loop": {
+          "type": "boolean"
+        },
+        "autoplay": {
+          "type": "boolean"
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "playsinline": {
+          "type": "boolean"
+        },
+        "controls": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "loop",
+        "autoplay",
+        "muted",
+        "playsinline",
+        "controls"
+      ]
+    },
+    "ThumbnailsMap": {
+      "patternProperties": {
+        "^[0-9]+$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkMetadata": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "finished": {
+          "type": "string"
+        },
+        "started": {
+          "type": "string"
+        },
+        "made with": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "title style": {
+          "type": "string"
+        },
+        "colors": {
+          "$ref": "#/$defs/ColorPalette"
+        },
+        "page background": {
+          "type": "string"
+        },
+        "wip": {
+          "type": "boolean"
+        },
+        "private": {
+          "type": "boolean"
+        },
+        "additionalmetadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "started",
+        "made with",
+        "tags"
+      ]
+    }
+  }
+}

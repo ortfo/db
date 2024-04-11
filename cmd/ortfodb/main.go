@@ -17,8 +17,8 @@ import (
 	ortfodb "github.com/ortfo/db"
 )
 
-const CLIUsage = `
-ortfo/db v0.1.2
+var CLIUsage = fmt.Sprintf(`
+ortfo/db v%s
 
 Usage:
   ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
@@ -27,6 +27,7 @@ Usage:
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
   ortfodb [options] <database> add [--overwrite] <id> [<metadata-item>...]
   ortfodb [options] <database> validate
+  ortfodb [options] schemas (configuration|database|tags|technologies)
 
 Options:
   -C --config=<filepath>      Use the configuration path at <filepath>. Defaults to ortfodb.yaml.
@@ -86,6 +87,13 @@ Commands:
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
 
+  schemas (configuration|database|tags|technologies)
+    Output the JSON schema for:
+	- configuration: the configuration file (.ortfodb.yaml)
+	- database: the output database file
+	- tags: the tags repository file (tags.yaml)
+	- technologies: the technologies repository file (technologies.yaml)
+
 Scattered mode:
   With this mode activated, when building, portfoliodb will go through each folder (non-recursively) of <from-directory>, and, if it finds a .ortfo file in the folder, consider the files in that .ortfo folder.
   (The actual name of .ortfo is configurable, set "scattered mode folder" in ortfodb.yaml to change it)
@@ -138,7 +146,7 @@ Build Progress:
 		language: Unused. Only here for consistency with ortfo/mk's --write-progress
 		output: Unused. Only here for consistency with ortfo/mk's --write-progress
 	}
-`
+`, ortfodb.Version)
 
 func main() {
 	usage := CLIUsage
@@ -199,6 +207,9 @@ func dispatchCommand(args docopt.Opts) error {
 	}
 	if val, _ := args.Bool("validate"); val {
 		return errors.New("command “validate” is not implemented yet")
+	}
+	if val, _ := args.Bool("schemas"); val {
+		return RunCommandSchemas(args)
 	}
 	return nil
 }
@@ -312,6 +323,26 @@ func RunCommandAdd(args docopt.Opts) error {
 	}
 
 	return nil
+}
+
+func RunCommandSchemas(args docopt.Opts) error {
+	if val, _ := args.Bool("configuration"); val {
+		fmt.Println(ortfodb.ConfigurationJSONSchema())
+		return nil
+	}
+	if val, _ := args.Bool("database"); val {
+		fmt.Println(ortfodb.DatabaseJSONSchema())
+		return nil
+	}
+	if val, _ := args.Bool("tags"); val {
+		fmt.Println(ortfodb.TagsRepositoryJSONSchema())
+		return nil
+	}
+	if val, _ := args.Bool("technologies"); val {
+		fmt.Println(ortfodb.TechnologiesRepositoryJSONSchema())
+		return nil
+	}
+	return errors.New("Unknown schema type")
 }
 
 func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {

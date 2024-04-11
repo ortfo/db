@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.2/schemas/configuration.schema.json",
+  "$ref": "#/$defs/Configuration",
+  "$defs": {
+    "Configuration": {
+      "properties": {
+        "extract colors": {
+          "$ref": "#/$defs/ExtractColorsConfiguration"
+        },
+        "make gifs": {
+          "$ref": "#/$defs/MakeGIFsConfiguration"
+        },
+        "make thumbnails": {
+          "$ref": "#/$defs/MakeThumbnailsConfiguration"
+        },
+        "build metadata file": {
+          "type": "string"
+        },
+        "media": {
+          "properties": {
+            "at": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "at"
+          ]
+        },
+        "scattered mode folder": {
+          "type": "string"
+        },
+        "tags": {
+          "properties": {
+            "repository": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "repository"
+          ]
+        },
+        "technologies": {
+          "properties": {
+            "repository": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "repository"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "extract colors",
+        "make gifs",
+        "make thumbnails",
+        "build metadata file",
+        "media",
+        "scattered mode folder",
+        "tags",
+        "technologies"
+      ]
+    },
+    "ExtractColorsConfiguration": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "extract": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "default files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "extract",
+        "default files"
+      ]
+    },
+    "MakeGIFsConfiguration": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "file name template": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "file name template"
+      ]
+    },
+    "MakeThumbnailsConfiguration": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "sizes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "input file": {
+          "type": "string"
+        },
+        "file name template": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "sizes",
+        "input file",
+        "file name template"
+      ]
+    }
+  }
+}

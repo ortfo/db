@@ -145,7 +145,7 @@ func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultEr
 	yaml.Unmarshal(configContent, &configuration)
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
-	return validateWithJSONSchema(string(configurationDocument), configurationJSONSchema)
+	return validateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema())
 }
 
 // DefaultConfiguration returns a configuration with sensible defaults.
