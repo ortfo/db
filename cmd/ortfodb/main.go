@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime/pprof"
 	"strings"
+	"syscall"
 
 	"github.com/docopt/docopt-go"
 	"github.com/mitchellh/colorstring"
@@ -23,7 +25,7 @@ Usage:
   ortfodb [options] <inside> blog to <to-filepath>
   ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
   ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  ortfodb [options] <database> add <id> [<metadata-item>...]
+  ortfodb [options] <database> add [--overwrite] <id> [<metadata-item>...]
   ortfodb [options] <database> validate
 
 Options:
@@ -35,6 +37,7 @@ Options:
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
   --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
   --workers=<count>  	      Use <count> workers to build the database. Defaults to the number of CPU cores.
+  --overwrite                 (add command): Overwrite the description.md file if it already exists.
 
 Examples:
   ortfodb database build database.json
@@ -151,17 +154,30 @@ func main() {
 
 	if err := dispatchCommand(args); err != nil {
 		// Start with leading \n because previous lines will have \r\033[K in front
-		colorstring.Println("\n[red][bold]An error occured[reset]")
-		printError(err)
+		ortfodb.LogCustom("Error", "red", formatError(err))
 		os.Exit(1)
 	}
 }
 
-func printError(err error) {
+func formatError(err error) string {
+	output := ""
 	errorFragments := strings.Split(err.Error(), ": ")
 	for i, fragment := range errorFragments {
-		colorstring.Println("[red]" + strings.Repeat(" ", i) + fragment)
+		if i > 0 {
+			output += strings.Repeat("  ", i-1) + colorstring.Color("[dim][bold]→[reset] ")
+		}
+		if i == 0 {
+			output += colorstring.Color("[red]" + fragment + "[reset]")
+		} else if i == len(errorFragments)-1 {
+			output += colorstring.Color("[bold]" + fragment + "[reset]")
+		} else {
+			output += fragment
+		}
+		if i < len(errorFragments)-1 {
+			output += "\n"
+		}
 	}
+	return output
 }
 
 func dispatchCommand(args docopt.Opts) error {
@@ -264,9 +280,38 @@ func RunCommandAdd(args docopt.Opts) error {
 	}
 
 	context, err := ortfodb.PrepareBuild(databaseDirectory, outputFilename, flags, config)
+	if err != nil {
+		return fmt.Errorf("while preparing build: %w", err)
+	}
 
 	projectId, _ := args.String("<id>")
-	return context.CreateDescriptionFile(projectId, args["<metadata-item>"].([]string))
+	descriptionFilepath, err := context.CreateDescriptionFile(projectId, args["<metadata-item>"].([]string), args["--overwrite"].(bool))
+	if err != nil {
+		context.ReleaseBuildLock(ortfodb.BuildLockFilepath(outputFilename))
+		return fmt.Errorf("while creating description file: %w", err)
+	}
+
+	err = context.ReleaseBuildLock(ortfodb.BuildLockFilepath(outputFilename))
+	if err != nil {
+		return fmt.Errorf("while releasing build lock: %w", err)
+	}
+
+	editor := os.Getenv("EDITOR")
+	if editor != "" {
+		ortfodb.LogCustom("Opening", "cyan", "%s in %s", descriptionFilepath, editor)
+		editorPath, err := exec.LookPath(editor)
+		if err != nil {
+			return fmt.Errorf("while getting path to %s: %w", editor, err)
+		}
+
+		err = syscall.Exec(editorPath, []string{editorPath, descriptionFilepath}, os.Environ())
+		if err != nil {
+			return fmt.Errorf("while opening with %s: %w", editorPath, err)
+		}
+
+	}
+
+	return nil
 }
 
 func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {

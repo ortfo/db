@@ -22,8 +22,13 @@ func logWriter() io.Writer {
 	return writer
 }
 
+func indentSubsequent(size int, text string) string {
+	indentation := strings.Repeat(" ", size)
+	return strings.ReplaceAll(text, "\n", "\n"+indentation)
+}
+
 func LogCustom(verb string, color string, message string, fmtArgs ...interface{}) {
-	fmt.Fprintln(logWriter(), colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset] %s", color, verb, fmt.Sprintf(message, fmtArgs...))))
+	fmt.Fprintln(logWriter(), colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset] %s", color, verb, indentSubsequent(15+1, fmt.Sprintf(message, fmtArgs...)))))
 }
 
 // DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal.
@@ -68,4 +73,29 @@ func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
 // LogWarning logs warnings.
 func (ctx *RunContext) LogWarning(message string, fmtArgs ...interface{}) {
 	LogCustom("Warning", "yellow", message, fmtArgs...)
+}
+
+func formatList(list []string, format string, separator string) string {
+	result := ""
+	for i, tag := range list {
+		sep := separator
+		if i == len(list)-1 {
+			sep = ""
+		}
+		result += fmt.Sprintf(format, tag) + sep
+	}
+	return result
+}
+
+// formatErrors returns a string where the error message was split on ': ', and each item is on a new line, indented once more than the previous line.
+func formatErrors(err error) string {
+	causes := strings.Split(err.Error(), ": ")
+	output := ""
+	for i, cause := range causes {
+		output += strings.Repeat(" ", i) + cause
+		if i < len(causes)-1 {
+			output += "\n"
+		}
+	}
+	return output
 }

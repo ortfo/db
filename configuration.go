@@ -62,6 +62,18 @@ type Configuration struct {
 	// 	AnchoredHeadings   configurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
 	// 	CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
 	// }
+	Tags struct {
+		// Path to file describing all tags.
+		Repository string `yaml:"repository"`
+	} `yaml:"tags"`
+
+	Technologies struct {
+		// Path to file describing all technologies.
+		Repository string `yaml:"repository"`
+	} `yaml:"technologies"`
+
+	// Where was the configuration loaded from
+	source string
 }
 
 // LoadConfiguration loads the given configuration YAML file and puts it contents into loadInto.
@@ -102,7 +114,7 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 		return Configuration{}, fmt.Errorf("the configuration file is invalid. See validation errors above")
 	}
 
-	config := Configuration{}
+	config := Configuration{source: filename}
 	err = LoadConfiguration(filename, &config)
 
 	// Set default value for ScatteredModeFolder

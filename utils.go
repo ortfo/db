@@ -201,3 +201,12 @@ func handleControlC(action func()) {
 		}
 	}()
 }
+
+func stringsLooselyMatch(s string, needles ...string) bool {
+	for _, needle := range needles {
+		if strings.EqualFold(s, needle) {
+			return true
+		}
+	}
+	return false
+}

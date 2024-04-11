@@ -155,6 +155,9 @@ type RunContext struct {
 	PreviousBuiltDatabase Database
 	Flags                 Flags
 	BuildMetadata         BuildMetadata
+
+	TagsRepository         []Tag
+	TechnologiesRepository []Technology
 }
 
 type Flags struct {
