@@ -1,17 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/ortfo/db/v0.1.3/schemas/database.schema.json",
-  "$ref": "#/$defs/Database",
+  "$ref": "#/$defs/DatabaseWithMetaWork",
   "$defs": {
     "AnalyzedWork": {
       "properties": {
         "id": {
           "type": "string"
         },
-        "builtat": {
+        "builtAt": {
           "type": "string"
         },
-        "descriptionhash": {
+        "descriptionHash": {
           "type": "string"
         },
         "metadata": {
@@ -20,7 +20,7 @@
         "content": {
           "$ref": "#/$defs/LocalizableContent"
         },
-        "partial": {
+        "Partial": {
           "type": "boolean"
         }
       },
@@ -28,11 +28,11 @@
       "type": "object",
       "required": [
         "id",
-        "builtat",
-        "descriptionhash",
+        "builtAt",
+        "descriptionHash",
         "metadata",
         "content",
-        "partial"
+        "Partial"
       ]
     },
     "ColorPalette": {
@@ -75,13 +75,13 @@
         "caption": {
           "type": "string"
         },
-        "relativesource": {
+        "relativeSource": {
           "type": "string"
         },
-        "distsource": {
+        "distSource": {
           "type": "string"
         },
-        "contenttype": {
+        "contentType": {
           "type": "string"
         },
         "size": {
@@ -96,7 +96,7 @@
         "duration": {
           "type": "number"
         },
-        "hassound": {
+        "hasSound": {
           "type": "boolean"
         },
         "colors": {
@@ -105,7 +105,7 @@
         "thumbnails": {
           "$ref": "#/$defs/ThumbnailsMap"
         },
-        "thumbnailsbuiltat": {
+        "thumbnailsBuiltAt": {
           "type": "string"
         },
         "attributes": {
@@ -136,17 +136,17 @@
         "index",
         "alt",
         "caption",
-        "relativesource",
-        "distsource",
-        "contenttype",
+        "relativeSource",
+        "distSource",
+        "contentType",
         "size",
         "dimensions",
         "online",
         "duration",
-        "hassound",
+        "hasSound",
         "colors",
         "thumbnails",
-        "thumbnailsbuiltat",
+        "thumbnailsBuiltAt",
         "attributes",
         "analyzed",
         "content",
@@ -156,6 +156,17 @@
       ]
     },
     "Database": {
+      "additionalProperties": {
+        "$ref": "#/$defs/AnalyzedWork"
+      },
+      "type": "object"
+    },
+    "DatabaseWithMetaWork": {
+      "properties": {
+        "#meta": {
+          "$ref": "#/$defs/MetaWork"
+        }
+      },
       "additionalProperties": {
         "$ref": "#/$defs/AnalyzedWork"
       },
@@ -175,7 +186,7 @@
         "height": {
           "type": "integer"
         },
-        "aspectratio": {
+        "aspectRatio": {
           "type": "number"
         }
       },
@@ -184,7 +195,7 @@
       "required": [
         "width",
         "height",
-        "aspectratio"
+        "aspectRatio"
       ]
     },
     "Layout": {
@@ -257,6 +268,14 @@
         "controls"
       ]
     },
+    "MetaWork": {
+      "properties": {
+        "Partial": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "ThumbnailsMap": {
       "patternProperties": {
         "^[0-9]+$": {
@@ -280,7 +299,7 @@
         "started": {
           "type": "string"
         },
-        "made with": {
+        "madeWith": {
           "items": {
             "type": "string"
           },
@@ -295,13 +314,13 @@
         "thumbnail": {
           "type": "string"
         },
-        "title style": {
+        "titleStyle": {
           "type": "string"
         },
         "colors": {
           "$ref": "#/$defs/ColorPalette"
         },
-        "page background": {
+        "pageBackground": {
           "type": "string"
         },
         "wip": {
@@ -310,16 +329,25 @@
         "private": {
           "type": "boolean"
         },
-        "additionalmetadata": {
+        "additionalMetadata": {
           "type": "object"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
+        "aliases",
+        "finished",
         "started",
-        "made with",
-        "tags"
+        "madeWith",
+        "tags",
+        "thumbnail",
+        "titleStyle",
+        "colors",
+        "pageBackground",
+        "wip",
+        "private",
+        "additionalMetadata"
       ]
     }
   }

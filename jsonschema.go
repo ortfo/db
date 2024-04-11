@@ -8,7 +8,7 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
-var reflector = jsonschema.Reflector{
+var yamlReflector = jsonschema.Reflector{
 	FieldNameTag: "yaml",
 	KeyNamer:     func(key string) string { return strings.ToLower(key) },
 }
@@ -20,7 +20,7 @@ func setSchemaId(schema *jsonschema.Schema) {
 }
 
 func makeJSONSchema(t any) string {
-	schema := reflector.Reflect(t)
+	schema := yamlReflector.Reflect(t)
 	setSchemaId(schema)
 	out, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
@@ -34,7 +34,38 @@ func ConfigurationJSONSchema() string {
 }
 
 func DatabaseJSONSchema() string {
-	return makeJSONSchema(&Database{})
+	schema := jsonschema.Reflect(&Database{})
+	setSchemaId(schema)
+
+	metaWorkProperties := jsonschema.NewProperties()
+	metaWorkProperties.Set("Partial", &jsonschema.Schema{
+		Type: "boolean",
+	})
+
+	schema.Definitions["MetaWork"] = &jsonschema.Schema{
+		Type:       "object",
+		Properties: metaWorkProperties,
+	}
+
+	dbWithWorkProperties := jsonschema.NewProperties()
+	dbWithWorkProperties.Set("#meta", &jsonschema.Schema{
+		Ref: "#/$defs/MetaWork",
+	})
+
+	schema.Definitions["DatabaseWithMetaWork"] = &jsonschema.Schema{
+		Type:       "object",
+		Properties: dbWithWorkProperties,
+		AdditionalProperties: &jsonschema.Schema{
+			Ref: "#/$defs/AnalyzedWork",
+		},
+	}
+	schema.Ref = "#/$defs/DatabaseWithMetaWork"
+
+	out, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(out)
 }
 
 type tags []Tag
