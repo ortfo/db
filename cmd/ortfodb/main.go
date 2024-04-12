@@ -356,6 +356,8 @@ func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {
 			if _, err := os.Stat(buildLockFilepath); err == nil && argError == nil {
 				os.Remove(buildLockFilepath)
 			}
+	
+			context.StopProgressBar()
 			os.Exit(1)
 		}
 	}()

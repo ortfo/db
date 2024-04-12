@@ -66,12 +66,20 @@ func StartProgressBar(total int) {
 func (ctx *RunContext) IncrementProgress() {
 	progressbar.Incr()
 	if progressbar.CompletedPercent() >= 100 {
-		progressBars.Bars = nil
-		progressBars.Stop()
-		// Clear progress bar empty line
-		fmt.Print("\r\033[K")
+		ctx.StopProgressBar()
 		colorstring.Printf("[bold][green]%15s[reset] compiling to %s in %s\n", "Finished", ctx.OutputDatabaseFile, progressbar.TimeElapsedString())
 	}
+}
+
+func (ctx *RunContext) StopProgressBar() {
+	if progressbar == nil {
+		return
+	}
+
+	progressBars.Bars = nil
+	progressBars.Stop()
+	// Clear progress bar empty line
+	fmt.Print("\r\033[K")
 }
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
