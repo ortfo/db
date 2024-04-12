@@ -1,5 +1,6 @@
 build:
 	#!/usr/bin/env bash
+	set -euxo pipefail
 	cd cmd/ortfodb
 	go mod tidy
 	go build
