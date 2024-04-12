@@ -1,7 +1,9 @@
 package ortfodb
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -110,4 +112,49 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	} else if phase == PhaseBuilding {
 		currentlyBuildingWorkIDs = append(currentlyBuildingWorkIDs, workID)
 	}
+
+	if err := ctx.appendToProgressFile(workID, phase, details...); err != nil {
+		ctx.DisplayWarning("could not append progress info to file", err)
+	}
+}
+
+// ProgressInfoEvent represents an event that is appended to the progress JSONLines file.
+type ProgressInfoEvent struct {
+	// WorksDone is the number of works that have been built
+	WorksDone int `json:"works_done"`
+	// WorksTotal is the total number of works that will be built
+	WorksTotal int        `json:"works_total"`
+	WorkID     string     `json:"work_id"`
+	Phase      BuildPhase `json:"phase"`
+	Details    []string   `json:"details"`
+}
+
+func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, details ...string) error {
+	if ctx.ProgressInfoFile == "" {
+		return nil
+	}
+	event := ProgressInfoEvent{
+		WorksDone:  progressbar.Current(),
+		WorksTotal: progressbar.Total,
+		WorkID:     workID,
+		Phase:      phase,
+		Details:    details,
+	}
+	// append JSON marshalled event to file
+	file, err := os.OpenFile(ctx.ProgressInfoFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("while opening progress info file at %s: %w", ctx.ProgressInfoFile, err)
+	}
+
+	marshaled, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("while converting event to JSON (event is %#v): %w", event, err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("%s\n", marshaled))
+	if err != nil {
+		return fmt.Errorf("while appending progress info event to %s: %w", ctx.ProgressInfoFile, err)
+	}
+
+	return nil
 }

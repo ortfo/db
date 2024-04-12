@@ -155,18 +155,20 @@ type RunContext struct {
 	PreviousBuiltDatabase Database
 	Flags                 Flags
 	BuildMetadata         BuildMetadata
+	ProgressInfoFile      string
 
 	TagsRepository         []Tag
 	TechnologiesRepository []Technology
 }
 
 type Flags struct {
-	Scattered    bool
-	Silent       bool
-	Minified     bool
-	Config       string
-	NoCache      bool
-	WorkersCount int
+	Scattered        bool
+	Silent           bool
+	Minified         bool
+	Config           string
+	NoCache          bool
+	WorkersCount     int
+	ProgressInfoFile string
 }
 
 // Project represents a project.
@@ -209,6 +211,14 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		Flags:              flags,
 		DatabaseDirectory:  databaseDirectory,
 		OutputDatabaseFile: outputFilename,
+		ProgressInfoFile:   flags.ProgressInfoFile,
+	}
+
+	if ctx.ProgressInfoFile != "" {
+		ctx.LogDebug("Removing progress info file %s", ctx.ProgressInfoFile)
+		if err := os.Remove(ctx.ProgressInfoFile); err != nil {
+			ctx.LogDebug("Could not remove progress info file %s: %s", ctx.ProgressInfoFile, err.Error())
+		}
 	}
 
 	ctx.LogDebug("Running with configuration %#v", &config)
