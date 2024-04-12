@@ -1,6 +1,6 @@
 // To parse this data:
 //
-//   import { Convert, Database } from "./file";
+//   import { Convert } from "./file";
 //
 //   const database = Convert.toDatabase(json);
 //
@@ -8,24 +8,99 @@
 // match the expected interface, even if the JSON is valid.
 
 export interface Database {
-    "#meta"?: Meta;
-    [property: string]: any;
+    builtAt:         string;
+    content:         { [key: string]: ContentValue };
+    descriptionHash: string;
+    id:              string;
+    metadata:        Metadata;
+    Partial:         boolean;
 }
 
-export interface Meta {
-    Partial?: boolean;
-    [property: string]: any;
+export interface ContentValue {
+    blocks:    BlockElement[];
+    footnotes: { [key: string]: string };
+    layout:    Array<string[]>;
+    title:     string;
+}
+
+export interface BlockElement {
+    alt:               string;
+    analyzed:          boolean;
+    anchor:            string;
+    attributes:        Attributes;
+    caption:           string;
+    colors:            Colors;
+    content:           string;
+    contentType:       string;
+    dimensions:        Dimensions;
+    distSource:        string;
+    duration:          number;
+    hasSound:          boolean;
+    id:                string;
+    index:             number;
+    online:            boolean;
+    relativeSource:    string;
+    size:              number;
+    text:              string;
+    thumbnails:        Thumbnails;
+    thumbnailsBuiltAt: string;
+    title:             string;
+    type:              string;
+    url:               string;
+}
+
+export interface Attributes {
+    autoplay:    boolean;
+    controls:    boolean;
+    loop:        boolean;
+    muted:       boolean;
+    playsinline: boolean;
+}
+
+export interface Colors {
+    primary:   string;
+    secondary: string;
+    tertiary:  string;
+}
+
+export interface Dimensions {
+    aspectRatio: number;
+    height:      number;
+    width:       number;
+}
+
+export interface Thumbnails {
+}
+
+export interface Metadata {
+    additionalMetadata: { [key: string]: any };
+    aliases:            string[];
+    colors:             Colors;
+    databaseMetadata:   DatabaseMetadataClass;
+    finished:           string;
+    madeWith:           string[];
+    pageBackground:     string;
+    private:            boolean;
+    started:            string;
+    tags:               string[];
+    thumbnail:          string;
+    titleStyle:         string;
+    wip:                boolean;
+}
+
+export interface DatabaseMetadataClass {
+    Partial: boolean;
 }
 
 // Converts JSON strings to/from your types
 // and asserts the results of JSON.parse at runtime
 export class Convert {
-    public static toDatabase(json: string): Database {
-        return cast(JSON.parse(json), r("Database"));
+    public static toDatabase(json: string): { [key: string]: Database } {
+        return cast(JSON.parse(json), m(r("Database")));
     }
 
-    public static databaseToJson(value: Database): string {
-        return JSON.stringify(uncast(value, r("Database")), null, 2);
+    public static databaseToJson(value: { [key: string]: Database }): string {
+        return JSON.stringify(uncast(value, m(r("Database"))), null, 2);
     }
 }
 
@@ -183,9 +258,79 @@ function r(name: string) {
 
 const typeMap: any = {
     "Database": o([
-        { json: "#meta", js: "#meta", typ: u(undefined, r("Meta")) },
-    ], "any"),
-    "Meta": o([
-        { json: "Partial", js: "Partial", typ: u(undefined, true) },
-    ], "any"),
+        { json: "builtAt", js: "builtAt", typ: "" },
+        { json: "content", js: "content", typ: m(r("ContentValue")) },
+        { json: "descriptionHash", js: "descriptionHash", typ: "" },
+        { json: "id", js: "id", typ: "" },
+        { json: "metadata", js: "metadata", typ: r("Metadata") },
+        { json: "Partial", js: "Partial", typ: true },
+    ], false),
+    "ContentValue": o([
+        { json: "blocks", js: "blocks", typ: a(r("BlockElement")) },
+        { json: "footnotes", js: "footnotes", typ: m("") },
+        { json: "layout", js: "layout", typ: a(a("")) },
+        { json: "title", js: "title", typ: "" },
+    ], false),
+    "BlockElement": o([
+        { json: "alt", js: "alt", typ: "" },
+        { json: "analyzed", js: "analyzed", typ: true },
+        { json: "anchor", js: "anchor", typ: "" },
+        { json: "attributes", js: "attributes", typ: r("Attributes") },
+        { json: "caption", js: "caption", typ: "" },
+        { json: "colors", js: "colors", typ: r("Colors") },
+        { json: "content", js: "content", typ: "" },
+        { json: "contentType", js: "contentType", typ: "" },
+        { json: "dimensions", js: "dimensions", typ: r("Dimensions") },
+        { json: "distSource", js: "distSource", typ: "" },
+        { json: "duration", js: "duration", typ: 3.14 },
+        { json: "hasSound", js: "hasSound", typ: true },
+        { json: "id", js: "id", typ: "" },
+        { json: "index", js: "index", typ: 0 },
+        { json: "online", js: "online", typ: true },
+        { json: "relativeSource", js: "relativeSource", typ: "" },
+        { json: "size", js: "size", typ: 0 },
+        { json: "text", js: "text", typ: "" },
+        { json: "thumbnails", js: "thumbnails", typ: r("Thumbnails") },
+        { json: "thumbnailsBuiltAt", js: "thumbnailsBuiltAt", typ: "" },
+        { json: "title", js: "title", typ: "" },
+        { json: "type", js: "type", typ: "" },
+        { json: "url", js: "url", typ: "" },
+    ], false),
+    "Attributes": o([
+        { json: "autoplay", js: "autoplay", typ: true },
+        { json: "controls", js: "controls", typ: true },
+        { json: "loop", js: "loop", typ: true },
+        { json: "muted", js: "muted", typ: true },
+        { json: "playsinline", js: "playsinline", typ: true },
+    ], false),
+    "Colors": o([
+        { json: "primary", js: "primary", typ: "" },
+        { json: "secondary", js: "secondary", typ: "" },
+        { json: "tertiary", js: "tertiary", typ: "" },
+    ], false),
+    "Dimensions": o([
+        { json: "aspectRatio", js: "aspectRatio", typ: 3.14 },
+        { json: "height", js: "height", typ: 0 },
+        { json: "width", js: "width", typ: 0 },
+    ], false),
+    "Thumbnails": o([
+    ], false),
+    "Metadata": o([
+        { json: "additionalMetadata", js: "additionalMetadata", typ: m("any") },
+        { json: "aliases", js: "aliases", typ: a("") },
+        { json: "colors", js: "colors", typ: r("Colors") },
+        { json: "databaseMetadata", js: "databaseMetadata", typ: r("DatabaseMetadataClass") },
+        { json: "finished", js: "finished", typ: "" },
+        { json: "madeWith", js: "madeWith", typ: a("") },
+        { json: "pageBackground", js: "pageBackground", typ: "" },
+        { json: "private", js: "private", typ: true },
+        { json: "started", js: "started", typ: "" },
+        { json: "tags", js: "tags", typ: a("") },
+        { json: "thumbnail", js: "thumbnail", typ: "" },
+        { json: "titleStyle", js: "titleStyle", typ: "" },
+        { json: "wip", js: "wip", typ: true },
+    ], false),
+    "DatabaseMetadataClass": o([
+        { json: "Partial", js: "Partial", typ: true },
+    ], false),
 };

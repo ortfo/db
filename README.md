@@ -21,7 +21,7 @@ See [Compiling](#compiling) for instructions on how to compile this yourself
 ## Usage
 
 ```docopt
-ortfo/db v0.3.1
+ortfo/db v0.3.2
 
 Usage:
   ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]

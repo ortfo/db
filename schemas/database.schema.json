@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.3.1/schemas/database.schema.json",
-  "$ref": "#/$defs/DatabaseWithMetaWork",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v0.3.2/schemas/database.schema.json",
+  "$ref": "#/$defs/Database",
   "$defs": {
     "AnalyzedWork": {
       "properties": {
@@ -161,18 +161,17 @@
       },
       "type": "object"
     },
-    "DatabaseWithMetaWork": {
+    "DatabaseMeta": {
       "properties": {
-        "#meta": {
-          "$ref": "#/$defs/MetaWork"
+        "Partial": {
+          "type": "boolean"
         }
       },
-      "patternProperties": {
-        "^(?!#meta).*$": {
-          "$ref": "#/$defs/AnalyzedWork"
-        }
-      },
-      "type": "object"
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "Partial"
+      ]
     },
     "Footnotes": {
       "additionalProperties": {
@@ -270,14 +269,6 @@
         "controls"
       ]
     },
-    "MetaWork": {
-      "properties": {
-        "Partial": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "ThumbnailsMap": {
       "patternProperties": {
         "^[0-9]+$": {
@@ -333,6 +324,9 @@
         },
         "additionalMetadata": {
           "type": "object"
+        },
+        "databaseMetadata": {
+          "$ref": "#/$defs/DatabaseMeta"
         }
       },
       "additionalProperties": false,
@@ -349,7 +343,8 @@
         "pageBackground",
         "wip",
         "private",
-        "additionalMetadata"
+        "additionalMetadata",
+        "databaseMetadata"
       ]
     }
   }
