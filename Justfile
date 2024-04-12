@@ -18,8 +18,8 @@ prepare-release $VERSION:
 	./tools/build_readme.py
 	just build-packages $VERSION
 
-release name="":
-	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName="{{name}}"
+release name='${version}':
+	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName={{quote(name)}}
 	cd packages/python; poetry publish
 	cd packages/typescript; npm publish
 	cd packages/rust; cargo publish
