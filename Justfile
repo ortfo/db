@@ -6,6 +6,7 @@ build:
 	mv ortfodb ../../
 
 install:
+	just build
 	cp ortfodb ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
