@@ -198,7 +198,7 @@ func AcquireBuildLock(outputFilename string) error {
 func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
 	err := os.Remove(BuildLockFilepath(outputFilename))
 	if err != nil {
-		ctx.LogError("could not release build lockfile %s: %s", BuildLockFilepath(outputFilename), err)
+		ctx.DisplayError("could not release build lockfile %s", err, BuildLockFilepath(outputFilename))
 	}
 	return err
 }
@@ -216,13 +216,13 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			ctx.LogError("No previously built database file %s to use: %s", outputFilename, err.Error())
+			ctx.DisplayError("No previously built database file %s to use", err, outputFilename)
 		}
 		ctx.PreviousBuiltDatabase = Database{}
 	} else {
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
-			ctx.LogError("Couldn't use previous built database file %s: %s", outputFilename, err.Error())
+			ctx.DisplayError("Couldn't use previous built database file %s", err, outputFilename)
 			ctx.PreviousBuiltDatabase = Database{}
 		}
 	}
@@ -350,7 +350,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 						// Build it
 						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
 						if err != nil {
-							ctx.LogError("while building %s: %s", workID, err.Error())
+							ctx.DisplayError("while building %s", err, workID)
 							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
 							continue
 						}
@@ -409,7 +409,7 @@ func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename
 	worksWithMetadata := make(map[string]interface{})
 	err := mapstructure.Decode(works, &worksWithMetadata)
 	if err != nil {
-		ctx.LogError("while converting works to map: %s", err.Error())
+		ctx.DisplayError("while converting works to map", err)
 		return
 	}
 	worksWithMetadata["#meta"] = struct{ Partial bool }{Partial: partial}

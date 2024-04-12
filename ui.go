@@ -57,6 +57,14 @@ func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
 	LogCustom("Error", "red", message, fmtArgs...)
 }
 
+func (ctx *RunContext) DisplayError(msg string, err error, fmtArgs ...interface{}) {
+	ctx.LogError(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
+}
+
+func (ctx *RunContext) DisplayWarning(msg string, err error, fmtArgs ...interface{}) {
+	ctx.LogWarning(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
+}
+
 // LogInfo logs infos.
 func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
 	LogCustom("Info", "blue", message, fmtArgs...)

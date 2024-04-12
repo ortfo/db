@@ -118,7 +118,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	detectedStartDate, err := DetectStartDate(ctx.PathToWorkFolder(workId))
 	defaultStartedAt := ""
 	if err != nil {
-		ctx.LogWarning(formatErrors(fmt.Errorf("while detecting start date of %s: %w", workId, err)))
+		ctx.DisplayWarning("while detecting start date of %s", err, workId)
 	} else {
 		defaultStartedAt = detectedStartDate.Format("2006-01-02")
 		LogCustom("Detected", "cyan", "start date to be [bold][blue]%s[reset]", defaultStartedAt)
@@ -151,7 +151,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	autodetectedTags, err := ctx.DetectTags(workId, autodetectedTechs)
 	if err != nil {
-		ctx.LogWarning("while autodetecting tags for %s: %s", workId, err)
+		ctx.DisplayWarning("while autodetecting tags for %s", err, workId)
 	} else {
 		for _, tag := range autodetectedTags {
 			metadata.Tags = append(metadata.Tags, tag.String())

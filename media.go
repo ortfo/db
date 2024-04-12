@@ -206,7 +206,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if ctx.Config.ExtractColors.Enabled && canExtractColors(contentType) {
 			colors, err = ExtractColors(filename)
 			if err != nil {
-				ctx.LogError("Could not extract colors from %s: %s", filename, err)
+				ctx.DisplayError("Could not extract colors from %s", err, filename)
 				err = nil
 			}
 		}
