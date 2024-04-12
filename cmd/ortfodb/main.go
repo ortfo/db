@@ -129,23 +129,16 @@ Scattered mode:
 
 Build Progress:
   For integration purposes, the current build progress can be written to a file.
-  The progress information is written as JSON, and has the following structure:
+  The progress information is written as a JSON Lines file.
 
-	total: the total number of works to process.
-	processed: the number of works processed so far.
-	percent: The current overall progress percentage of the build. Equal to processed/total * 100.
-	current: {
-		id: The id of the work being built.
-		step: The current step. One of: "thumbnail", "color extraction", "description", "media analysis"
-		resolution: The resolution of the thumbnail being generated. 0 when step is not "thumbnails"
-		file: The file being processed (
-			original media when making thumbnails or during media analysis,
-			media the colors are being extracted from, or
-			the description.md file when parsing description
-		)
-		language: Unused. Only here for consistency with ortfo/mk's --write-progress
-		output: Unused. Only here for consistency with ortfo/mk's --write-progress
-	}
+  Each line of this file is a JSON object that contains the following properties:
+
+  - works_done: the number of works built
+  - works_total: the total number of works to build
+  - phase: one of "Thumbnailing", "Analyzing", "Building", "Built", "Reusing"
+  - details: free-form additional information as an array of strings
+
+  See ProgressInfoEvent in the documentation.
 `, ortfodb.Version)
 
 func main() {
@@ -356,7 +349,7 @@ func handleControlC(args docopt.Opts, context *ortfodb.RunContext) {
 			if _, err := os.Stat(buildLockFilepath); err == nil && argError == nil {
 				os.Remove(buildLockFilepath)
 			}
-	
+
 			context.StopProgressBar()
 			os.Exit(1)
 		}

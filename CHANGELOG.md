@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - add command: detect summary and title from README.md, and finish date from git history
+- updated --help information for --write-progress' file format
 
 ## [0.2.0] - 2024-04-12
 
