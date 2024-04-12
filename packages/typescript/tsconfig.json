@@ -1,0 +1,7 @@
+{
+	"compilerOptions": {
+		"baseUrl": "src",
+		"moduleResolution": "node16",
+		"module": "NodeNext"
+	}
+}

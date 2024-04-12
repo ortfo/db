@@ -1,0 +1,31 @@
+{
+  "name": "@ortfo/db",
+  "version": "0.3.0-1",
+  "description": "ortfodb client library",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --declaration --outDir dist"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ortfo/db.git"
+  },
+  "keywords": [
+    "ortfodb"
+  ],
+  "author": "Ewen Le Bihan <hey@ewen.works>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ortfo/db/issues"
+  },
+  "homepage": "https://github.com/ortfo/db#readme",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

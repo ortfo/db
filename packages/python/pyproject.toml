@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "ortfodb"
+version = "0.3.0"
+description = "ortfodb client library"
+authors = ["Ewen Le Bihan <hey@ewen.works>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
