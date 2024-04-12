@@ -6,11 +6,8 @@ import (
 	"os"
 	"strings"
 
-	// "time"
-
-	// "github.com/mattn/go-isatty"
+	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/colorstring"
-	// "github.com/theckman/yacspin"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -53,7 +50,6 @@ func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string)
 
 // LogError logs non-fatal errors.
 func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
-	// colorstring.Fprintf(logWriter(), "[red]          Error[reset] %s\n", fmt.Sprintf(message, fmtArgs...))
 	LogCustom("Error", "red", message, fmtArgs...)
 }
 
@@ -106,4 +102,8 @@ func formatErrors(err error) string {
 		}
 	}
 	return output
+}
+
+func isInteractiveTerminal() bool {
+	return isatty.IsTerminal(os.Stdout.Fd()) && isatty.IsTerminal(os.Stderr.Fd())
 }

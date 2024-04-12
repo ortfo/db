@@ -15,6 +15,7 @@ require (
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/invopop/jsonschema v0.12.0
 	github.com/json-iterator/go v1.1.12
+	github.com/mattn/go-isatty v0.0.20
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
@@ -43,7 +44,6 @@ require (
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect

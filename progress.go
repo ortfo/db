@@ -30,9 +30,16 @@ func padPhaseVerb(phase BuildPhase) string {
 	return fmt.Sprintf("%15s", phase)
 }
 
-func StartProgressBar(total int) {
+func (ctx *RunContext) StartProgressBar(total int) {
 	if progressbar != nil {
 		panic("progress bar already started")
+	}
+
+	if isInteractiveTerminal() {
+		ctx.LogDebug("terminal is interactive, starting progress bar")
+	} else {
+		ctx.LogDebug("not starting progress bar because not in an interactive terminal")
+		return
 	}
 
 	progressBars = uiprogress.New()
@@ -66,6 +73,10 @@ func StartProgressBar(total int) {
 }
 
 func (ctx *RunContext) IncrementProgress() {
+	if progressbar == nil {
+		return
+	}
+
 	progressbar.Incr()
 	if progressbar.CompletedPercent() >= 100 {
 		ctx.StopProgressBar()
@@ -99,7 +110,17 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	if len(details) > 0 {
 		formattedDetails = fmt.Sprintf(" [dim]%s[reset]", strings.Join(details, " "))
 	}
-	fmt.Fprintln(progressBars.Bypass(), colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID)))
+	formattedMessage := colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID))
+
+	if progressBars != nil {
+		fmt.Fprintln(progressBars.Bypass(), formattedMessage)
+	} else {
+		if isInteractiveTerminal() {
+			fmt.Println(formattedMessage)
+		} else {
+			fmt.Printf(" %s %s %s\n", padPhaseVerb(phase), workID, strings.Join(details, " "))
+		}
+	}
 
 	if phase == PhaseBuilt || phase == PhaseUnchanged {
 		for i, id := range currentlyBuildingWorkIDs {

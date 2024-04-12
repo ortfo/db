@@ -312,7 +312,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 		flags.WorkersCount = runtime.NumCPU()
 	}
 
-	StartProgressBar(len(workDirectories))
+	ctx.StartProgressBar(len(workDirectories))
 
 	// Build works in parallel
 	// worker count divided by two because each worker has two workers for thumbnail generation
