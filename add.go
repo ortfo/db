@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anaskhan96/soup"
 	"github.com/charmbracelet/huh"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -16,9 +17,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func FirstGitCommitDate(workingDirectory string) (time.Time, error) {
+func gitCommitDate(workingDirectory string, gitFlags ...string) (time.Time, error) {
 	// Shell out to git
-	gitLog := exec.Command("git", "log", "--reverse", "--format=%aI")
+	gitLog := exec.Command("git", "log", "--format=%aI")
+	gitLog.Args = append(gitLog.Args, gitFlags...)
 	gitLog.Dir = workingDirectory
 	out, err := gitLog.Output()
 	if err != nil {
@@ -36,6 +38,14 @@ func FirstGitCommitDate(workingDirectory string) (time.Time, error) {
 		return time.Now(), fmt.Errorf("while getting creation date from git commits in %s: git returned no output", workingDirectory)
 	}
 	return time.Parse(time.RFC3339, lines[0])
+}
+
+func FirstGitCommitDate(workingDirectory string) (time.Time, error) {
+	return gitCommitDate(workingDirectory, "--reverse")
+}
+
+func LastGitCommitDate(workingDirectory string) (time.Time, error) {
+	return gitCommitDate(workingDirectory)
 }
 
 // titleCase replaces underscores and dashes with spaces and capitalizes the first letter of each word.
@@ -77,9 +87,28 @@ func decodeMetadataItem(item string, metadata *WorkMetadata) error {
 	return nil
 }
 
+// fromReadme extracts the title from the readme and returns the entire readme content
+func fromReadme(readmePath string) (title string, firstParagraph string, err error) {
+	readme, err := os.ReadFile(readmePath)
+	if err != nil {
+		err = fmt.Errorf("while reading %s: %w", readmePath, err)
+		return
+	}
+
+	readmeTree := soup.HTMLParse(MarkdownToHTML(string(readme)))
+	title = readmeTree.Find("h1").FullText()
+	firstParagraph = HTMLString(readmeTree.Find("p").HTML()).Markdown()
+	return
+}
+
 func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []string, forceOverwrite bool) (string, error) {
 	output := ""
 	outputPath := filepath.Join(ctx.PathToWorkFolder(workId), ctx.Config.ScatteredModeFolder, "description.md")
+
+	if _, err := os.Stat(ctx.PathToWorkFolder(workId)); os.IsNotExist(err) {
+		ctx.LogError("folder for given work %s does not exist.", workId)
+		return outputPath, nil
+	}
 
 	if _, err := os.Stat(outputPath); err == nil && !forceOverwrite {
 		confirmOverwrite := false
@@ -114,6 +143,20 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	}
 
 	defaultProjectTitle := titleCase(workId)
+	defaultSummary := ""
+
+	readmePath := filepath.Join(ctx.PathToWorkFolder(workId), "README.md")
+	if fileExists(readmePath) {
+		readmeTitle, readmeBody, err := fromReadme(readmePath)
+		if err != nil {
+			ctx.DisplayWarning("couldn't extract info from README.md", err)
+		}
+
+		if readmeTitle != "" {
+			defaultProjectTitle = readmeTitle
+		}
+		defaultSummary = readmeBody
+	}
 
 	detectedStartDate, err := DetectStartDate(ctx.PathToWorkFolder(workId))
 	defaultStartedAt := ""
@@ -162,11 +205,15 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	}
 
 	var projectTitle string
+	var summary string
 
-	form := huh.NewForm(
+	err = huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Description("Title of the work").Placeholder(defaultProjectTitle).Value(&projectTitle),
+			huh.NewInput().Title("Title").Placeholder(defaultProjectTitle).Value(&projectTitle),
 
+			huh.NewText().Title("Summary").Description("A short description of the work").Placeholder(defaultSummary).Value(&summary),
+		),
+		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Technologies").
 				Description("What was the work made with?").
@@ -186,26 +233,33 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 				Value(&metadata.Tags).
 				Options(allTagsOptions...).
 				Height(2+6),
-
+		),
+		huh.NewGroup(
 			huh.NewInput().Description("When did you start working on this?").Placeholder(startedAtPlaceholder).Value(&metadata.Started),
 
 			huh.NewConfirm().Title("Work in progress").Description("What's the status?").Value(&metadata.WIP).Affirmative("WIP").Negative("Finished"),
 		),
-	)
+	).Run()
 
-	err = form.Run()
 	if err != nil {
 		return outputPath, fmt.Errorf("while getting your answers: %w", err)
 	}
 
 	if !metadata.WIP {
 		defaultFinishedAt := time.Now().Format("2006-01-02")
+		if finishedAtFromGit, err := LastGitCommitDate(ctx.PathToWorkFolder(workId)); err == nil {
+			defaultFinishedAt = finishedAtFromGit.Format("2006-01-02")
+			LogCustom("Detected", "cyan", "finish date to be [bold][blue]%s[reset]", defaultFinishedAt)
+		}
 
-		huh.NewForm(
+		err = huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().Description("When did you finish working on this?").Placeholder(defaultFinishedAt).Value(&metadata.Finished),
 			),
-		)
+		).Run()
+		if err != nil {
+			return outputPath, fmt.Errorf("while getting your answer: %w", err)
+		}
 
 		if metadata.Finished == "" {
 			metadata.Finished = defaultFinishedAt
@@ -238,11 +292,8 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	output += "---\n\n"
 
 	output += "# " + projectTitle + "\n\n"
+	output += summary + "\n\n"
 
-	if _, err := os.Stat(ctx.PathToWorkFolder(workId)); os.IsNotExist(err) {
-		ctx.LogError("folder for given work %s does not exist.", workId)
-		return outputPath, nil
-	}
 	os.MkdirAll(filepath.Dir(outputPath), 0o755)
 	os.WriteFile(outputPath, []byte(output), 0o644)
 	LogCustom("Created", "green", "description.md file at [bold]%s[reset]", outputPath)

@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Changed
 
--
+- add command: detect summary and title from README.md, and finish date from git history
 
 ## [0.2.0] - 2024-04-12
 
@@ -20,4 +20,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [Unreleased]: https://github.com/ortfo/db/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
-[//]: # "C3-2-DKAC:GGH:Rortfo/db:Tv{t}"
+[//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
