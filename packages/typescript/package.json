@@ -1,6 +1,6 @@
 {
   "name": "@ortfo/db",
-  "version": "0.3.0-1",
+  "version": "0.3.1",
   "description": "ortfodb client library",
   "scripts": {
     "build": "tsc -p tsconfig.json --declaration --outDir dist"
