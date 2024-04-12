@@ -16,20 +16,18 @@ prepare-release $VERSION:
 	just build
 	./tools/generate_schemas.py
 	./tools/build_readme.py
-	just publish-packages $VERSION
+	just build-packages $VERSION
 
 release name="":
 	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName="{{name}}"
-
-publish-packages version:
-	just build-typescript {{version}}
-	cd packages/typescript; npm publish
-
-	just build-python {{version}}
 	cd packages/python; poetry publish
-
-	just build-rust {{version}}
+	cd packages/typescript; npm publish
 	cd packages/rust; cargo publish
+
+build-packages version:
+	just build-typescript {{version}}
+	just build-python {{version}}
+	just build-rust {{version}}
 
 build-typescript version:
 	#!/usr/bin/env bash
