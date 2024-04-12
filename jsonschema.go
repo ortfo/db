@@ -55,8 +55,10 @@ func DatabaseJSONSchema() string {
 	schema.Definitions["DatabaseWithMetaWork"] = &jsonschema.Schema{
 		Type:       "object",
 		Properties: dbWithWorkProperties,
-		AdditionalProperties: &jsonschema.Schema{
-			Ref: "#/$defs/AnalyzedWork",
+		PatternProperties: map[string]*jsonschema.Schema{
+			"^(?!#meta).*$": {
+				Ref: "#/$defs/AnalyzedWork",
+			},
 		},
 	}
 	schema.Ref = "#/$defs/DatabaseWithMetaWork"
