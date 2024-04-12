@@ -21,44 +21,59 @@ See [Compiling](#compiling) for instructions on how to compile this yourself
 ## Usage
 
 ```docopt
+ortfo/db v0.3.0
+
 Usage:
-  portfoliodb [options] <database> build <to-filepath> [--config=FILEPATH] [-msS] [--]
-  portfoliodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  portfoliodb [options] <database> add <fullname> [<metadata-item>...]
-  portfoliodb [options] <database> validate <database>
+  ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] <inside> blog to <to-filepath>
+  ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
+  ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
+  ortfodb [options] <database> add [--overwrite] <id> [<metadata-item>...]
+  ortfodb [options] <database> validate
+  ortfodb [options] schemas (configuration|database|tags|technologies)
 
 Options:
-  -C --config=<filepath>      Use the configuration path at <filepath>. [default: ortfodb.yaml]
+  -C --config=<filepath>      Use the configuration path at <filepath>. Defaults to ortfodb.yaml.
+							  If not provided, and if ortfodb.yaml does not exist, a default configuration
+							  will be written to ortfodb.yaml and used.
   -m --minified               Output a minifed JSON file
   -s --silent                 Do not write to stdout
   -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
+  --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
+  --workers=<count>  	      Use <count> workers to build the database. Defaults to the number of CPU cores.
+  --overwrite                 (add command): Overwrite the description.md file if it already exists.
 
 Examples:
-  portfoliodb database build database.json
-  portfoliodb database add schoolsyst/presentation -#web -#site --color 268CCE
-  portfoliodb replicate database.json replicated-database --config=ortfodb.yaml
+  ortfodb database build database.json
+  ortfodb database add schoolsyst/presentation -#web -#site --color 268CCE
+  ortfodb replicate database.json replicated-database --config=ortfodb.yaml
 
 Commands:
-  build <from-directory> <to-filepath>
-    Scan in <from-directory> for folders with description.md files
+  build <to-filepath>
+	Scan in <database> for folders with description.md files
     (and potential media files)
     and compile the whole database into a JSON file at <to-filepath>
+	If <to-filepath> is "-", the output will be written to stdout.
+
+  build <include-works> <to-filepath>
+	Like build <to-filepath>, but only re-build works that match the glob pattern <include-works>.
 
   replicate <from-filepath> <to-directory>
     The reverse operation of 'build'.
     Note that <to-directory> must be an empty directory
 
-  add <name> [<metadata-item>...]
+  add <id> [<metadata-item>...]
     Creates a new description.md in the appropriate folder.
-    <name> is the work's name.
-    You can provide additional metadata items in the form --ITEM_NAME=VALUE,
-    eg. 'add phelng --tag=cli --tag=program' will generate ./phelng/description.md,
+    <id> is the work's slug.
+    You can provide additional metadata items in the form ITEM_NAME:VALUE,
+    eg. 'add phelng tag:program tag:cli' will generate ./phelng/description.md,
     with the following contents:
     ---
-    collection: null
+    tags: [program, cli]
+	made with: []
+	created: ????-??-??
     ---
     # phelng
-    program, cli
 
   validate <database>
     Make sure that everything is OK in the database:
@@ -75,38 +90,58 @@ Commands:
         f. [working media files] check all local paths for links (audio/video files, image files, other files)
         g. [working urls] check that no http url gives errors
 
+  schemas (configuration|database|tags|technologies)
+    Output the JSON schema for:
+	- configuration: the configuration file (.ortfodb.yaml)
+	- database: the output database file
+	- tags: the tags repository file (tags.yaml)
+	- technologies: the technologies repository file (technologies.yaml)
+
 Scattered mode:
   With this mode activated, when building, portfoliodb will go through each folder (non-recursively) of <from-directory>, and, if it finds a .ortfo file in the folder, consider the files in that .ortfo folder.
+  (The actual name of .ortfo is configurable, set "scattered mode folder" in ortfodb.yaml to change it)
 
   Consider the following directory tree:
 
   <from-directory>
     project1
-	  index.html
-	  src
-	  dist
-	  .ortfo
-	    file1.png
-		description.md
-	project2
-	  .ortfo
-	    file-2.png
-		description.md
-	otherfolder
-	  stuff
+      index.html
+      src
+      dist
+      .ortfo
+        file.png
+        description.md
+    project2
+      .ortfo
+        file-2.png
+      description.md
+    otherfolder
+      stuff
 
   Running portfoliodb build --scattered on this tree is equivalent to builing without --scattered on the following tree:
 
   <from-directory>
     project1
-	  file.png
-	  description.md
-	project2
-	  file-2.png
-	  description.md
+      file.png
+      description.md
+    project2
+      file-2.png
+      description.md
 
   Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
-`
+
+Build Progress:
+  For integration purposes, the current build progress can be written to a file.
+  The progress information is written as a JSON Lines file.
+
+  Each line of this file is a JSON object that contains the following properties:
+
+  - works_done: the number of works built
+  - works_total: the total number of works to build
+  - phase: one of "Thumbnailing", "Analyzing", "Building", "Built", "Reusing"
+  - details: free-form additional information as an array of strings
+
+  See ProgressInfoEvent in the documentation.
 ```
 
 ## How it works
