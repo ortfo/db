@@ -16,5 +16,5 @@ prepare-release $VERSION:
 	./tools/generate_schemas.py
 	./tools/build_readme.py
 
-release:
-	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it
+release name="":
+	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName="{{name}}"
