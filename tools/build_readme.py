@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+import subprocess
 
-with open("main.go", encoding="utf-8") as file:
-	# FIXME
-    usage = "\n".join(file.read().split("\n")[13:-1])
-
+usage = (
+    subprocess.run(["./ortfodb", "--help"], capture_output=True)
+    .stdout.decode("utf-8")
+    .strip()
+)
 
 with open("tools/_README.md", mode="r", encoding="utf-8") as file:
     readme = file.read()
