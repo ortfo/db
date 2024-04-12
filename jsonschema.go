@@ -19,8 +19,12 @@ func setSchemaId(schema *jsonschema.Schema) {
 	schema.ID = jsonschema.ID(fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/v%s/schemas/%s.schema.json", Version, base))
 }
 
-func makeJSONSchema(t any) string {
-	schema := yamlReflector.Reflect(t)
+func makeJSONSchema(t any, yaml bool) string {
+	selectedReflector := jsonschema.Reflector{}
+	if yaml {
+		selectedReflector = yamlReflector
+	}
+	schema := selectedReflector.Reflect(t)
 	setSchemaId(schema)
 	out, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
@@ -30,54 +34,21 @@ func makeJSONSchema(t any) string {
 }
 
 func ConfigurationJSONSchema() string {
-	return makeJSONSchema(&Configuration{})
+	return makeJSONSchema(&Configuration{}, true)
 }
 
 func DatabaseJSONSchema() string {
-	schema := jsonschema.Reflect(&Database{})
-	setSchemaId(schema)
-
-	metaWorkProperties := jsonschema.NewProperties()
-	metaWorkProperties.Set("Partial", &jsonschema.Schema{
-		Type: "boolean",
-	})
-
-	schema.Definitions["MetaWork"] = &jsonschema.Schema{
-		Type:       "object",
-		Properties: metaWorkProperties,
-	}
-
-	dbWithWorkProperties := jsonschema.NewProperties()
-	dbWithWorkProperties.Set("#meta", &jsonschema.Schema{
-		Ref: "#/$defs/MetaWork",
-	})
-
-	schema.Definitions["DatabaseWithMetaWork"] = &jsonschema.Schema{
-		Type:       "object",
-		Properties: dbWithWorkProperties,
-		PatternProperties: map[string]*jsonschema.Schema{
-			"^(?!#meta).*$": {
-				Ref: "#/$defs/AnalyzedWork",
-			},
-		},
-	}
-	schema.Ref = "#/$defs/DatabaseWithMetaWork"
-
-	out, err := json.MarshalIndent(schema, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	return string(out)
+	return makeJSONSchema(&Database{}, false)
 }
 
 type tags []Tag
 
 func TagsRepositoryJSONSchema() string {
-	return makeJSONSchema(&tags{})
+	return makeJSONSchema(&tags{}, true)
 }
 
 type technologies []Technology
 
 func TechnologiesRepositoryJSONSchema() string {
-	return makeJSONSchema(&technologies{})
+	return makeJSONSchema(&technologies{}, true)
 }

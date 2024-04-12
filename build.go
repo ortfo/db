@@ -21,12 +21,12 @@ import (
 	"path"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/mitchellh/mapstructure"
 )
 
 type Database map[string]AnalyzedWork
 
 type DatabaseMeta struct {
+	// Partial is true if the database was not fully built.
 	Partial bool
 }
 
@@ -38,25 +38,15 @@ func (w Database) AsSlice() []AnalyzedWork {
 	return works
 }
 
-// Works gets the mapping of all works (without the #meta "pseudo-work").
+// Works gets the mapping of all works
 func (w Database) Works() map[string]AnalyzedWork {
-	works := make(map[string]AnalyzedWork)
-	for id, work := range w {
-		if id == "#meta" {
-			continue
-		}
-		works[id] = work
-	}
-	return works
+	return w
 }
 
-// WorksSlice gets the slice of all works in the database (without the #meta "pseudo-work")
+// WorksSlice gets the slice of all works in the database
 func (w Database) WorksSlice() []AnalyzedWork {
 	works := make([]AnalyzedWork, 0)
-	for id, work := range w {
-		if id == "#meta" {
-			continue
-		}
+	for _, work := range w {
 		works = append(works, work)
 	}
 	return works
@@ -108,12 +98,10 @@ func (w Database) GroupWorksByYear() [][]AnalyzedWork {
 
 // Meta gets the database meta information
 func (w Database) Meta() DatabaseMeta {
-	for id, metaWork := range w {
-		if id == "#meta" {
-			return DatabaseMeta{Partial: metaWork.Partial}
-		}
+	for _, work := range w {
+		return work.Metadata.DatabaseMetadata
 	}
-	panic("no meta work found, database has no meta information (no #meta top-level key found)")
+	panic("no work in database, cannot get meta information")
 }
 
 // Partial returns true if the database results from a partial build.
@@ -416,20 +404,19 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename string, partial bool) {
 	ctx.LogDebug("Writing database (partial=%v) to %s", partial, outputFilename)
-	worksWithMetadata := make(map[string]interface{})
-	err := mapstructure.Decode(works, &worksWithMetadata)
-	if err != nil {
-		ctx.DisplayError("while converting works to map", err)
-		return
+	worksWithDatabaseMetadata := make(Database, 0)
+	for id, work := range works {
+		work.Metadata.DatabaseMetadata = DatabaseMeta{Partial: partial}
+		worksWithDatabaseMetadata[id] = work
 	}
-	worksWithMetadata["#meta"] = struct{ Partial bool }{Partial: partial}
+
 	// Compile the database
 	var worksJSON []byte
 	json := jsoniter.ConfigFastest
 	if ctx.Flags.Minified {
-		worksJSON, _ = json.Marshal(worksWithMetadata)
+		worksJSON, _ = json.Marshal(worksWithDatabaseMetadata)
 	} else {
-		worksJSON, _ = json.MarshalIndent(worksWithMetadata, "", "    ")
+		worksJSON, _ = json.MarshalIndent(worksWithDatabaseMetadata, "", "    ")
 	}
 
 	// Output it

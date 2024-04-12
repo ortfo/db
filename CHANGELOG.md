@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- replace meta-work in database with a databaseMetadata field on all works' metadata. client libraries should be able to generate properly from the resulting, simpler JSON schema.
+
 ## [0.3.1] - 2024-04-13
 
 ### Fixed
@@ -26,11 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/ortfo/db/compare/v0.3.0...HEAD
-[0.3.1]: https://github.com/ortfo/db/-/releases/tag/v0.3.1
+[Unreleased]: https://github.com/ortfo/db/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ortfo/db/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ortfo/db/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
 [//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
-
-[unreleased]: https://github.com/ortfo/db/-/compare/v0.3.1...main
