@@ -33,7 +33,7 @@ type MakeThumbnailsConfiguration struct {
 
 type BuildSteps struct {
 	ExtractColors  ExtractColorsConfiguration  `yaml:"extract colors"`
-	MakeGifs       MakeGIFsConfiguration       `yaml:"make GIFs"`
+	MakeGifs       MakeGIFsConfiguration       `yaml:"make gifs"`
 	MakeThumbnails MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 }
 
@@ -44,7 +44,7 @@ type BuildMetadata struct {
 // Configuration represents what the ortfodb.yaml configuration file describes.
 type Configuration struct {
 	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors"`
-	MakeGifs              MakeGIFsConfiguration       `yaml:"make GIFs"`
+	MakeGifs              MakeGIFsConfiguration       `yaml:"make gifs"`
 	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 	BuildMetadataFilepath string                      `yaml:"build metadata file"`
 	Media                 struct{ At string }         `yaml:"media"`
