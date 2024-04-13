@@ -9,58 +9,14 @@ import (
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/anaskhan96/soup"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/docopt/docopt-go"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
-// RunCommandReplicate runs the command 'replicate' given parsed CLI args from docopt.
-func RunCommandReplicate(args docopt.Opts) error {
-	// TODO: validate database.json
-	var parsedDatabase []AnalyzedWork
-	json := jsoniter.ConfigFastest
-	databaseFilepath, err := args.String("<from-filepath>")
-	if err != nil {
-		return err
-	}
-	targetDatabasePath, err := args.String("<to-directory>")
-	if err != nil {
-		return err
-	}
-	content, err := readFileBytes(databaseFilepath)
-	if err != nil {
-		return err
-	}
-	validated, validationErrors, err := validateWithJSONSchema(string(content), DatabaseJSONSchema())
-	if err != nil {
-		return err
-	}
-	if !validated {
-		DisplayValidationErrors(validationErrors, "database JSON")
-		return nil
-	}
-	err = json.Unmarshal(content, &parsedDatabase)
-	if err != nil {
-		return err
-	}
-	ctx := RunContext{
-		Config: &Configuration{},
-	}
-	defer fmt.Print("\033[2K\r\n")
-	err = ReplicateAll(&ctx, targetDatabasePath, parsedDatabase)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // ReplicateAll recreates a database inside targetDatabase containing all the works in works.
-func ReplicateAll(ctx *RunContext, targetDatabase string, works []AnalyzedWork) error {
+func (ctx *RunContext) ReplicateAll(targetDatabase string, works Database) error {
 	for _, work := range works {
-		// ctx.Status() TODO
-		err := ReplicateOne(targetDatabase, work)
+		err := ctx.ReplicateOne(targetDatabase, work)
 		if err != nil {
 			return err
 		}
@@ -69,31 +25,24 @@ func ReplicateAll(ctx *RunContext, targetDatabase string, works []AnalyzedWork) 
 }
 
 // ReplicateOne creates a description.md file in targetDatabase in the correct folder in order to replicate Work.
-func ReplicateOne(targetDatabase string, work AnalyzedWork) error {
+func (ctx *RunContext) ReplicateOne(targetDatabase string, work AnalyzedWork) error {
 	//TODO: make file mode configurable
 	workDirectory := path.Join(targetDatabase, work.ID)
-	os.MkdirAll(workDirectory, os.FileMode(0o0666))
-	file, err := os.Create(path.Join(workDirectory, "description.md"))
+	os.MkdirAll(workDirectory, os.FileMode(0o0777))
+	description, err := ctx.ReplicateDescription(work)
 	if err != nil {
-		return err
+		return fmt.Errorf("while replicating %s: %w", work.ID, err)
 	}
-	defer file.Close()
-	description, err := ReplicateDescription(work)
-	if err != nil {
-		return err
-	}
-	_, err = file.WriteString(description)
-	if err != nil {
-		return err
-	}
+
+	os.WriteFile(path.Join(workDirectory, "description.md"), []byte(description), os.FileMode(0o0777))
 	return nil
 }
 
 // ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
-func ReplicateDescription(work AnalyzedWork) (string, error) {
+func (ctx *RunContext) ReplicateDescription(work AnalyzedWork) (string, error) {
 	var result string
 	// Start with the YAML header, this one is never localized
-	yamlHeader, err := replicateMetadata(work.Metadata)
+	yamlHeader, err := ctx.replicateMetadata(work.Metadata)
 	if err != nil {
 		return "", err
 	}
@@ -101,8 +50,8 @@ func ReplicateDescription(work AnalyzedWork) (string, error) {
 	// TODO get rid of "default" language behavior
 	// if a file has NO language markers, auto-insert ":: (machine's language)" before parsing.
 	for language := range work.Content {
-		result += replicateLanguageMarker(language) + "\n\n"
-		replicatedBlock, err := replicateLocalizedBlock(work, language)
+		result += ctx.replicateLanguageMarker(language) + "\n\n"
+		replicatedBlock, err := ctx.replicateLocalizedBlock(work, language)
 		if err != nil {
 			return "", err
 		}
@@ -111,7 +60,7 @@ func ReplicateDescription(work AnalyzedWork) (string, error) {
 	return strings.TrimSpace(result), nil
 }
 
-func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error) {
+func (ctx *RunContext) replicateLocalizedBlock(work AnalyzedWork, language string) (string, error) {
 	var result string
 	end := "\n\n"
 	content := work.Content[language]
@@ -119,44 +68,44 @@ func replicateLocalizedBlock(work AnalyzedWork, language string) (string, error)
 	abbreviations := make(Abbreviations)
 	// Start with the title
 	if content.Title != "" {
-		result += replicateTitle(content.Title) + end
+		result += ctx.replicateTitle(content.Title) + end
 	}
 	// Then, for each block (ordered by the layout)
-	spew.Dump(work)
+	// spew.Dump(work)
 	for _, block := range content.Blocks {
-		fmt.Printf("replicating %s block #%s", block.Type, block.ID)
+		ctx.LogDebug("replicating %s block #%s", block.Type, block.ID)
 		switch block.Type {
 		case "media":
-			result += replicateMediaEmbed(block.Media) + end
+			result += ctx.replicateMediaEmbed(block.Media) + end
 		case "link":
-			result += replicateLink(block.Link) + end
+			result += ctx.replicateLink(block.Link) + end
 		case "paragraph":
-			replicatedParagraph, err := replicateParagraph(block.Anchor, block.Paragraph)
+			replicatedParagraph, err := ctx.replicateParagraph(block.Anchor, block.Paragraph)
 			if err != nil {
 				return "", err
 			}
 			// This is not finished: we need to properly translate to markdown abbreviations & footnotes
 			parsedHTML := soup.HTMLParse(string(block.Content))
-			abbreviations = merge(abbreviations, collectAbbreviations(parsedHTML))
-			replicatedParagraph = transformAbbreviations(parsedHTML, replicatedParagraph)
-			replicatedParagraph = transformFootnoteReferences(replicatedParagraph)
+			abbreviations = merge(abbreviations, ctx.collectAbbreviations(parsedHTML))
+			replicatedParagraph = ctx.transformAbbreviations(parsedHTML, replicatedParagraph)
+			replicatedParagraph = ctx.transformFootnoteReferences(replicatedParagraph)
 			result += replicatedParagraph + end
 		default: // nothing
 		}
 	}
 	for name, content := range content.Footnotes {
-		result += replicateFootnoteDefinition(name, string(content)) + end
+		result += ctx.replicateFootnoteDefinition(name, string(content)) + end
 	}
-	result += replicateAbbreviations(abbreviations)
+	result += ctx.replicateAbbreviations(abbreviations)
 	return result, nil
 }
 
-func replicateLanguageMarker(language string) string {
+func (ctx *RunContext) replicateLanguageMarker(language string) string {
 	return ":: " + language
 }
 
 // transformFootnoteReferences turns HTML references to footnotes into markdown ones.
-func transformFootnoteReferences(markdown string) string {
+func (ctx *RunContext) transformFootnoteReferences(markdown string) string {
 	pattern := regexp.MustCompile(`\[(\d+)\]\(#fn:([^)]+)\)`)
 	lines := strings.Split(markdown, "\n")
 	transformedMarkdown := markdown
@@ -171,7 +120,7 @@ func transformFootnoteReferences(markdown string) string {
 }
 
 // Remove markup from abbreviations.
-func transformAbbreviations(htmlSoup soup.Root, markdown string) string {
+func (ctx *RunContext) transformAbbreviations(htmlSoup soup.Root, markdown string) string {
 	transformedMarkdown := markdown
 	for _, abbr := range htmlSoup.FindAll("abbr") {
 		transformedMarkdown = strings.ReplaceAll(transformedMarkdown, abbr.HTML(), abbr.FullText())
@@ -179,7 +128,7 @@ func transformAbbreviations(htmlSoup soup.Root, markdown string) string {
 	return transformedMarkdown
 }
 
-func collectAbbreviations(htmlSoup soup.Root) Abbreviations {
+func (ctx *RunContext) collectAbbreviations(htmlSoup soup.Root) Abbreviations {
 	abbreviations := make(Abbreviations)
 	for _, abbr := range htmlSoup.FindAll("abbr") {
 		abbreviations[abbr.FullText()] = abbr.Attrs()["title"]
@@ -188,7 +137,7 @@ func collectAbbreviations(htmlSoup soup.Root) Abbreviations {
 }
 
 // We replicate all abbreviations in one function to avoid duplicates.
-func replicateAbbreviations(abbreviations Abbreviations) string {
+func (ctx *RunContext) replicateAbbreviations(abbreviations Abbreviations) string {
 	var result string
 	// Stores all the alread-replicated abbreviations' names (to handle duplicates)
 	replicated := make([]string, 0, len(abbreviations))
@@ -202,22 +151,22 @@ func replicateAbbreviations(abbreviations Abbreviations) string {
 	return result
 }
 
-func replicateFootnoteDefinition(name string, content string) string {
+func (ctx *RunContext) replicateFootnoteDefinition(name string, content string) string {
 	return "[^" + name + "]: " + content
 }
 
-func replicateLink(link Link) string {
+func (ctx *RunContext) replicateLink(link Link) string {
 	if link.Title != "" {
 		return "[" + link.Text.String() + `](` + link.URL + ` "` + link.Title + `")`
 	}
 	return "[" + link.Text.String() + "](" + link.URL + ")"
 }
 
-func replicateTitle(title HTMLString) string {
+func (ctx *RunContext) replicateTitle(title HTMLString) string {
 	return "# " + title.Markdown()
 }
 
-func replicateMetadata(metadata WorkMetadata) (string, error) {
+func (ctx *RunContext) replicateMetadata(metadata WorkMetadata) (string, error) {
 	metadataOut := make(map[string]interface{})
 	mapstructure.Decode(metadata, &metadataOut)
 	yamlBytes, err := yaml.Marshal(metadataOut)
@@ -227,7 +176,7 @@ func replicateMetadata(metadata WorkMetadata) (string, error) {
 	return "---\n" + string(yamlBytes) + "---", nil
 }
 
-func replicateMediaAttributesString(attributes MediaAttributes) string {
+func (ctx *RunContext) replicateMediaAttributesString(attributes MediaAttributes) string {
 	result := ""
 	if attributes.Autoplay {
 		result += string(RuneAutoplay)
@@ -242,14 +191,14 @@ func replicateMediaAttributesString(attributes MediaAttributes) string {
 }
 
 // TODO: configure whether to use >[]() syntax: never, or only for non-images
-func replicateMediaEmbed(media Media) string {
+func (ctx *RunContext) replicateMediaEmbed(media Media) string {
 	if media.Caption != "" {
-		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource), media.Caption)
+		return fmt.Sprintf(`![%s %s](%s "%s")`, media.Alt, ctx.replicateMediaAttributesString(media.Attributes), string(media.RelativeSource), media.Caption)
 	}
-	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, replicateMediaAttributesString(media.Attributes), string(media.RelativeSource))
+	return fmt.Sprintf(`![%s %s](%s)`, media.Alt, ctx.replicateMediaAttributesString(media.Attributes), string(media.RelativeSource))
 }
 
-func replicateParagraph(anchor string, p Paragraph) (string, error) {
+func (ctx *RunContext) replicateParagraph(anchor string, p Paragraph) (string, error) {
 	markdown := p.Content.Markdown()
 	if strings.TrimSpace(markdown) == "" {
 		markdown = "<p></p>"

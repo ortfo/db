@@ -3,7 +3,7 @@ package ortfodb
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,6 +12,9 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
+
+const DefaultConfigurationFilename = "ortfodb.yaml"
+const DefaultScatteredModeFolder = ".ortfo"
 
 type ExtractColorsConfiguration struct {
 	Enabled      bool
@@ -72,6 +75,9 @@ type Configuration struct {
 		Repository string `yaml:"repository"`
 	} `yaml:"technologies"`
 
+	// Path to the directory containing all projects. Must be absolute.
+	ProjectsDirectory string `yaml:"projects at"`
+
 	// Where was the configuration loaded from
 	source string
 }
@@ -90,21 +96,21 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 }
 
 // NewConfiguration loads a YAML configuration file.
-// If filepath is empty, the path defaults to databaseDirectory/ortfodb.yaml.
 // This function also validates the configuration and prints any error to the user.
 // Use LoadConfiguration for a lower-level function that just loads the YAML file into a struct.
-func NewConfiguration(filename string, databaseDirectory string) (Configuration, error) {
-	if filename == "" {
-		filename = path.Join(databaseDirectory, "ortfodb.yaml")
+func NewConfiguration(filename string) (Configuration, error) {
+	if filename == DefaultConfigurationFilename {
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			LogCustom("Writing", "yellow", "default configuration file at %s", filename)
 			defaultConfig, err := yaml.Marshal(DefaultConfiguration())
 			if err != nil {
 				panic(err)
 			}
-			os.WriteFile("ortfodb.yaml", []byte(defaultConfig), 0o644)
+			os.WriteFile(DefaultConfigurationFilename, []byte(defaultConfig), 0o644)
 			return DefaultConfiguration(), nil
 		}
 	}
+
 	validated, validationErrors, err := ValidateConfiguration(filename)
 	if err != nil {
 		return Configuration{}, fmt.Errorf("while validating configuration %s: %v", filename, err.Error())
@@ -116,6 +122,20 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 
 	config := Configuration{source: filename}
 	err = LoadConfiguration(filename, &config)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("while loading configuration file at %s: %w", filename, err)
+	}
+
+	config.ProjectsDirectory, err = homedir.Expand(config.ProjectsDirectory)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("while expanding home symbol for project at: %w", err)
+	}
+
+	// Make sure the project directory exists, is a directory and is absolute.
+	err = checkProjectsDirectory(config)
+	if err != nil {
+		return Configuration{}, err
+	}
 
 	// Set default value for ScatteredModeFolder
 	if config.ScatteredModeFolder == "" {
@@ -127,15 +147,39 @@ func NewConfiguration(filename string, databaseDirectory string) (Configuration,
 
 	// Expand ~
 	config.MakeThumbnails.FileNameTemplate, err = homedir.Expand(config.MakeThumbnails.FileNameTemplate)
-	config.Media.At, err = homedir.Expand(config.Media.At)
-	config.BuildMetadataFilepath, err = homedir.Expand(config.BuildMetadataFilepath)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("could not expand home directory symbol of make thumbnails.file name template: %w", err)
+	}
 
-	return config, err
+	config.Media.At, err = homedir.Expand(config.Media.At)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("could not expand home directory symbol of media.at: %w", err)
+	}
+
+	config.BuildMetadataFilepath, err = homedir.Expand(config.BuildMetadataFilepath)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("could not expand home directory symbol of build metadata filepath: %w", err)
+	}
+
+	return config, nil
+}
+
+func checkProjectsDirectory(config Configuration) error {
+	stat, err := os.Stat(config.ProjectsDirectory)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("projects directory %s does not exist", config.ProjectsDirectory)
+	} else if err != nil {
+		return fmt.Errorf("while checking projects directory at %s: %w", config.ProjectsDirectory, err)
+	}
+	if !stat.IsDir() {
+		return fmt.Errorf("projects directory %s is not a directory", config.ProjectsDirectory)
+	}
+	return nil
 }
 
 // ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath.
 // The third return value (of type error) is not nil when the validation process itself fails, not if the validation ran succesfully with a result of "not validated".
-func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultError, error) {
+func ValidateConfiguration(configFilepath string) (valid bool, validationErrors []gojsonschema.ResultError, err error) {
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
 	configContent, err := readFileBytes(configFilepath)
@@ -145,11 +189,18 @@ func ValidateConfiguration(configFilepath string) (bool, []gojsonschema.ResultEr
 	yaml.Unmarshal(configContent, &configuration)
 	json := jsoniter.ConfigFastest
 	configurationDocument, _ := json.Marshal(configuration)
-	return validateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema())
+	valid, validationErrors, err = validateWithJSONSchema(string(configurationDocument), ConfigurationJSONSchema())
+	return
 }
 
 // DefaultConfiguration returns a configuration with sensible defaults.
+
 func DefaultConfiguration() Configuration {
+	absoluteFilepathToHere, err := filepath.Abs(".")
+	if err != nil {
+		panic(fmt.Errorf("cannot get absolute path to current directory: %w", err))
+	}
+
 	return Configuration{
 		ExtractColors: ExtractColorsConfiguration{
 			Enabled: true,
@@ -163,7 +214,8 @@ func DefaultConfiguration() Configuration {
 			At: "media/",
 		},
 		BuildMetadataFilepath: ".lastbuild.yaml",
-		ScatteredModeFolder:   ".ortfo",
+		ScatteredModeFolder:   DefaultScatteredModeFolder,
 		IsDefault:             true,
+		ProjectsDirectory:     absoluteFilepathToHere,
 	}
 }

@@ -8,7 +8,6 @@ require (
 	github.com/anaskhan96/soup v1.2.5
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/charmbracelet/huh v0.3.0
-	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gomarkdown/markdown v0.0.0-20220419181919-412bcf14cd2e
@@ -22,6 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/plus3it/gorecurcopy v0.0.1
 	github.com/relvacode/iso8601 v1.3.0
+	github.com/spf13/cobra v1.8.0
 	github.com/ssttevee/go-ffmpeg v0.2.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -42,6 +42,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -51,6 +52,7 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
@@ -59,9 +61,9 @@ require (
 )
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gen2brain/go-fitz v1.19.0
 	github.com/hullerob/go.farbfeld v0.0.0-20181222022525-3661193c725f
 	github.com/jbuchbinder/gopnm v0.0.0-20220507095634-e31f54490ce0

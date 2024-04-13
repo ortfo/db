@@ -1,10 +1,10 @@
 build:
 	#!/usr/bin/env bash
 	set -euxo pipefail
-	cd cmd/ortfodb
+	cd cmd
 	go mod tidy
 	go build
-	mv ortfodb ../../
+	mv cmd ../ortfodb
 
 install:
 	just build

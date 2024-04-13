@@ -106,8 +106,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	outputPath := filepath.Join(ctx.PathToWorkFolder(workId), ctx.Config.ScatteredModeFolder, "description.md")
 
 	if _, err := os.Stat(ctx.PathToWorkFolder(workId)); os.IsNotExist(err) {
-		ctx.LogError("folder for given work %s does not exist.", workId)
-		return outputPath, nil
+		return outputPath, fmt.Errorf("folder for given work %s (%s) does not exist", workId, ctx.PathToWorkFolder(workId))
 	}
 
 	if _, err := os.Stat(outputPath); err == nil && !forceOverwrite {
