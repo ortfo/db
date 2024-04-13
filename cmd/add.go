@@ -21,7 +21,7 @@ func init() {
 var addCmd = &cobra.Command{
 	Use:   "add <id>",
 	Short: "Add a new project to your portfolio",
-	Long:  heredoc.Doc(`Create a new project in the appropriate folder. <id> is the work's slug.`),
+	Long:  heredoc.Doc(`Create a new project in the appropriate folder. ID is the work's slug.`),
 	Args:  cobra.MinimumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := ortfodb.NewConfiguration(flags.Config)

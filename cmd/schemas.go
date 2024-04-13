@@ -19,6 +19,7 @@ var schemasCmd = &cobra.Command{
 		- technologies: the technologies repository file (technologies.yaml)
 	`),
 	ValidArgs: []string{"configuration", "database", "tags", "technologies"},
+	Args:      cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		switch args[0] {
 		case "configuration":
@@ -36,5 +37,3 @@ var schemasCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(schemasCmd)
 }
-
-

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/MakeNowJust/heredoc"
 	ortfodb "github.com/ortfo/db"
 	"github.com/spf13/cobra"
@@ -8,10 +10,10 @@ import (
 
 func init() {
 	buildCmd.PersistentFlags().BoolVarP(&flags.Minified, "minified", "m", false, "Output a minifed JSON file")
-	buildCmd.PersistentFlags().BoolVarP(&flags.Silent, "silent", "s", false, "Do not write to stdout")
-	buildCmd.PersistentFlags().StringVar(&flags.ProgressInfoFile, "write-progress", "", "Write progress information to a file")
+	buildCmd.PersistentFlags().BoolVarP(&flags.Silent, "silent", "q", false, "Do not write to stdout")
+	buildCmd.PersistentFlags().StringVar(&flags.ProgressInfoFile, "write-progress", "", "Write progress information to a file. See https://pkg.go.dev/github.com/ortfo/db#ProgressInfoEvent for more information.")
 	buildCmd.PersistentFlags().BoolVar(&flags.NoCache, "no-cache", false, "Disable usage of previous database build as cache for this build (used for media analysis among other things).")
-	buildCmd.PersistentFlags().IntVar(&flags.WorkersCount, "workers", 0, "Use <count> workers to build the database. Defaults to the number of CPU cores.")
+	buildCmd.PersistentFlags().IntVar(&flags.WorkersCount, "workers", runtime.NumCPU(), "Use <count> workers to build the database. Defaults to the number of CPU cores.")
 	rootCmd.AddCommand(buildCmd)
 }
 
