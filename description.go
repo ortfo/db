@@ -195,7 +195,7 @@ type WorkMetadata struct {
 	WIP                bool                          `json:"wip" yaml:",omitempty"`
 	Private            bool                          `json:"private" yaml:",omitempty"`
 	AdditionalMetadata map[string]interface{}        `mapstructure:",remain" json:"additionalMetadata" yaml:",omitempty"`
-	DatabaseMetadata   DatabaseMeta                  `json:"databaseMetadata" `
+	DatabaseMetadata   DatabaseMeta                  `json:"databaseMetadata" yaml:"-" `
 }
 
 func (m WorkMetadata) CreatedAt() time.Time {
