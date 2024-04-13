@@ -1,8 +1,4 @@
-# portfoliodb
-
-****
-> I'm following RDD (readme-driven development) for this project, so, until v0.1.0 is released, this document describes what the program will look like
-****
+# ortfo/db
 
 A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
 
@@ -11,9 +7,9 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
 Pre-compiled binaries are available through [GitHub Releases](https://help.github.com/en/github/administering-a-repository/releasing-projects-on-github):
 
 ```shell
-$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/portfoliodb
+$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/ortfodb
 # Put the command in a directory that is in your PATH, so that you can use portfoliodb from anywhere, e.g.:
-$ mv portfoliodb /usr/bin/portfoliodb
+$ mv portfoliodb /usr/bin/ortfodb
 ```
 
 See [Compiling](#compiling) for instructions on how to compile this yourself
@@ -33,18 +29,48 @@ Here's an example tree:
 
 ```directory-tree
 database/
-├── ideaseed
+├── helloworld
 │   ├── logo.png
 │   └── description.md
-├── phelng
+├── resume
 │   └── description.md
 ├── portfolio
 │   └── description.md
-└── portfoliodb
+└── hackernews-clone
     └── description.md
 ```
 
 "Building" your database is just translating that easy-to-maintain and natural directory tree to a single JSON file, easily consummable by your frontend website. This way, you can add new projects to your portfolio without having to write a single line of code: just create a new folder, describe your project, build the database, upload it, and done!
+
+### "Scattered mode"
+
+If you prefer, you can store your description.md files alongside your projects themselves, instead of having everything in a single folder. This use case is referred to as "Scattered mode". Use the `--scattered` flag to enable it.
+
+This mode expects you to have all of your projects stored in a single directory (with each project being its own folder in that directory). Then, your description.md file (and potentially other resources like screenshots or photos of the work) live in a `.ortfo` folder that's in the projects' folders. The example tree from above becomes:
+
+```directory-tree
+projects/
+├── helloworld
+│   ├── .ortfo
+│   │   ├── logo.png
+│   │   └── description.md
+│   └── main.py
+├── resume
+│   └── .ortfo
+│       └── description.md
+├── portfolio
+│   └── .ortfo
+│       └── description.md
+└── hackernews-clone
+    └── .ortfo
+        └── description.md
+```
+
+
+
+Of course, your actual project files are still where they are and are left untouched (like the main.py file in the above example)
+
+
 
 ### `description.md` files
 
@@ -119,58 +145,16 @@ Of course, you can use links inside of a paragraphs, but you can also declare is
 
 Put this in `ortfodb.yaml` in the root of your database:
 
-```yaml
-build steps:
-  - step: extract colors
-    default file names: [logo.png]
 
-  - step: make gifs
-    # <filetitle> refers to the filename without its extension.
-    file name template: <filetitle>.gif
-
-  - step: make thumbnails
-    widths: [20, 100, 500]
-    # Paths are always relative to the work's database folder
-    file name template: ../../static/thumbs/<id>/<width>.png
-
-
-validate:
-  checks:
-    # can be `off` (not checked for)
-    # can be `on` (uses the default level)
-    # can be a level:
-    # - `fatal`: also checked when building, triggers end of build if fails
-    # - `error`: prints an error message (red), makes validate command exit with 1
-    # - `warn` : prints a warning message (orange), does not make validate exit with 1
-    # - `info` : regular message, informative
-    # these are the default values
-    schema compliance: fatal
-    work folder uniqueness: fatal
-    work folder safeness: error
-    yaml header: error
-    title presence: error
-    title uniqueness: error
-    tags presence: warn
-    tags knowledge: error
-    working media: warn
-    working urls: off
-```
-
-PRO TIP: You can use the provided `ortfodb.yaml.schema.json` to validate your YAML file
-with this JSONSchema
 
 ## Extra markdown features
 
-Except for the `>[text](video/audio URL/filepath)` feature, the markdown also supports a number of non-standard features:
-
-- all of what GFM supports (except autolinking of issues and commit hashes, ofc)
 - Abbreviations: `*[YAML]: Yet Another Markup Language`
-- Definition lists: `- key: value` or the more standard, [PHP-markdown-extra-style](https://michelf.ca/projects/php-markdown/extra/#def-list)
-- Admonitions: `!!! type "Optional title"`, see [this documentation](https://python-markdown.github.io/extensions/admonition/)
+
 - Footnotes: `footnote reference[^1]` and then `[^1]: footnote content`
-- Markdown in HTML: [See documentation here](https://python-markdown.github.io/extensions/md_in_html/)
-- (off by default) New-line-to-line-break: Transforms line breaks in markdown into `<br>`s, see [the documentation](https://python-markdown.github.io/extensions/nl2br/)
+
 - Smarty pants: typographic replacements (not replaced inside code):
+  
   - `--` to –
   - `---` to —
   - `->` to →
@@ -178,35 +162,11 @@ Except for the `>[text](video/audio URL/filepath)` feature, the markdown also su
   - `...` to …
   - `<<` to «
   - `>>` to »
-- (off by default) Anchored headings: Each headings is assigned an id to reference in the URL with `example.com#heading`
 
-### Configuring markdown
+## Compiling
 
-The extra features discussed just above are all available or disable, using the module name:
-
-_ortfodb.yaml_
-```yaml
-markdown:
-  abbreviations: on
-  definition lists: on
-  admonitions: off
-  footnotes: on
-  markdown in html: on
-  new-line-to-line-break: on
-  smarty pants: off
-  anchored headings:
-  # you can also use an object form to pass in config options
-    enabled: yes
-    format: <content> # default value
-  custom syntaxes:
-    # this is just an example, not an actual implementation of the video/audio embed feature
-    - from: '>\[(?P<fallback>[^\]]+)\]\((?P<source>.+)\)'
-      to: <video src="${source}">${fallback}</video>
-```
-
-# Compiling
+The build tool is [Just](https://just.systems), a modern alternative to Makefiles. See [installation](https://github.com/casey/just?tab=readme-ov-file#installation)
 
 1. Clone the repository: `git clone https://github.com/ewen-lbh/portfoliodb`
 2. `cd` into it: `cd portfoliodb`
-3. `make` the binary: `make`
-4. Install it (this just copies the file to `/usr/bin/`): `make install`
+3. Compile & install in `~/.local/bin/` `just install`... or simply build a binary to your working directory: `just build`.

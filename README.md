@@ -1,8 +1,4 @@
-# portfoliodb
-
-****
-> I'm following RDD (readme-driven development) for this project, so, until v0.1.0 is released, this document describes what the program will look like
-****
+# ortfo/db
 
 A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
 
@@ -11,9 +7,9 @@ A readable, easy and enjoyable way to manage portfolio databases using directori
 Pre-compiled binaries are available through [GitHub Releases](https://help.github.com/en/github/administering-a-repository/releasing-projects-on-github):
 
 ```shell
-$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/portfoliodb
+$ wget https://github.com/ewen-lbh/portfoliodb/releases/latest/ortfodb
 # Put the command in a directory that is in your PATH, so that you can use portfoliodb from anywhere, e.g.:
-$ mv portfoliodb /usr/bin/portfoliodb
+$ mv portfoliodb /usr/bin/ortfodb
 ```
 
 See [Compiling](#compiling) for instructions on how to compile this yourself
@@ -21,127 +17,31 @@ See [Compiling](#compiling) for instructions on how to compile this yourself
 ## Usage
 
 ```docopt
-ortfo/db v0.3.2
+Manage your portfolio's database — See https://github.com/ortfo/db for more information.
 
 Usage:
-  ortfodb [options] <database> build to <to-filepath> [--config=FILEPATH] [-msS] [--]
-  ortfodb [options] <inside> blog to <to-filepath>
-  ortfodb [options] <database> build <include-works> to <to-filepath> [--config=FILEPATH] [-msS] [--]
-  ortfodb [options] replicate <from-filepath> <to-directory> [--config=FILEPATH]
-  ortfodb [options] <database> add [--overwrite] <id> [<metadata-item>...]
-  ortfodb [options] <database> validate
-  ortfodb [options] schemas (configuration|database|tags|technologies)
-
-Options:
-  -C --config=<filepath>      Use the configuration path at <filepath>. Defaults to ortfodb.yaml.
-							  If not provided, and if ortfodb.yaml does not exist, a default configuration
-							  will be written to ortfodb.yaml and used.
-  -m --minified               Output a minifed JSON file
-  -s --silent                 Do not write to stdout
-  -S --scattered              Operate in scattered mode. See Scattered Mode section for more information.
-  --no-cache				  Disable usage of previous database build as cache for this build (used for media analysis among other things).
-  --workers=<count>  	      Use <count> workers to build the database. Defaults to the number of CPU cores.
-  --overwrite                 (add command): Overwrite the description.md file if it already exists.
+  ortfodb [command]
 
 Examples:
-  ortfodb database build database.json
-  ortfodb database add schoolsyst/presentation -#web -#site --color 268CCE
-  ortfodb replicate database.json replicated-database --config=ortfodb.yaml
+  $ ortfodb --config .ortfodb.yaml build database.json
+  $ ortfodb add my-project
 
-Commands:
-  build <to-filepath>
-	Scan in <database> for folders with description.md files
-    (and potential media files)
-    and compile the whole database into a JSON file at <to-filepath>
-	If <to-filepath> is "-", the output will be written to stdout.
+Available Commands:
+  add         Add a new project to your portfolio
+  build       Build the database
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  replicate   Replicate a database directory from a built database file.
+  schemas     Output JSON schemas for ortfodb's various resources
 
-  build <include-works> <to-filepath>
-	Like build <to-filepath>, but only re-build works that match the glob pattern <include-works>.
+Flags:
+  -c, --config string   config file path (default "ortfodb.yaml")
+  -h, --help            help for ortfodb
+      --scattered       Operate in scattered mode. In scattered mode, the description.md files are searched inside `.ortfo' folders in every folder of the database directory, instead of directly in the database directory's folders. See https://github.com/ortfo/
+  -v, --version         version for ortfodb
 
-  replicate <from-filepath> <to-directory>
-    The reverse operation of 'build'.
-    Note that <to-directory> must be an empty directory
+Use "ortfodb [command] --help" for more information about a command.
 
-  add <id> [<metadata-item>...]
-    Creates a new description.md in the appropriate folder.
-    <id> is the work's slug.
-    You can provide additional metadata items in the form ITEM_NAME:VALUE,
-    eg. 'add phelng tag:program tag:cli' will generate ./phelng/description.md,
-    with the following contents:
-    ---
-    tags: [program, cli]
-	made with: []
-	created: ????-??-??
-    ---
-    # phelng
-
-  validate <database>
-    Make sure that everything is OK in the database:
-    Each one of these checks are configurable and deactivable in ortfodb.yaml:validate.checks,
-    the step name is the one in [square brackets] at the beginning of these lines.
-    1. [schema compliance] validate compliance to schema for ortfodb.yaml
-    2. [work folder names] check work folder names for url-unsafe characters or case-insensitively non-unique folder names
-    3. for each work directory:
-        a. [yaml header] check YAML header for unknown keys
-        b. [title presence] check presence of work title
-        c. [title uniqueness] check uniqueness (case-insensitive) of work title
-        d. [tags presence] check if at least one tag is present
-        e. [tags knowledge] check absence of unknown tags
-        f. [working media files] check all local paths for links (audio/video files, image files, other files)
-        g. [working urls] check that no http url gives errors
-
-  schemas (configuration|database|tags|technologies)
-    Output the JSON schema for:
-	- configuration: the configuration file (.ortfodb.yaml)
-	- database: the output database file
-	- tags: the tags repository file (tags.yaml)
-	- technologies: the technologies repository file (technologies.yaml)
-
-Scattered mode:
-  With this mode activated, when building, portfoliodb will go through each folder (non-recursively) of <from-directory>, and, if it finds a .ortfo file in the folder, consider the files in that .ortfo folder.
-  (The actual name of .ortfo is configurable, set "scattered mode folder" in ortfodb.yaml to change it)
-
-  Consider the following directory tree:
-
-  <from-directory>
-    project1
-      index.html
-      src
-      dist
-      .ortfo
-        file.png
-        description.md
-    project2
-      .ortfo
-        file-2.png
-      description.md
-    otherfolder
-      stuff
-
-  Running portfoliodb build --scattered on this tree is equivalent to builing without --scattered on the following tree:
-
-  <from-directory>
-    project1
-      file.png
-      description.md
-    project2
-      file-2.png
-      description.md
-
-  Concretely, it allows you to store your portfoliodb descriptions and supporting files directly in your projects, assuming that your store all of your projects under the same directory.
-
-Build Progress:
-  For integration purposes, the current build progress can be written to a file.
-  The progress information is written as a JSON Lines file.
-
-  Each line of this file is a JSON object that contains the following properties:
-
-  - works_done: the number of works built
-  - works_total: the total number of works to build
-  - phase: one of "Thumbnailing", "Analyzing", "Building", "Built", "Reusing"
-  - details: free-form additional information as an array of strings
-
-  See ProgressInfoEvent in the documentation.
 ```
 
 ## How it works
@@ -153,18 +53,44 @@ Here's an example tree:
 
 ```directory-tree
 database/
-├── ideaseed
+├── helloworld
 │   ├── logo.png
 │   └── description.md
-├── phelng
+├── resume
 │   └── description.md
 ├── portfolio
 │   └── description.md
-└── portfoliodb
+└── hackernews-clone
     └── description.md
 ```
 
 "Building" your database is just translating that easy-to-maintain and natural directory tree to a single JSON file, easily consummable by your frontend website. This way, you can add new projects to your portfolio without having to write a single line of code: just create a new folder, describe your project, build the database, upload it, and done!
+
+### "Scattered mode"
+
+If you prefer, you can store your description.md files alongside your projects themselves, instead of having everything in a single folder. This use case is referred to as "Scattered mode". Use the `--scattered` flag to enable it.
+
+This mode expects you to have all of your projects stored in a single directory (with each project being its own folder in that directory). Then, your description.md file (and potentially other resources like screenshots or photos of the work) live in a `.ortfo` folder that's in the projects' folders. The example tree from above becomes:
+
+```directory-tree
+projects/
+├── helloworld
+│   ├── .ortfo
+│   │   ├── logo.png
+│   │   └── description.md
+│   └── main.py
+├── resume
+│   └── .ortfo
+│       └── description.md
+├── portfolio
+│   └── .ortfo
+│       └── description.md
+└── hackernews-clone
+    └── .ortfo
+        └── description.md
+```
+
+Of course, your actual project files are still where they are and are left untouched (like the main.py file in the above example)
 
 ### `description.md` files
 
@@ -237,59 +163,14 @@ Of course, you can use links inside of a paragraphs, but you can also declare is
 
 ## Configuration
 
-Put this in `ortfodb.yaml` in the root of your database:
+Simply run `ortfodb build` without giving a configuration filename, and ortfodb will create a default configuration file for you in the current directory.
 
-```yaml
-build steps:
-  - step: extract colors
-    default file names: [logo.png]
-
-  - step: make gifs
-    # <filetitle> refers to the filename without its extension.
-    file name template: <filetitle>.gif
-
-  - step: make thumbnails
-    widths: [20, 100, 500]
-    # Paths are always relative to the work's database folder
-    file name template: ../../static/thumbs/<id>/<width>.png
-
-
-validate:
-  checks:
-    # can be `off` (not checked for)
-    # can be `on` (uses the default level)
-    # can be a level:
-    # - `fatal`: also checked when building, triggers end of build if fails
-    # - `error`: prints an error message (red), makes validate command exit with 1
-    # - `warn` : prints a warning message (orange), does not make validate exit with 1
-    # - `info` : regular message, informative
-    # these are the default values
-    schema compliance: fatal
-    work folder uniqueness: fatal
-    work folder safeness: error
-    yaml header: error
-    title presence: error
-    title uniqueness: error
-    tags presence: warn
-    tags knowledge: error
-    working media: warn
-    working urls: off
-```
-
-PRO TIP: You can use the provided `ortfodb.yaml.schema.json` to validate your YAML file
-with this JSONSchema
+<!-- TODO: document configuration -->
 
 ## Extra markdown features
 
-Except for the `>[text](video/audio URL/filepath)` feature, the markdown also supports a number of non-standard features:
-
-- all of what GFM supports (except autolinking of issues and commit hashes, ofc)
 - Abbreviations: `*[YAML]: Yet Another Markup Language`
-- Definition lists: `- key: value` or the more standard, [PHP-markdown-extra-style](https://michelf.ca/projects/php-markdown/extra/#def-list)
-- Admonitions: `!!! type "Optional title"`, see [this documentation](https://python-markdown.github.io/extensions/admonition/)
 - Footnotes: `footnote reference[^1]` and then `[^1]: footnote content`
-- Markdown in HTML: [See documentation here](https://python-markdown.github.io/extensions/md_in_html/)
-- (off by default) New-line-to-line-break: Transforms line breaks in markdown into `<br>`s, see [the documentation](https://python-markdown.github.io/extensions/nl2br/)
 - Smarty pants: typographic replacements (not replaced inside code):
   - `--` to –
   - `---` to —
@@ -298,35 +179,11 @@ Except for the `>[text](video/audio URL/filepath)` feature, the markdown also su
   - `...` to …
   - `<<` to «
   - `>>` to »
-- (off by default) Anchored headings: Each headings is assigned an id to reference in the URL with `example.com#heading`
 
-### Configuring markdown
+## Compiling
 
-The extra features discussed just above are all available or disable, using the module name:
-
-_ortfodb.yaml_
-```yaml
-markdown:
-  abbreviations: on
-  definition lists: on
-  admonitions: off
-  footnotes: on
-  markdown in html: on
-  new-line-to-line-break: on
-  smarty pants: off
-  anchored headings:
-  # you can also use an object form to pass in config options
-    enabled: yes
-    format: <content> # default value
-  custom syntaxes:
-    # this is just an example, not an actual implementation of the video/audio embed feature
-    - from: '>\[(?P<fallback>[^\]]+)\]\((?P<source>.+)\)'
-      to: <video src="${source}">${fallback}</video>
-```
-
-# Compiling
+The build tool is [Just](https://just.systems), a modern alternative to Makefiles. See [installation](https://github.com/casey/just?tab=readme-ov-file#installation)
 
 1. Clone the repository: `git clone https://github.com/ewen-lbh/portfoliodb`
 2. `cd` into it: `cd portfoliodb`
-3. `make` the binary: `make`
-4. Install it (this just copies the file to `/usr/bin/`): `make install`
+3. Compile & install in `~/.local/bin/` `just install`... or simply build a binary to your working directory: `just build`.

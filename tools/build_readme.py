@@ -7,9 +7,14 @@ usage = (
     .strip()
 )
 
+def strip_ansi(text):
+	import re
+	ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+	return ansi_escape.sub("", text)
+
 with open("tools/_README.md", mode="r", encoding="utf-8") as file:
     readme = file.read()
-    readme = readme.replace("<<<<USAGE>>>>", usage)
+    readme = readme.replace("<<<<USAGE>>>>", strip_ansi(usage))
 
 
 with open("README.md", mode="w", encoding="utf-8") as file:
