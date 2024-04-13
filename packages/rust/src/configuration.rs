@@ -29,6 +29,9 @@ pub struct Configuration {
 
     pub media: Media,
 
+    #[serde(rename = "projects at")]
+    pub projects_at: String,
+
     #[serde(rename = "scattered mode folder")]
     pub scattered_mode_folder: String,
 

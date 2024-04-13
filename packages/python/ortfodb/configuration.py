@@ -167,16 +167,18 @@ class Configuration:
     make_gifs: MakeGifs
     make_thumbnails: MakeThumbnails
     media: Media
+    projects_at: str
     scattered_mode_folder: str
     tags: Tags
     technologies: Technologies
 
-    def __init__(self, build_metadata_file: str, extract_colors: ExtractColors, make_gifs: MakeGifs, make_thumbnails: MakeThumbnails, media: Media, scattered_mode_folder: str, tags: Tags, technologies: Technologies) -> None:
+    def __init__(self, build_metadata_file: str, extract_colors: ExtractColors, make_gifs: MakeGifs, make_thumbnails: MakeThumbnails, media: Media, projects_at: str, scattered_mode_folder: str, tags: Tags, technologies: Technologies) -> None:
         self.build_metadata_file = build_metadata_file
         self.extract_colors = extract_colors
         self.make_gifs = make_gifs
         self.make_thumbnails = make_thumbnails
         self.media = media
+        self.projects_at = projects_at
         self.scattered_mode_folder = scattered_mode_folder
         self.tags = tags
         self.technologies = technologies
@@ -189,10 +191,11 @@ class Configuration:
         make_gifs = MakeGifs.from_dict(obj.get("make gifs"))
         make_thumbnails = MakeThumbnails.from_dict(obj.get("make thumbnails"))
         media = Media.from_dict(obj.get("media"))
+        projects_at = from_str(obj.get("projects at"))
         scattered_mode_folder = from_str(obj.get("scattered mode folder"))
         tags = Tags.from_dict(obj.get("tags"))
         technologies = Technologies.from_dict(obj.get("technologies"))
-        return Configuration(build_metadata_file, extract_colors, make_gifs, make_thumbnails, media, scattered_mode_folder, tags, technologies)
+        return Configuration(build_metadata_file, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -201,6 +204,7 @@ class Configuration:
         result["make gifs"] = to_class(MakeGifs, self.make_gifs)
         result["make thumbnails"] = to_class(MakeThumbnails, self.make_thumbnails)
         result["media"] = to_class(Media, self.media)
+        result["projects at"] = from_str(self.projects_at)
         result["scattered mode folder"] = from_str(self.scattered_mode_folder)
         result["tags"] = to_class(Tags, self.tags)
         result["technologies"] = to_class(Technologies, self.technologies)

@@ -13,6 +13,7 @@ export interface Configuration {
     "make gifs":             MakeGifs;
     "make thumbnails":       MakeThumbnails;
     media:                   Media;
+    "projects at":           string;
     "scattered mode folder": string;
     tags:                    Tags;
     technologies:            Technologies;
@@ -219,6 +220,7 @@ const typeMap: any = {
         { json: "make gifs", js: "make gifs", typ: r("MakeGifs") },
         { json: "make thumbnails", js: "make thumbnails", typ: r("MakeThumbnails") },
         { json: "media", js: "media", typ: r("Media") },
+        { json: "projects at", js: "projects at", typ: "" },
         { json: "scattered mode folder", js: "scattered mode folder", typ: "" },
         { json: "tags", js: "tags", typ: r("Tags") },
         { json: "technologies", js: "technologies", typ: r("Technologies") },

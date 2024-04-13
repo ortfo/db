@@ -90,7 +90,11 @@ projects/
         └── description.md
 ```
 
+
+
 Of course, your actual project files are still where they are and are left untouched (like the main.py file in the above example)
+
+
 
 ### `description.md` files
 
@@ -163,15 +167,18 @@ Of course, you can use links inside of a paragraphs, but you can also declare is
 
 ## Configuration
 
-Simply run `ortfodb build` without giving a configuration filename, and ortfodb will create a default configuration file for you in the current directory.
+Put this in `ortfodb.yaml` in the root of your database:
 
-<!-- TODO: document configuration -->
+
 
 ## Extra markdown features
 
 - Abbreviations: `*[YAML]: Yet Another Markup Language`
+
 - Footnotes: `footnote reference[^1]` and then `[^1]: footnote content`
+
 - Smarty pants: typographic replacements (not replaced inside code):
+  
   - `--` to –
   - `---` to —
   - `->` to →
