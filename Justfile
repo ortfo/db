@@ -20,6 +20,8 @@ prepare-release $VERSION:
 
 release name='${version}':
 	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName={{quote(name)}}
+
+publish-packages:
 	cd packages/python; poetry publish
 	cd packages/typescript; npm publish
 	cd packages/rust; cargo publish

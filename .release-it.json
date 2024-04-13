@@ -22,6 +22,7 @@
 		}
 	},
 	"hooks": {
-		"after:bump": [ "just prepare-release ${version}" ]
+		"after:bump": [ "just prepare-release ${version}" ],
+		"after:release": [ "just publish-packages" ]
 	}
 }
