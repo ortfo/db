@@ -2,6 +2,8 @@
 
 A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
 
+![](./demo.gif)
+
 ## Installation
 
 Pre-compiled binaries are available through [GitHub Releases](https://help.github.com/en/github/administering-a-repository/releasing-projects-on-github):
@@ -154,7 +156,7 @@ Put this in `ortfodb.yaml` in the root of your database:
 - Footnotes: `footnote reference[^1]` and then `[^1]: footnote content`
 
 - Smarty pants: typographic replacements (not replaced inside code):
-  
+
   - `--` to –
   - `---` to —
   - `->` to →

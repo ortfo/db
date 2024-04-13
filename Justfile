@@ -11,6 +11,14 @@ install:
 	cp ortfodb ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
+render-demo-gif:
+	#!/usr/bin/env bash
+	set -euxo pipefail
+	cd ~/projects/portfolio
+	just db
+	jq 'delpaths([[".ortfo", ".centraverse", ".onset"]])' < database.json | sponge database.json
+	vhs ~/projects/ortfo/db/demo.tape -o ~/projects/ortfo/db/demo.gif
+
 prepare-release $VERSION:
 	./tools/update_meta_go.py $VERSION
 	just build
