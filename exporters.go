@@ -76,7 +76,7 @@ var BuiltinExporters = []Exporter{
 
 // BuiltinYAMLExporters are exporters that can be accessed by their name directly. They should be available for download over the network at the github repository.
 // TODO use go:embed instead
-var BuiltinYAMLExporters = []string{"ssh-upload"}
+var BuiltinYAMLExporters = []string{"ssh"}
 
 func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
 	for _, exporter := range BuiltinExporters {
@@ -86,7 +86,7 @@ func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
 	}
 	for _, builtinName := range BuiltinYAMLExporters {
 		if builtinName == name {
-			return DownloadExporter(name, fmt.Sprintf("https://raw.githubusercontent.com/ortfodb/exporters/main/exporters/%s.yaml", name), ctx.Config.Exporters[name])
+			return DownloadExporter(name, fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/main/exporters/%s.yaml", name), ctx.Config.Exporters[name])
 		}
 	}
 	if strings.HasPrefix(name, "./") {

@@ -12,5 +12,5 @@ after:
           {{ if .DryRun }} echo {{end}}
           scp
           {{ if .Verbose }} -v {{ end }}
-          {{ .Ctx.OutputDatabaseFilename }}
+          {{ .Ctx.OutputDatabaseFile }}
           {{ index .Data "ssh" }}'
