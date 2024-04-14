@@ -19,6 +19,20 @@ type CustomExporter struct {
 	cwd      string
 }
 
+func (e *CustomExporter) VerifyRequiredPrograms() error {
+	missingPrograms := make([]string, 0, len(e.manifest.Requires))
+	for _, program := range e.manifest.Requires {
+		_, err := exec.LookPath(program)
+		if err != nil {
+			missingPrograms = append(missingPrograms, program)
+		}
+	}
+	if len(missingPrograms) > 0 {
+		return fmt.Errorf("intall %s to use the %s exporter", strings.Join(missingPrograms, ", "), e.name)
+	}
+	return nil
+}
+
 func (e *CustomExporter) Name() string {
 	return e.name
 }
@@ -28,6 +42,11 @@ func (e *CustomExporter) OptionsType() any {
 }
 
 func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
+	ctx.LogDebug("Running before commands for %s", e.name)
+	err := e.VerifyRequiredPrograms()
+	if err != nil {
+		return err
+	}
 	return e.runCommands(ctx, e.manifest.Verbose, e.manifest.Before, map[string]any{})
 
 }

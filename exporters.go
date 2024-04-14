@@ -46,6 +46,9 @@ type ExporterManifest struct {
 
 	// If true, will show every command that is run
 	Verbose bool `yaml:"verbose,omitempty"`
+
+	// List of programs that are required to be available in the PATH for the exporter to run.
+	Requires []string `yaml:"requires,omitempty"`
 }
 
 // ExporterOptions validates then returns the configuration options for the given exporter.
@@ -68,6 +71,7 @@ func ValidateExporterOptions(exporter Exporter, opts ExporterOptions) error {
 	}
 	return nil
 }
+
 
 var BuiltinExporters = []Exporter{
 	&SqlExporter{},

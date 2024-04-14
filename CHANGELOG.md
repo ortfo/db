@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Requires key in exporter manifests to specify programs required to run the exporter
+
 ## [1.1.0] - 2024-04-14
 
 ### Added

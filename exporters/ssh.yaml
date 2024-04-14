@@ -1,4 +1,8 @@
 name: SSH Upload
+
+requires:
+    - scp
+
 data:
     # set to true to only print the commands, not execute them
     dry run: false
