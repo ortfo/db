@@ -3,14 +3,22 @@ data:
     # set to true to only print the commands, not execute them
     dry run: false
     # set to true to enable debugging output for this exporter
-    verbose: true
+    verbose: false
+    # set to true to enable rsync
+    rsync: true
     # please set this to user@host:/path/to/database.json
     ssh:
 after:
-    - log: [Uploading, blue, 'to {{ index .Data "ssh" }}']
+    - log:
+          - Uploading
+          - blue
+          - '{{ .Ctx.OutputDatabaseFile }} to [bold]{{ index .Data "ssh" }} [dim]using{{ if (index .Data "rsync") }} rsync {{ else }} scp {{ end }} [reset]'
     - run: >-
+          {{ $from := .Ctx.OutputDatabaseFile }}
+          {{ $to := index .Data "ssh" }}
           {{ if .DryRun }} echo {{end}}
-          scp
-          {{ if .Verbose }} -v {{ end }}
-          {{ .Ctx.OutputDatabaseFile }}
-          {{ index .Data "ssh" }}'
+          {{ if (index .Data "rsync") }}
+              rsync -r --info=progress {{$from}} {{$to}}
+          {{ else }}
+              scp {{$from}} {{$to}}
+          {{ end }}
