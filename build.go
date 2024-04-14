@@ -445,8 +445,8 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	}
 
 	for _, exporter := range ctx.Exporters {
-		ctx.LogDebug("Running exporter %s's after hook", exporter.Name())
 		options := ctx.Config.Exporters[exporter.Name()]
+		ctx.LogDebug("Running exporter %s's after hook with options %#v", exporter.Name(), options)
 		exporter.After(ctx, options, &works)
 	}
 
