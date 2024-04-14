@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- (S)FTP exporter
+- Git exporter: clones a repo, adds and commits the database json file and pushes
+- Cloud exporter: uses rclone to upload the database.json file to many cloud services
 - Requires key in exporter manifests to specify programs required to run the exporter
 
 ## [1.1.0] - 2024-04-14
@@ -58,8 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/ortfo/db/compare/v1.0.0...HEAD
-[1.1.0]: https://github.com/ortfo/db/-/releases/tag/v1.1.0
+[Unreleased]: https://github.com/ortfo/db/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ortfo/db/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ortfo/db/compare/v0.3.2...v1.0.0
 [0.3.2]: https://github.com/ortfo/db/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/ortfo/db/compare/v0.3.0...v0.3.1
@@ -67,5 +70,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
 [//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
-
-[unreleased]: https://github.com/ortfo/db/-/compare/v1.1.0...main

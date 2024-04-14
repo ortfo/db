@@ -1,0 +1,19 @@
+name: FTP Uploader
+
+requires:
+    - curl
+
+data:
+    username:
+    password:
+    host:
+    path:
+    secure: true
+    dry run: false
+
+after:
+    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to {{if (index .Data "secure")}}s{{end}}ftp://{{ index .Data "host" }}/{{ index .Data "path" }}']
+    - run: >-
+        {{if .DryRun}} echo {{end}}
+        curl -T {{ .Ctx.OutputDatabaseFile }}
+        {{if (index .Data "secure")}}sftp://{{else}}ftp://{{end}}{{index .Data "username"}}:{{index .Data "password"}}@{{ index .Data "host" }}/{{ index .Data "path" }}

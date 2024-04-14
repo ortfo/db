@@ -1,0 +1,18 @@
+name: Cloud Exporter
+
+requires:
+    - rclone
+
+data:
+    # Path to the Google Drive folder
+    path:
+
+    # Name of the rclone remote(s)
+    remotes:
+
+after:
+    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to{{ range $remote := (index .Data "remotes") }} {{$remote}}:{{ index $.Data "path" }}, {{ end }}[dim]with rclone']
+    - run: >-
+        {{ range $remote := (index .Data "remotes") }}
+            rclone copy --progress {{ $.Ctx.OutputDatabaseFile }} {{$remote}}:{{ index $.Data "path" }}
+        {{ end }}

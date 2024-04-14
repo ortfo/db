@@ -1,0 +1,22 @@
+name: Git Uploader
+
+requires:
+    - git
+
+data:
+    # URL to the Git repository
+    url:
+    # Commit message used
+    commit:
+
+after:
+    # - run: test ! -d .ortfodb-tmp || echo .ortfodb-tmp exists, please remove it >&2; exit 1
+    - log: [Cloning, blue, 'repository {{ index .Data "url" }}']
+    - run: git clone {{ index .Data "url" }} .ortfodb-tmp
+    - log: [Comitting, blue, "{{ .Ctx.OutputDatabaseFile }} to the repository"]
+    - run: cp {{ .Ctx.OutputDatabaseFile }} .ortfodb-tmp
+    - run: cd .ortfodb-tmp && git add {{ .Ctx.OutputDatabaseFile }} && git commit -m '{{ index .Data "commit" }}'
+    - log: [Pushing, blue, "changes to the repository"]
+    - run: cd .ortfodb-tmp && git push
+    - log: [Cleaning up, dim, ".ortfodb-tmp directory"]
+    - run: rm -rf .ortfodb-tmp
