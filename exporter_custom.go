@@ -1,6 +1,7 @@
 package ortfodb
 
 import (
+	"bufio"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -55,30 +56,54 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 				ExporterLogCustom(e, "Running", "yellow", commandline)
 			}
 
-			var stderrBuf strings.Builder
-			var stdoutBuf strings.Builder
-
 			proc := exec.Command("bash", "-c", commandline)
 			proc.Dir = e.cwd
-			proc.Stderr = &stderrBuf
-			proc.Stdout = &stdoutBuf
-			err := proc.Run()
-
-			stdout := strings.TrimSpace(stdoutBuf.String())
-			stderr := strings.TrimSpace(stderrBuf.String())
-
-			if stdout != "" {
-				ExporterLogCustom(e, ">", "blue", stdout)
-			}
-			if stderr != "" {
-				if !verbose {
-					ExporterLogCustom(e, "Error", "red", "While running %s\n%s", commandline, stderr)
-				} else {
-					ExporterLogCustom(e, "!", "red", stderr)
-				}
-			}
-
+			stderr, _ := proc.StderrPipe()
+			stdout, _ := proc.StdoutPipe()
+			err := proc.Start()
 			if err != nil {
+				return fmt.Errorf("while starting command %q: %w", commandline, err)
+			}
+
+			outputBuffer := new(strings.Builder)
+			outputChannel := make(chan string)
+
+			// Goroutine to read from stdout and send lines to the output channel
+			go func() {
+				scanner := bufio.NewScanner(stdout)
+				for scanner.Scan() {
+					outputChannel <- scanner.Text()
+				}
+			}()
+
+			// Goroutine to read from stderr and send lines to the output channel
+			go func() {
+				scanner := bufio.NewScanner(stderr)
+				for scanner.Scan() {
+					outputChannel <- scanner.Text()
+				}
+			}()
+
+			linesPrinterCount := 0
+
+			go func() {
+				for line := range outputChannel {
+					if linesPrinterCount > 5 {
+						// Clear the line fives lines after the first output
+						fmt.Print("\033[5A\033[K")
+					}
+					outputBuffer.WriteString(line + "\n")
+					ExporterLogCustomNoFormatting(e, ">", "blue", line)
+					if linesPrinterCount > 5 {
+						// Go back to last line
+						fmt.Print("\033[5B")
+					}
+					linesPrinterCount++
+				}
+			}()
+
+			if err = proc.Wait(); err != nil {
+				ExporterLogCustomNoFormatting(e, "Error", "red", fmt.Sprintf("While running %s\n%s", commandline, outputBuffer.String()))
 				return fmt.Errorf("while running %s: %w", commandline, err)
 			}
 		} else {

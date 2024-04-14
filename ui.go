@@ -32,8 +32,25 @@ func ExporterLogCustom(exporter Exporter, verb string, color string, message str
 	}
 }
 
+func ExporterLogCustomNoFormatting(exporter Exporter, verb string, color string, message string) {
+	if os.Getenv("DEBUG") == "1" {
+		LogCustomNoFormatting(verb, color, colorstring.Color("[dim][bold](from exporter "+exporter.Name()+")[reset] ")+message)
+	} else {
+		LogCustomNoFormatting(verb, color, message)
+	}
+}
+
 func LogCustom(verb string, color string, message string, fmtArgs ...interface{}) {
-	fmt.Fprintln(logWriter(), colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset] %s", color, verb, indentSubsequent(15+1, fmt.Sprintf(message, fmtArgs...)))))
+	LogCustomNoFormatting(verb, color, colorstring.Color(fmt.Sprintf(message, fmtArgs...)))
+}
+
+func LogCustomNoFormatting(verb string, color string, message string) {
+	fmt.Fprintln(
+		logWriter(),
+		colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset]", color, verb))+
+			" "+
+			indentSubsequent(15+1, message),
+	)
 }
 
 // DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal.

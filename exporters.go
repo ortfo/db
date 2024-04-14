@@ -86,25 +86,32 @@ func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
 	}
 	for _, builtinName := range BuiltinYAMLExporters {
 		if builtinName == name {
-			return DownloadExporter(name, fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/main/exporters/%s.yaml", name), ctx.Config.Exporters[name])
+			return ctx.DownloadExporter(name, fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/main/exporters/%s.yaml", name), ctx.Config.Exporters[name])
 		}
 	}
-	if strings.HasPrefix(name, "./") {
-		rawManifest, err := readFile(filepath.Join(filepath.Dir(ctx.Flags.Config), name))
+	if strings.HasPrefix(name, "./") || strings.HasPrefix(name, "/") {
+		var manifestPath string
+		if filepath.IsAbs(name) {
+			manifestPath = name
+		} else {
+			manifestPath = filepath.Join(filepath.Dir(ctx.Flags.Config), name)
+		}
+
+		rawManifest, err := readFile(manifestPath)
 		if err != nil {
 			return &CustomExporter{}, fmt.Errorf("while reading local manifest file at %s: %w", name, err)
 		}
-		return LoadExporter(name, rawManifest, ctx.Config.Exporters[name])
+		return ctx.LoadExporter(name, rawManifest, ctx.Config.Exporters[name])
 	} else if isValidURL(ensureHttpPrefix(name)) {
 		url := ensureHttpPrefix(name)
 		ctx.LogDebug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
-		return DownloadExporter(name, url, ctx.Config.Exporters[name])
+		return ctx.DownloadExporter(name, url, ctx.Config.Exporters[name])
 	}
 	return nil, fmt.Errorf("no exporter named %s", name)
 }
 
 // LoadExporter loads an exporter from a manifest YAML file's contents.
-func LoadExporter(name string, manifestRaw string, config map[string]any) (*CustomExporter, error) {
+func (ctx *RunContext) LoadExporter(name string, manifestRaw string, config map[string]any) (*CustomExporter, error) {
 	var manifest ExporterManifest
 	err := yaml.Unmarshal([]byte(manifestRaw), &manifest)
 	if err != nil {
@@ -125,7 +132,7 @@ func LoadExporter(name string, manifestRaw string, config map[string]any) (*Cust
 
 	cwd := "."
 	if !isValidURL(name) && fileExists(name) {
-		cwd = filepath.Dir(name)
+		cwd = filepath.Dir(ctx.Config.source)
 	}
 
 	exporter := CustomExporter{
@@ -140,14 +147,14 @@ func LoadExporter(name string, manifestRaw string, config map[string]any) (*Cust
 }
 
 // DownloadExporter loads an exporter from a URL.
-func DownloadExporter(name string, url string, config map[string]any) (*CustomExporter, error) {
+func (ctx *RunContext) DownloadExporter(name string, url string, config map[string]any) (*CustomExporter, error) {
 	LogCustom("Installing", "cyan", "exporter at %s", url)
 	manifestRaw, err := downloadFile(url)
 	if err != nil {
 		return &CustomExporter{}, fmt.Errorf("while downloading exporter manifest file: %w", err)
 	}
 
-	exporter, err := LoadExporter(name, manifestRaw, config)
+	exporter, err := ctx.LoadExporter(name, manifestRaw, config)
 	if err != nil {
 		return &CustomExporter{}, err
 	}
