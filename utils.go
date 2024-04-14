@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -52,8 +53,12 @@ func writeFile(filename string, content []byte) error {
 }
 
 // validateWithJSONSchema checks if the JSON document document conforms to the JSON schema schema.
-func validateWithJSONSchema(document string, schema string) (bool, []gojsonschema.ResultError, error) {
-	schemaLoader := gojsonschema.NewStringLoader(schema)
+func validateWithJSONSchema(document string, schema *jsonschema.Schema) (bool, []gojsonschema.ResultError, error) {
+	schemaJson, err := schema.MarshalJSON()
+	if err != nil {
+		panic(err)
+	}
+	schemaLoader := gojsonschema.NewStringLoader(string(schemaJson))
 	documentLoader := gojsonschema.NewStringLoader(document)
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {

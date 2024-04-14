@@ -262,11 +262,11 @@
         },
         "autoplay": {
           "type": "boolean",
-          "description": "Controlled with attribute character \u003e (adds)"
+          "description": "Controlled with attribute character > (adds)"
         },
         "muted": {
           "type": "boolean",
-          "description": "Controlled with attribute character \u003e (adds)"
+          "description": "Controlled with attribute character > (adds)"
         },
         "playsinline": {
           "type": "boolean",
