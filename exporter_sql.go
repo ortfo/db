@@ -25,6 +25,10 @@ func (e *SqlExporter) Name() string {
 	return "sql"
 }
 
+func (e *SqlExporter) Description() string {
+	return "Export the database as SQL statements. Rudimentary for now."
+}
+
 func (e *SqlExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	e.result = ""
 	if !fileExists(e.outputFilename(ctx)) {

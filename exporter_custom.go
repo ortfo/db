@@ -37,6 +37,10 @@ func (e *CustomExporter) Name() string {
 	return e.name
 }
 
+func (e *CustomExporter) Description() string {
+	return e.manifest.Description
+}
+
 func (e *CustomExporter) OptionsType() any {
 	return e.manifest.Data
 }

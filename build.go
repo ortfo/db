@@ -268,6 +268,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 			return &ctx, err
 		}
 
+		LogCustom("Using", "magenta", "exporter [bold]%s[reset]\n[dim]%s", exporter.Name(), exporter.Description())
 		err = exporter.Before(&ctx, options)
 		if err != nil {
 			return &ctx, fmt.Errorf("while running exporter %s before hook: %w", exporter.Name(), err)

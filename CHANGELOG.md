@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cloud exporter: uses rclone to upload the database.json file to many cloud services
 - Requires key in exporter manifests to specify programs required to run the exporter
 
+### Changed
+
+- building now shows exporters that are activated along with their description
+
 ## [1.1.0] - 2024-04-14
 
 ### Added
