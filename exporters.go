@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
@@ -73,9 +74,9 @@ func ValidateExporterOptions(exporter Exporter, opts ExporterOptions) error {
 	return nil
 }
 
-
 var BuiltinExporters = []Exporter{
 	&SqlExporter{},
+	&LocalizeExporter{},
 	&CustomExporter{},
 }
 
@@ -166,4 +167,31 @@ func (ctx *RunContext) DownloadExporter(name string, url string, config map[stri
 
 	exporter.name = name
 	return exporter, nil
+}
+
+// GetExporterOptions returns the options for the given exporter.
+// Use it to get your options in a nice struct. The struct will be of the same type as the one returned by e.OptionsType().
+// Example:
+//
+//	type MyExporterOptions struct {
+//			// Some option
+//			Option string `yaml:"option"`
+//	}
+//
+//	func (e *MyExporter) OptionsType() any {
+//	 	return MyExporterOptions{}
+//	 }
+//
+//	func (e *MyExporter) After(ctx *ortfodb.RunContext, opts *ortfodb.ExporterOptions, db *ortfodb.Database) error {
+//		 options := GetExporterOptions[MyExporterOptions](e, opts)
+//		 // Now you can use options as a MyExporterOptions struct
+//		}
+func GetExporterOptions[ConcreteOptionsType any](e Exporter, opts ExporterOptions) ConcreteOptionsType {
+	options := e.OptionsType()
+	decoder, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:  &options,
+		TagName: "yaml",
+	})
+	decoder.Decode(opts)
+	return options.(ConcreteOptionsType)
 }

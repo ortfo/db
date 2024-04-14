@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 type SqlExporterOptions struct {
@@ -46,8 +44,7 @@ func (e *SqlExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 }
 
 func (e *SqlExporter) Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error {
-	options := SqlExporterOptions{}
-	mapstructure.Decode(opts, &options)
+	options := GetExporterOptions[SqlExporterOptions](e, opts)
 
 	_, summary := work.FirstParagraph(options.Language)
 	e.result += fmt.Sprintf(

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git exporter: clones a repo, adds and commits the database json file and pushes
 - Cloud exporter: uses rclone to upload the database.json file to many cloud services
 - Requires key in exporter manifests to specify programs required to run the exporter
+- localize exporter: export the database as a single-language database for every language in the original database
 
 ### Changed
 
