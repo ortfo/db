@@ -53,3 +53,7 @@ type technologies []Technology
 func TechnologiesRepositoryJSONSchema() string {
 	return makeJSONSchema(&technologies{}, true)
 }
+
+func ExporterManifestJSONSchema() string {
+	return makeJSONSchema(&ExporterManifest{}, true)
+}

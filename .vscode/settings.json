@@ -1,7 +1,6 @@
 {
-    "yaml.schemas": {
-        "ortfodb.yaml.schema.json": ["example/ortfodb.yaml", ".porfoliodb.yml"]
-    },
-    "go.inferGopath": false,
-    "python.formatting.provider": "black"
+	"yaml.schemas": {
+		"schemas/exporter.schema.json": "exporters/*.yaml"
+	},
+	"go.inferGopath": false
 }

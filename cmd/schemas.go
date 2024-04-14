@@ -30,6 +30,8 @@ var schemasCmd = &cobra.Command{
 			fmt.Println(ortfodb.TagsRepositoryJSONSchema())
 		case "technologies":
 			fmt.Println(ortfodb.TechnologiesRepositoryJSONSchema())
+		case "exporter":
+			fmt.Println(ortfodb.ExporterManifestJSONSchema())
 		}
 	},
 }
