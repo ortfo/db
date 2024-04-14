@@ -12,11 +12,14 @@
 // }
 
 use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct Configuration {
     #[serde(rename = "build metadata file")]
     pub build_metadata_file: String,
+
+    pub exporters: Option<HashMap<String, HashMap<String, Option<serde_json::Value>>>>,
 
     #[serde(rename = "extract colors")]
     pub extract_colors: ExtractColors,

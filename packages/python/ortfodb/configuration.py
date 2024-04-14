@@ -1,4 +1,4 @@
-from typing import List, Any, TypeVar, Callable, Type, cast
+from typing import List, Any, Dict, Optional, TypeVar, Callable, Type, cast
 
 
 T = TypeVar("T")
@@ -22,6 +22,25 @@ def from_bool(x: Any) -> bool:
 def from_int(x: Any) -> int:
     assert isinstance(x, int) and not isinstance(x, bool)
     return x
+
+
+def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
+    assert isinstance(x, dict)
+    return { k: f(v) for (k, v) in x.items() }
+
+
+def from_none(x: Any) -> Any:
+    assert x is None
+    return x
+
+
+def from_union(fs, x):
+    for f in fs:
+        try:
+            return f(x)
+        except:
+            pass
+    assert False
 
 
 def to_class(c: Type[T], x: Any) -> dict:
@@ -163,6 +182,7 @@ class Technologies:
 
 class Configuration:
     build_metadata_file: str
+    exporters: Optional[Dict[str, Dict[str, Any]]]
     extract_colors: ExtractColors
     make_gifs: MakeGifs
     make_thumbnails: MakeThumbnails
@@ -172,8 +192,9 @@ class Configuration:
     tags: Tags
     technologies: Technologies
 
-    def __init__(self, build_metadata_file: str, extract_colors: ExtractColors, make_gifs: MakeGifs, make_thumbnails: MakeThumbnails, media: Media, projects_at: str, scattered_mode_folder: str, tags: Tags, technologies: Technologies) -> None:
+    def __init__(self, build_metadata_file: str, exporters: Optional[Dict[str, Dict[str, Any]]], extract_colors: ExtractColors, make_gifs: MakeGifs, make_thumbnails: MakeThumbnails, media: Media, projects_at: str, scattered_mode_folder: str, tags: Tags, technologies: Technologies) -> None:
         self.build_metadata_file = build_metadata_file
+        self.exporters = exporters
         self.extract_colors = extract_colors
         self.make_gifs = make_gifs
         self.make_thumbnails = make_thumbnails
@@ -187,6 +208,7 @@ class Configuration:
     def from_dict(obj: Any) -> 'Configuration':
         assert isinstance(obj, dict)
         build_metadata_file = from_str(obj.get("build metadata file"))
+        exporters = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], obj.get("exporters"))
         extract_colors = ExtractColors.from_dict(obj.get("extract colors"))
         make_gifs = MakeGifs.from_dict(obj.get("make gifs"))
         make_thumbnails = MakeThumbnails.from_dict(obj.get("make thumbnails"))
@@ -195,11 +217,13 @@ class Configuration:
         scattered_mode_folder = from_str(obj.get("scattered mode folder"))
         tags = Tags.from_dict(obj.get("tags"))
         technologies = Technologies.from_dict(obj.get("technologies"))
-        return Configuration(build_metadata_file, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
+        return Configuration(build_metadata_file, exporters, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
 
     def to_dict(self) -> dict:
         result: dict = {}
         result["build metadata file"] = from_str(self.build_metadata_file)
+        if self.exporters is not None:
+            result["exporters"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], self.exporters)
         result["extract colors"] = to_class(ExtractColors, self.extract_colors)
         result["make gifs"] = to_class(MakeGifs, self.make_gifs)
         result["make thumbnails"] = to_class(MakeThumbnails, self.make_thumbnails)

@@ -9,6 +9,7 @@
 
 export interface Configuration {
     "build metadata file":   string;
+    exporters?:              { [key: string]: { [key: string]: any } };
     "extract colors":        ExtractColors;
     "make gifs":             MakeGifs;
     "make thumbnails":       MakeThumbnails;
@@ -216,6 +217,7 @@ function r(name: string) {
 const typeMap: any = {
     "Configuration": o([
         { json: "build metadata file", js: "build metadata file", typ: "" },
+        { json: "exporters", js: "exporters", typ: u(undefined, m(m("any"))) },
         { json: "extract colors", js: "extract colors", typ: r("ExtractColors") },
         { json: "make gifs", js: "make gifs", typ: r("MakeGifs") },
         { json: "make thumbnails", js: "make thumbnails", typ: r("MakeThumbnails") },
