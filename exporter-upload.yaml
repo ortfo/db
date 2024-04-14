@@ -1,4 +1,0 @@
-name: SSH Upload
-after:
-    - log: [Uploading, blue, 'to {{ index .Data "ssh" }}']
-    - run: scp -r {{ .Ctx.OutputDatabaseFile }} {{ index .Data "ssh" }}
