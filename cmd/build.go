@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/MakeNowJust/heredoc"
@@ -45,6 +46,7 @@ var buildCmd = &cobra.Command{
 
 		context, err := ortfodb.PrepareBuild(config.ProjectsDirectory, outputFilename, flags, config)
 		if err != nil {
+			releaseLockFileSafe(context, outputFilename)
 			handleError(err)
 		}
 
@@ -63,8 +65,16 @@ var buildCmd = &cobra.Command{
 			context.WriteDatabase(works, flags, outputFilename, err != nil)
 		}
 
+		releaseLockFileSafe(context, outputFilename)
+
 		if err != nil {
 			handleError(err)
 		}
 	},
+}
+
+func releaseLockFileSafe(ctx *ortfodb.RunContext, outputFilename string) {
+	if _, ok := os.Stat(ortfodb.BuildLockFilepath(outputFilename)); ok == nil {
+		ctx.ReleaseBuildLock(outputFilename)
+	}
 }
