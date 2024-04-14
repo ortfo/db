@@ -1,5 +1,7 @@
 name: SSH Upload
 
+description: Upload the database to an SSH server using scp or rsync.
+
 requires:
     - scp
 

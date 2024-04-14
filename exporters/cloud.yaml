@@ -1,5 +1,7 @@
 name: Cloud Exporter
 
+description: Export the database to a cloud storage service using rclone.
+
 requires:
     - rclone
 

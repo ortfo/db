@@ -1,5 +1,7 @@
 name: FTP Uploader
 
+description: Upload the database to an FTP server using curl.
+
 requires:
     - curl
 

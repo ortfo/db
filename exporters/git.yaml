@@ -1,5 +1,7 @@
 name: Git Uploader
 
+description: Commit the database.json file to a Git repository and push.
+
 requires:
     - git
 
