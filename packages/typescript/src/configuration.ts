@@ -7,13 +7,22 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
+/**
+ * Configuration represents what the ortfodb.yaml configuration file describes.
+ */
 export interface Configuration {
-    "build metadata file":   string;
-    exporters?:              { [key: string]: { [key: string]: any } };
-    "extract colors":        ExtractColors;
-    "make gifs":             MakeGifs;
-    "make thumbnails":       MakeThumbnails;
-    media:                   Media;
+    "build metadata file": string;
+    /**
+     * Exporter-specific configuration. Maps exporter names to their configuration.
+     */
+    exporters?:        { [key: string]: { [key: string]: any } };
+    "extract colors":  ExtractColors;
+    "make gifs":       MakeGifs;
+    "make thumbnails": MakeThumbnails;
+    media:             Media;
+    /**
+     * Path to the directory containing all projects. Must be absolute.
+     */
     "projects at":           string;
     "scattered mode folder": string;
     tags:                    Tags;

@@ -181,13 +181,19 @@ class Technologies:
 
 
 class Configuration:
+    """Configuration represents what the ortfodb.yaml configuration file describes."""
+
     build_metadata_file: str
     exporters: Optional[Dict[str, Dict[str, Any]]]
+    """Exporter-specific configuration. Maps exporter names to their configuration."""
+
     extract_colors: ExtractColors
     make_gifs: MakeGifs
     make_thumbnails: MakeThumbnails
     media: Media
     projects_at: str
+    """Path to the directory containing all projects. Must be absolute."""
+
     scattered_mode_folder: str
     tags: Tags
     technologies: Technologies

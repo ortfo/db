@@ -7,6 +7,9 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
+/**
+ * AnalyzedWork represents a complete work, with analyzed mediae.
+ */
 export interface Database {
     builtAt:         string;
     content:         { [key: string]: ContentValue };
@@ -24,22 +27,34 @@ export interface ContentValue {
 }
 
 export interface BlockElement {
-    alt:               string;
-    analyzed:          boolean;
-    anchor:            string;
-    attributes:        Attributes;
-    caption:           string;
-    colors:            Colors;
-    content:           string;
-    contentType:       string;
-    dimensions:        Dimensions;
-    distSource:        string;
-    duration:          number;
-    hasSound:          boolean;
-    id:                string;
-    index:             number;
-    online:            boolean;
-    relativeSource:    string;
+    alt: string;
+    /**
+     * whether the media has been analyzed
+     */
+    analyzed:   boolean;
+    anchor:     string;
+    attributes: Attributes;
+    caption:    string;
+    colors:     Colors;
+    /**
+     * html
+     */
+    content:     string;
+    contentType: string;
+    dimensions:  Dimensions;
+    distSource:  string;
+    /**
+     * in seconds
+     */
+    duration:       number;
+    hasSound:       boolean;
+    id:             string;
+    index:          number;
+    online:         boolean;
+    relativeSource: string;
+    /**
+     * in bytes
+     */
     size:              number;
     text:              string;
     thumbnails:        Thumbnails;
@@ -49,24 +64,57 @@ export interface BlockElement {
     url:               string;
 }
 
+/**
+ * MediaAttributes stores which HTML attributes should be added to the media.
+ */
 export interface Attributes {
-    autoplay:    boolean;
-    controls:    boolean;
-    loop:        boolean;
-    muted:       boolean;
+    /**
+     * Controlled with attribute character > (adds)
+     */
+    autoplay: boolean;
+    /**
+     * Controlled with attribute character = (removes)
+     */
+    controls: boolean;
+    /**
+     * Controlled with attribute character ~ (adds)
+     */
+    loop: boolean;
+    /**
+     * Controlled with attribute character > (adds)
+     */
+    muted: boolean;
+    /**
+     * Controlled with attribute character = (adds)
+     */
     playsinline: boolean;
 }
 
+/**
+ * ColorPalette reprensents the object in a Work's metadata.colors.
+ */
 export interface Colors {
     primary:   string;
     secondary: string;
     tertiary:  string;
 }
 
+/**
+ * ImageDimensions represents metadata about a media as it's extracted from its file.
+ */
 export interface Dimensions {
+    /**
+     * width / height
+     */
     aspectRatio: number;
-    height:      number;
-    width:       number;
+    /**
+     * Height in pixels
+     */
+    height: number;
+    /**
+     * Width in pixels
+     */
+    width: number;
 }
 
 export interface Thumbnails {
@@ -89,6 +137,9 @@ export interface Metadata {
 }
 
 export interface DatabaseMetadataClass {
+    /**
+     * Partial is true if the database was not fully built.
+     */
     Partial: boolean;
 }
 

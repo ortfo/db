@@ -24,6 +24,7 @@ func makeJSONSchema(t any, yaml bool) string {
 	if yaml {
 		selectedReflector = yamlReflector
 	}
+	selectedReflector.AddGoComments("github.com/ortfo/db", "./")
 	schema := selectedReflector.Reflect(t)
 	setSchemaId(schema)
 	out, err := json.MarshalIndent(schema, "", "  ")

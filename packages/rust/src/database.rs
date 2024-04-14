@@ -16,6 +16,7 @@ use std::collections::HashMap;
 
 pub type Database = HashMap<String, DatabaseValue>;
 
+/// AnalyzedWork represents a complete work, with analyzed mediae.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseValue {
@@ -49,6 +50,7 @@ pub struct ContentValue {
 pub struct BlockElement {
     pub alt: String,
 
+    /// whether the media has been analyzed
     pub analyzed: bool,
 
     pub anchor: String,
@@ -59,6 +61,7 @@ pub struct BlockElement {
 
     pub colors: Colors,
 
+    /// html
     pub content: String,
 
     pub content_type: String,
@@ -67,6 +70,7 @@ pub struct BlockElement {
 
     pub dist_source: String,
 
+    /// in seconds
     pub duration: f64,
 
     pub has_sound: bool,
@@ -79,6 +83,7 @@ pub struct BlockElement {
 
     pub relative_source: String,
 
+    /// in bytes
     pub size: i64,
 
     pub text: String,
@@ -95,20 +100,27 @@ pub struct BlockElement {
     pub url: String,
 }
 
+/// MediaAttributes stores which HTML attributes should be added to the media.
 #[derive(Serialize, Deserialize)]
 pub struct Attributes {
+    /// Controlled with attribute character > (adds)
     pub autoplay: bool,
 
+    /// Controlled with attribute character = (removes)
     pub controls: bool,
 
+    /// Controlled with attribute character ~ (adds)
     #[serde(rename = "loop")]
     pub attributes_loop: bool,
 
+    /// Controlled with attribute character > (adds)
     pub muted: bool,
 
+    /// Controlled with attribute character = (adds)
     pub playsinline: bool,
 }
 
+/// ColorPalette reprensents the object in a Work's metadata.colors.
 #[derive(Serialize, Deserialize)]
 pub struct Colors {
     pub primary: String,
@@ -118,13 +130,17 @@ pub struct Colors {
     pub tertiary: String,
 }
 
+/// ImageDimensions represents metadata about a media as it's extracted from its file.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dimensions {
+    /// width / height
     pub aspect_ratio: f64,
 
+    /// Height in pixels
     pub height: i64,
 
+    /// Width in pixels
     pub width: i64,
 }
 
@@ -165,5 +181,6 @@ pub struct Metadata {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DatabaseMetadataClass {
+    /// Partial is true if the database was not fully built.
     pub partial: bool,
 }

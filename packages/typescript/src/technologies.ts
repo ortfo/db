@@ -8,10 +8,19 @@
 // match the expected interface, even if the JSON is valid.
 
 export interface Technologies {
-    aliases:         string[];
-    autodetect:      string[];
-    by:              string;
-    description:     string;
+    aliases: string[];
+    /**
+     * Autodetect contains an expression of the form 'CONTENT in PATH' where CONTENT is a
+     * free-form unquoted string and PATH is a filepath relative to the work folder.
+     * If CONTENT is found in PATH, we consider that technology to be used in the work.
+     */
+    autodetect:  string[];
+    by:          string;
+    description: string;
+    /**
+     * Files contains a list of gitignore-style patterns. If the work contains any of the
+     * patterns specified, we consider that technology to be used in the work.
+     */
     files:           string[];
     "learn more at": string;
     name:            string;

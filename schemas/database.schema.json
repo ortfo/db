@@ -33,7 +33,8 @@
         "metadata",
         "content",
         "Partial"
-      ]
+      ],
+      "description": "AnalyzedWork represents a complete work, with analyzed mediae."
     },
     "ColorPalette": {
       "properties": {
@@ -53,7 +54,8 @@
         "primary",
         "secondary",
         "tertiary"
-      ]
+      ],
+      "description": "ColorPalette reprensents the object in a Work's metadata.colors."
     },
     "ContentBlock": {
       "properties": {
@@ -85,7 +87,8 @@
           "type": "string"
         },
         "size": {
-          "type": "integer"
+          "type": "integer",
+          "description": "in bytes"
         },
         "dimensions": {
           "$ref": "#/$defs/ImageDimensions"
@@ -94,7 +97,8 @@
           "type": "boolean"
         },
         "duration": {
-          "type": "number"
+          "type": "number",
+          "description": "in seconds"
         },
         "hasSound": {
           "type": "boolean"
@@ -112,10 +116,12 @@
           "$ref": "#/$defs/MediaAttributes"
         },
         "analyzed": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "whether the media has been analyzed"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "html"
         },
         "text": {
           "type": "string"
@@ -164,7 +170,8 @@
     "DatabaseMeta": {
       "properties": {
         "Partial": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Partial is true if the database was not fully built."
         }
       },
       "additionalProperties": false,
@@ -177,18 +184,22 @@
       "additionalProperties": {
         "type": "string"
       },
-      "type": "object"
+      "type": "object",
+      "description": "Footnotes represents the footnote declarations in a description.md file."
     },
     "ImageDimensions": {
       "properties": {
         "width": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Width in pixels"
         },
         "height": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Height in pixels"
         },
         "aspectRatio": {
-          "type": "number"
+          "type": "number",
+          "description": "width / height"
         }
       },
       "additionalProperties": false,
@@ -197,7 +208,8 @@
         "width",
         "height",
         "aspectRatio"
-      ]
+      ],
+      "description": "ImageDimensions represents metadata about a media as it's extracted from its file."
     },
     "Layout": {
       "items": {
@@ -206,7 +218,8 @@
         },
         "type": "array"
       },
-      "type": "array"
+      "type": "array",
+      "description": "Layout is a 2D array of content block IDs"
     },
     "LocalizableContent": {
       "additionalProperties": {
@@ -244,19 +257,24 @@
     "MediaAttributes": {
       "properties": {
         "loop": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Controlled with attribute character ~ (adds)"
         },
         "autoplay": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Controlled with attribute character \u003e (adds)"
         },
         "muted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Controlled with attribute character \u003e (adds)"
         },
         "playsinline": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Controlled with attribute character = (adds)"
         },
         "controls": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Controlled with attribute character = (removes)"
         }
       },
       "additionalProperties": false,
@@ -267,7 +285,8 @@
         "muted",
         "playsinline",
         "controls"
-      ]
+      ],
+      "description": "MediaAttributes stores which HTML attributes should be added to the media."
     },
     "ThumbnailsMap": {
       "patternProperties": {

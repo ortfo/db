@@ -14,11 +14,13 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
+/// Configuration represents what the ortfodb.yaml configuration file describes.
 #[derive(Serialize, Deserialize)]
 pub struct Configuration {
     #[serde(rename = "build metadata file")]
     pub build_metadata_file: String,
 
+    /// Exporter-specific configuration. Maps exporter names to their configuration.
     pub exporters: Option<HashMap<String, HashMap<String, Option<serde_json::Value>>>>,
 
     #[serde(rename = "extract colors")]
@@ -32,6 +34,7 @@ pub struct Configuration {
 
     pub media: Media,
 
+    /// Path to the directory containing all projects. Must be absolute.
     #[serde(rename = "projects at")]
     pub projects_at: String,
 

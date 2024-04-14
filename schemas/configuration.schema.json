@@ -57,13 +57,15 @@
           ]
         },
         "projects at": {
-          "type": "string"
+          "type": "string",
+          "description": "Path to the directory containing all projects. Must be absolute."
         },
         "exporters": {
           "additionalProperties": {
             "type": "object"
           },
-          "type": "object"
+          "type": "object",
+          "description": "Exporter-specific configuration. Maps exporter names to their configuration."
         }
       },
       "additionalProperties": false,
@@ -78,7 +80,8 @@
         "tags",
         "technologies",
         "projects at"
-      ]
+      ],
+      "description": "Configuration represents what the ortfodb.yaml configuration file describes."
     },
     "ExtractColorsConfiguration": {
       "properties": {

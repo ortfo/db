@@ -45,11 +45,22 @@ def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
 
 
 class Attributes:
+    """MediaAttributes stores which HTML attributes should be added to the media."""
+
     autoplay: bool
+    """Controlled with attribute character > (adds)"""
+
     controls: bool
+    """Controlled with attribute character = (removes)"""
+
     loop: bool
+    """Controlled with attribute character ~ (adds)"""
+
     muted: bool
+    """Controlled with attribute character > (adds)"""
+
     playsinline: bool
+    """Controlled with attribute character = (adds)"""
 
     def __init__(self, autoplay: bool, controls: bool, loop: bool, muted: bool, playsinline: bool) -> None:
         self.autoplay = autoplay
@@ -79,6 +90,8 @@ class Attributes:
 
 
 class Colors:
+    """ColorPalette reprensents the object in a Work's metadata.colors."""
+
     primary: str
     secondary: str
     tertiary: str
@@ -105,9 +118,16 @@ class Colors:
 
 
 class Dimensions:
+    """ImageDimensions represents metadata about a media as it's extracted from its file."""
+
     aspect_ratio: float
+    """width / height"""
+
     height: int
+    """Height in pixels"""
+
     width: int
+    """Width in pixels"""
 
     def __init__(self, aspect_ratio: float, height: int, width: int) -> None:
         self.aspect_ratio = aspect_ratio
@@ -149,21 +169,29 @@ class Thumbnails:
 class BlockElement:
     alt: str
     analyzed: bool
+    """whether the media has been analyzed"""
+
     anchor: str
     attributes: Attributes
     caption: str
     colors: Colors
     content: str
+    """html"""
+
     content_type: str
     dimensions: Dimensions
     dist_source: str
     duration: float
+    """in seconds"""
+
     has_sound: bool
     id: str
     index: int
     online: bool
     relative_source: str
     size: int
+    """in bytes"""
+
     text: str
     thumbnails: Thumbnails
     thumbnails_built_at: str
@@ -284,6 +312,7 @@ class ContentValue:
 
 class DatabaseMetadataClass:
     partial: bool
+    """Partial is true if the database was not fully built."""
 
     def __init__(self, partial: bool) -> None:
         self.partial = partial
@@ -367,6 +396,8 @@ class Metadata:
 
 
 class DatabaseValue:
+    """AnalyzedWork represents a complete work, with analyzed mediae."""
+
     built_at: str
     content: Dict[str, ContentValue]
     description_hash: str

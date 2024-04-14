@@ -30,13 +30,15 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Files contains a list of gitignore-style patterns. If the work contains any of the patterns specified, we consider that technology to be used in the work."
         },
         "autodetect": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Autodetect contains an expression of the form 'CONTENT in PATH' where CONTENT is a free-form unquoted string and PATH is a filepath relative to the work folder.\nIf CONTENT is found in PATH, we consider that technology to be used in the work."
         }
       },
       "additionalProperties": false,

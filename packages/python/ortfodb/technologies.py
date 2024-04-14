@@ -22,9 +22,16 @@ def to_class(c: Type[T], x: Any) -> dict:
 class Technology:
     aliases: List[str]
     autodetect: List[str]
+    """Autodetect contains an expression of the form 'CONTENT in PATH' where CONTENT is a
+    free-form unquoted string and PATH is a filepath relative to the work folder.
+    If CONTENT is found in PATH, we consider that technology to be used in the work.
+    """
     by: str
     description: str
     files: List[str]
+    """Files contains a list of gitignore-style patterns. If the work contains any of the
+    patterns specified, we consider that technology to be used in the work.
+    """
     learn_more_at: str
     name: str
     slug: str
