@@ -54,17 +54,7 @@ type Configuration struct {
 	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
 	// Signals whether the configuration was instanciated by DefaultConfiguration.
 	IsDefault bool `yaml:"-"`
-	// Markdown struct {
-	// 	Abbreviations      bool                                  `yaml:"abbreviations"`
-	// 	DefinitionLists    bool                                  `yaml:"definition lists"`
-	// 	Admonitions        bool                                  `yaml:"admonitions"`
-	// 	Footnotes          bool                                  `yaml:"footnotes"`
-	// 	MarkdownInHTML     bool                                  `yaml:"markdown in html"`
-	// 	NewLineToLineBreak bool                                  `yaml:"new-line-to-line-break"`
-	// 	SmartyPants        bool                                  `yaml:"smarty pants"`
-	// 	AnchoredHeadings   configurationMarkdownAnchoredHeadings `yaml:"anchored headings"`
-	// 	CustomSyntaxes     []configurationMarkdownCustomSyntax   `yaml:"custom syntaxes"`
-	// }
+
 	Tags struct {
 		// Path to file describing all tags.
 		Repository string `yaml:"repository"`
@@ -77,6 +67,9 @@ type Configuration struct {
 
 	// Path to the directory containing all projects. Must be absolute.
 	ProjectsDirectory string `yaml:"projects at"`
+
+	// Exporter-specific configuration. Maps exporter names to their configuration.
+	Exporters map[string]map[string]interface{} `yaml:"exporters,omitempty"`
 
 	// Where was the configuration loaded from
 	source string

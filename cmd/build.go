@@ -14,6 +14,15 @@ func init() {
 	buildCmd.PersistentFlags().StringVar(&flags.ProgressInfoFile, "write-progress", "", "Write progress information to a file. See https://pkg.go.dev/github.com/ortfo/db#ProgressInfoEvent for more information.")
 	buildCmd.PersistentFlags().BoolVar(&flags.NoCache, "no-cache", false, "Disable usage of previous database build as cache for this build (used for media analysis among other things).")
 	buildCmd.PersistentFlags().IntVar(&flags.WorkersCount, "workers", runtime.NumCPU(), "Use <count> workers to build the database. Defaults to the number of CPU cores.")
+	buildCmd.PersistentFlags().StringArrayVarP(&flags.ExportersToUse, "exporters", "e", []string{}, "Exporters to enable. If not provided, all the exporters configured in the configuration file will be enabled.")
+	buildCmd.RegisterFlagCompletionFunc("exporters", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		config, err := ortfodb.NewConfiguration(flags.Config)
+		if err != nil {
+			handleError(err)
+		}
+		//TODO omit already enabled exporters
+		return keys(config.Exporters), cobra.ShellCompDirectiveNoFileComp
+	})
 	rootCmd.AddCommand(buildCmd)
 }
 

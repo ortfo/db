@@ -24,12 +24,20 @@ func indentSubsequent(size int, text string) string {
 	return strings.ReplaceAll(text, "\n", "\n"+indentation)
 }
 
+func ExporterLogCustom(exporter Exporter, verb string, color string, message string, fmtArgs ...interface{}) {
+	if os.Getenv("DEBUG") == "1" {
+		LogCustom(verb, color, fmt.Sprintf("[dim][bold](from exporter %s)[reset] %s", exporter.Name(), message), fmtArgs...)
+	} else {
+		LogCustom(verb, color, message, fmtArgs...)
+	}
+}
+
 func LogCustom(verb string, color string, message string, fmtArgs ...interface{}) {
 	fmt.Fprintln(logWriter(), colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset] %s", color, verb, indentSubsequent(15+1, fmt.Sprintf(message, fmtArgs...)))))
 }
 
 // DisplayValidationErrors takes in a slice of json schema validation errors and displays them nicely to in the terminal.
-func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string) {
+func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string, rootPath ...string) {
 	println("Your " + filename + " file is invalid. Here are the validation errors:\n")
 	for _, err := range errors {
 		/* FIXME: having a "." in the field name fucks up the display: eg:
@@ -43,9 +51,21 @@ func DisplayValidationErrors(errors []gojsonschema.ResultError, filename string)
 		   - 0/media/fr/FR/2/online
 		   Invalid type. Expected: boolean, given: string
 		*/
-		colorstring.Println("- " + strings.ReplaceAll(err.Field(), ".", "[blue][bold]/[reset]"))
+		colorstring.Println("- " + strings.ReplaceAll(displayValidationErrorFieldPath(err.Field(), rootPath...), ".", "[blue][bold]/[reset]"))
 		colorstring.Println("    [red]" + err.Description())
 	}
+}
+
+func displayValidationErrorFieldPath(field string, rootPath ...string) string {
+	if field == "(root)" {
+		field = ""
+	}
+	for i, fragment := range rootPath {
+		if strings.Contains(fragment, "/") {
+			rootPath[i] = fmt.Sprintf("%q", fragment)
+		}
+	}
+	return strings.Join(append(rootPath, field), "/")
 }
 
 // LogError logs non-fatal errors.

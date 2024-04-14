@@ -1,0 +1,16 @@
+name: SSH Upload
+data:
+    # set to true to only print the commands, not execute them
+    dry run: false
+    # set to true to enable debugging output for this exporter
+    verbose: true
+    # please set this to user@host:/path/to/database.json
+    ssh:
+after:
+    - log: [Uploading, blue, 'to {{ index .Data "ssh" }}']
+    - run: >-
+          {{ if .DryRun }} echo {{end}}
+          scp
+          {{ if .Verbose }} -v {{ end }}
+          {{ .Ctx.OutputDatabaseFilename }}
+          {{ index .Data "ssh" }}'

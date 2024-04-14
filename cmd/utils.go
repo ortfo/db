@@ -52,3 +52,11 @@ func handleControlC(outputFilepath string, context *ortfodb.RunContext) {
 		}
 	}()
 }
+
+func keys[K comparable, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}

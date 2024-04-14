@@ -1,7 +1,8 @@
 package ortfodb
 
 import (
-	"io/ioutil"
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -15,12 +16,7 @@ import (
 
 // readFileBytes reads the content of filename and returns the contents as a byte array.
 func readFileBytes(filename string) ([]byte, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer file.Close()
-	b, err := ioutil.ReadAll(file)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -209,4 +205,29 @@ func stringsLooselyMatch(s string, needles ...string) bool {
 		}
 	}
 	return false
+}
+
+func downloadFile(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	contents, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(contents), nil
+}
+
+func ensureHttpPrefix(url string) string {
+	if !isValidURL(url) {
+		if strings.HasPrefix(url, "localhost") || strings.HasPrefix(url, "127.0.0.") {
+			return "http://" + url
+		} else {
+			return "https://" + url
+		}
+	}
+	return url
 }

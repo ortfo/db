@@ -144,6 +144,7 @@ type RunContext struct {
 	Flags                 Flags
 	BuildMetadata         BuildMetadata
 	ProgressInfoFile      string
+	Exporters             []Exporter
 
 	TagsRepository         []Tag
 	TechnologiesRepository []Technology
@@ -157,6 +158,7 @@ type Flags struct {
 	NoCache          bool
 	WorkersCount     int
 	ProgressInfoFile string
+	ExportersToUse   []string
 }
 
 // Project represents a project.
@@ -209,6 +211,20 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		}
 	}
 
+	exportersToUse := flags.ExportersToUse
+	if len(exportersToUse) == 0 {
+		exportersToUse = mapKeys(config.Exporters)
+	}
+
+	for _, exporterName := range exportersToUse {
+		exporter, err := ctx.FindExporter(exporterName)
+		if err != nil {
+			return &ctx, fmt.Errorf("while finding exporter %s: %w", exporterName, err)
+		}
+
+		ctx.Exporters = append(ctx.Exporters, exporter)
+	}
+
 	ctx.LogDebug("Running with configuration %#v", &config)
 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
@@ -246,6 +262,18 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		return &ctx, fmt.Errorf("another ortfo build is in progress (could not acquire build lock): %w", err)
 	}
 
+	for _, exporter := range ctx.Exporters {
+		options, err := ctx.ExporterOptions(exporter)
+		if err != nil {
+			return &ctx, err
+		}
+
+		err = exporter.Before(&ctx, options)
+		if err != nil {
+			return &ctx, fmt.Errorf("while running exporter %s before hook: %w", exporter.Name(), err)
+		}
+	}
+
 	return &ctx, nil
 }
 
@@ -270,6 +298,20 @@ func directoriesLeftToBuild(all []string, built []string) []string {
 		}
 	}
 	return remaining
+}
+
+func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
+	for _, exporter := range ctx.Exporters {
+		if os.Getenv("DEBUG") == "1" {
+			LogCustom("Exporting", "magenta", "%s to %s", work.ID, exporter.Name())
+		}
+		options, _ := ctx.Config.Exporters[exporter.Name()]
+		err := exporter.Export(ctx, options, work)
+		if err != nil {
+			return fmt.Errorf("while exporting %s: %w", exporter.Name(), err)
+		}
+	}
+	return nil
 }
 
 func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
@@ -343,6 +385,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 						// Skip it!
 						// ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
 						ctx.Status(workID, PhaseUnchanged)
+						ctx.RunExporters(&oldWork)
 					} else {
 						ctx.Status(workID, PhaseBuilding)
 						// Build it
@@ -352,6 +395,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
 							continue
 						}
+						ctx.RunExporters(&newWork)
 						ctx.Status(workID, PhaseBuilt)
 
 						// Set meta-info
@@ -398,8 +442,14 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 		ctx.LogDebug("main: built dirs: %d out of %d", len(builtDirectories), len(workDirectories))
 		ctx.LogDebug("main: left to build: %v", directoriesLeftToBuild(workDirectoriesNames, builtDirectories))
 	}
-	return works, nil
 
+	for _, exporter := range ctx.Exporters {
+		ctx.LogDebug("Running exporter %s's after hook", exporter.Name())
+		options := ctx.Config.Exporters[exporter.Name()]
+		exporter.After(ctx, options, &works)
+	}
+
+	return works, nil
 }
 
 func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename string, partial bool) {
