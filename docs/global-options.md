@@ -12,9 +12,9 @@ Manage your portfolio's database — See https://github.com/ortfo/db for more in
 
 ## Examples
 
-```
-  $ ortfodb --config .ortfodb.yaml build database.json
-  $ ortfodb add my-project
+```shellsession
+$ ortfodb --config .ortfodb.yaml build database.json
+$ ortfodb add my-project
 ```
 
 ## Options
