@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- tags.repository and technologies.repository now handle expansion of /home/uwun and ~user
+- tags.repository and technologies.repository now handle expansion of ~ and ~user
 
 ## [1.2.0] - 2024-04-14
 
