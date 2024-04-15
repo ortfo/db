@@ -11,6 +11,10 @@ install:
 	cp ortfodb ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
+docs:
+	mkdir -p docs manpages
+	./ortfodb makedocs
+
 render-demo-gif:
 	#!/usr/bin/env bash
 	set -euxo pipefail
@@ -22,6 +26,7 @@ render-demo-gif:
 prepare-release $VERSION:
 	./tools/update_meta_go.py $VERSION
 	just build
+	just docs
 	./tools/generate_schemas.py
 	./tools/build_readme.py
 	just build-packages $VERSION

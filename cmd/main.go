@@ -8,6 +8,7 @@ import (
 	"github.com/muesli/reflow/indent"
 	ortfodb "github.com/ortfo/db"
 	"github.com/spf13/cobra"
+	cobradoc "github.com/spf13/cobra/doc"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -31,6 +32,16 @@ func init() {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "makedocs" {
+		cobradoc.GenMarkdownTree(rootCmd, "./docs")
+		cobradoc.GenManTree(rootCmd, &cobradoc.GenManHeader{
+			Title:   "ORTFODB",
+			Section: "1",
+			Source:  "https://ortfo.org/db",
+			Manual:  "ortfo/db Manual",
+		}, "./manpages")
+		os.Exit(0)
+	}
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
