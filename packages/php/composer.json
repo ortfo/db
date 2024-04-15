@@ -1,0 +1,20 @@
+{
+    "name": "ortfo/db",
+    "description": "ortfo/db client library, exported from ortfo's JSON schemas",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Ortfo\\Db\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ewen Le Bihan",
+            "email": "hey@ewen.works"
+        }
+    ],
+    "require": {
+		"php": ">=8.0.0"
+	}
+}

@@ -38,11 +38,35 @@ publish-packages:
 	cd packages/python; poetry publish
 	cd packages/typescript; npm publish
 	cd packages/rust; cargo publish
+	cd packages/ruby; gem push ortfodb-*.gem; rm ortfodb-*.gem
+	# TODO: PHP. Packagist wants the repo all to itself, so I have to create a new repo, copy the code in it; etc.
 
 build-packages version:
 	just build-typescript {{version}}
 	just build-python {{version}}
 	just build-rust {{version}}
+	just build-php {{version}}
+
+build-php version:
+	#!/usr/bin/env bash
+	set -euxo pipefail
+	for schema in schemas/*.schema.json; do
+		pascal_case=$(basename $schema .schema.json | sed -re 's/(^|-)([a-z])/\U\2/g')
+		quicktype --src-lang schema -l php $schema -o packages/php/src/$pascal_case.php
+		sed -i 's/<?php/<?php\n\nnamespace Ortfo\\Db;/g' packages/php/src/$pascal_case.php
+	done
+	cd packages/php
+	composer install
+
+build-ruby version:
+	#!/usr/bin/env bash
+	set -euxo pipefail
+	for schema in schemas/*.schema.json; do
+		quicktype --src-lang schema -l ruby $schema -o packages/ruby/lib/ortfodb/$(basename $schema .schema.json).rb --namespace Ortfodb
+	done
+	cd packages/ruby
+	printf 'module Ortfodb\n\tVERSION = "%s"\nend\n' {{ version }} > lib/ortfodb/version.rb
+	gem build ortfodb.gemspec
 
 build-typescript version:
 	#!/usr/bin/env bash
