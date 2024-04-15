@@ -168,11 +168,11 @@ func printFlagGroupOptions(f *pflag.FlagSet, buf *bytes.Buffer) string {
 		}
 
 		line := ""
-		// We use &dash;&dash; instead of -- to avoid markdown "smarty pants" conversion of -- into &mdash;/&ndash;
+		// We use &hyphen;&hyphen; instead of -- to avoid markdown "smarty pants" conversion of -- into &mdash;/&ndash;
 		if flag.Shorthand != "" && flag.ShorthandDeprecated == "" {
-			line = fmt.Sprintf("| -%s | &dash;&dash;%s ", flag.Shorthand, flag.Name)
+			line = fmt.Sprintf("| -%s | &hyphen;&hyphen;%s ", flag.Shorthand, flag.Name)
 		} else {
-			line = fmt.Sprintf("| | &dash;&dash;%s ", flag.Name)
+			line = fmt.Sprintf("| | &hyphen;&hyphen;%s ", flag.Name)
 		}
 
 		varname, usage := pflag.UnquoteUsage(flag)

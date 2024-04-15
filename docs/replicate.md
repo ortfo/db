@@ -23,15 +23,15 @@ ortfodb replicate <from-filepath> <to-filepath> [flags]
 
 | Shorthand | Flag | Argument | Description | Default value |
 | --- | --- | --- | --- | --- |
-| -h | &dash;&dash;help | | help for replicate 
-| -n | &dash;&dash;no-verify | | Don't try to validate the built database file before replicating 
+| -h | &hyphen;&hyphen;help | | help for replicate 
+| -n | &hyphen;&hyphen;no-verify | | Don't try to validate the built database file before replicating 
 
 ## Options inherited from parent commands
 
 | Shorthand | Flag | Argument | Description | Default value |
 | --- | --- | --- | --- | --- |
-| -c | &dash;&dash;config | string | config file path | ortfodb.yaml
-| | &dash;&dash;scattered | | Operate in scattered mode. In scattered mode, the description.md files are searched inside `.ortfo' folders in every folder of the database directory, instead of directly in the database directory's folders. See https://github.com/ortfo/ 
+| -c | &hyphen;&hyphen;config | string | config file path | ortfodb.yaml
+| | &hyphen;&hyphen;scattered | | Operate in scattered mode. In scattered mode, the description.md files are searched inside `.ortfo' folders in every folder of the database directory, instead of directly in the database directory's folders. See https://github.com/ortfo/ 
 
 ## See also
 

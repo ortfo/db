@@ -21,9 +21,9 @@ Manage your portfolio's database — See https://github.com/ortfo/db for more in
 
 | Shorthand | Flag | Argument | Description | Default value |
 | --- | --- | --- | --- | --- |
-| -c | &dash;&dash;config | string | config file path | ortfodb.yaml
-| -h | &dash;&dash;help | | help for ortfodb 
-| | &dash;&dash;scattered | | Operate in scattered mode. In scattered mode, the description.md files are searched inside `.ortfo' folders in every folder of the database directory, instead of directly in the database directory's folders. See https://github.com/ortfo/ 
+| -c | &hyphen;&hyphen;config | string | config file path | ortfodb.yaml
+| -h | &hyphen;&hyphen;help | | help for ortfodb 
+| | &hyphen;&hyphen;scattered | | Operate in scattered mode. In scattered mode, the description.md files are searched inside `.ortfo' folders in every folder of the database directory, instead of directly in the database directory's folders. See https://github.com/ortfo/ 
 
 ## See also
 
