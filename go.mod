@@ -65,6 +65,7 @@ require (
 require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/PuerkitoBio/goquery v1.9.1 // indirect
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/gen2brain/go-fitz v1.23.7
 	github.com/hullerob/go.farbfeld v0.0.0-20181222022525-3661193c725f

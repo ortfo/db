@@ -33,7 +33,9 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "makedocs" {
-		cobradoc.GenMarkdownTree(rootCmd, "./docs")
+
+		GenMarkdownTree(rootCmd, "./docs")
+
 		cobradoc.GenManTree(rootCmd, &cobradoc.GenManHeader{
 			Title:   "ORTFODB",
 			Section: "1",
