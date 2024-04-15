@@ -124,6 +124,16 @@ func NewConfiguration(filename string) (Configuration, error) {
 		return Configuration{}, fmt.Errorf("while expanding home symbol for project at: %w", err)
 	}
 
+	config.Tags.Repository, err = homedir.Expand(config.Tags.Repository)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("while expanding home symbol for tags repository at: %w", err)
+	}
+
+	config.Technologies.Repository, err = homedir.Expand(config.Technologies.Repository)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("while expanding home symbol for technologies repository at: %w", err)
+	}
+
 	// Make sure the project directory exists, is a directory and is absolute.
 	err = checkProjectsDirectory(config)
 	if err != nil {
