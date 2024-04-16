@@ -22,5 +22,7 @@ Commands related to ortfo/db exporters
 ## See also
 
 * [ortfodb](global-options.md)	 - Manage your portfolio's database
+* [ortfodb exporters doc](exporters-doc.md)	 - Get help for a specific exporter
 * [ortfodb exporters init](exporters-init.md)	 - Create a new exporter
+* [ortfodb exporters list](exporters-list.md)	 - List all available exporters
 

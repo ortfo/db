@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2024-04-16
+
 ### Added
 
 - exporters: sub-commands list and doc
@@ -91,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 [Unreleased]: https://github.com/ortfo/db/compare/v1.3.0...HEAD
+[1.4.0]: https://github.com/ortfo/db/-/releases/tag/v1.4.0
 [1.3.0]: https://github.com/ortfo/db/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/ortfo/db/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ortfo/db/compare/v1.0.0...v1.1.0
@@ -101,3 +104,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
 [//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
+
+[unreleased]: https://github.com/ortfo/db/-/compare/v1.4.0...main
