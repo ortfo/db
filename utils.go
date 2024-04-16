@@ -212,18 +212,18 @@ func stringsLooselyMatch(s string, needles ...string) bool {
 	return false
 }
 
-func downloadFile(url string) (string, error) {
+func downloadFile(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 
 	contents, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
-	return string(contents), nil
+	return contents, nil
 }
 
 func ensureHttpPrefix(url string) string {

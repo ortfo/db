@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -16,15 +17,14 @@ import (
 type CustomExporter struct {
 	data     map[string]any
 	name     string
-	manifest ExporterManifest
+	Manifest ExporterManifest
 	verbose  bool
 	dryRun   bool
-	cwd      string
 }
 
 func (e *CustomExporter) VerifyRequiredPrograms() error {
-	missingPrograms := make([]string, 0, len(e.manifest.Requires))
-	for _, program := range e.manifest.Requires {
+	missingPrograms := make([]string, 0, len(e.Manifest.Requires))
+	for _, program := range e.Manifest.Requires {
 		_, err := exec.LookPath(program)
 		if err != nil {
 			missingPrograms = append(missingPrograms, program)
@@ -41,11 +41,11 @@ func (e *CustomExporter) Name() string {
 }
 
 func (e *CustomExporter) Description() string {
-	return e.manifest.Description
+	return e.Manifest.Description
 }
 
 func (e *CustomExporter) OptionsType() any {
-	return e.manifest.Data
+	return e.Manifest.Data
 }
 
 func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
@@ -54,19 +54,19 @@ func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	if err != nil {
 		return err
 	}
-	return e.runCommands(ctx, e.manifest.Verbose, e.manifest.Before, map[string]any{})
+	return e.runCommands(ctx, e.Manifest.Verbose, e.Manifest.Before, map[string]any{})
 
 }
 
 func (e *CustomExporter) Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error {
-	return e.runCommands(ctx, e.verbose, e.manifest.Work, map[string]any{
+	return e.runCommands(ctx, e.verbose, e.Manifest.Work, map[string]any{
 		"Work": work,
 	})
 }
 
 func (e *CustomExporter) After(ctx *RunContext, opts ExporterOptions, db *Database) error {
 
-	return e.runCommands(ctx, e.verbose, e.manifest.After, map[string]any{
+	return e.runCommands(ctx, e.verbose, e.Manifest.After, map[string]any{
 		"Database": db,
 	})
 }
@@ -83,7 +83,7 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 			}
 
 			proc := exec.Command("bash", "-c", commandline)
-			proc.Dir = e.cwd
+			proc.Dir = filepath.Dir(ctx.Config.source)
 			stderr, _ := proc.StderrPipe()
 			stdout, _ := proc.StdoutPipe()
 			err := proc.Start()
