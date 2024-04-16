@@ -1,0 +1,12 @@
+name: Copy
+description: Copy the output database file to one or more locations
+
+data:
+    paths: []
+
+after:
+  - log: [Copying, cyan, 'database to [bold]{{ index .Data "paths" | join ", " }}[reset]']
+  - run: >-
+        {{ range $path := index .Data "paths" }}
+            cp {{ if $.Verbose}}-v{{end}} {{ $.Ctx.OutputDatabaseFile }} {{$path}}
+        {{ end }}

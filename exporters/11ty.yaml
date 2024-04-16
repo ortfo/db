@@ -1,0 +1,10 @@
+name: 11ty (WIP)
+description: Export data template directory files for use in 11ty.js (Work in progress, never tested but should work fine)
+
+data:
+   # will write JSON for individual works at projects/<work id>.11tydata.json
+  in: projects/
+
+work:
+  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for 11ty to [bold]{{ index .Data "in" }}/{{.Work.ID}}.11tydata.json[reset]{{end}}']
+  - run: echo {{ .Work | json | escape }} > {{ index .Data "in" }}/{{.Work.ID}}.11tydata.json

@@ -1,0 +1,20 @@
+name: Hugo
+description: Export each work as a data file for use in Hugo's Data templates
+
+
+data:
+  # will write JSON for individual works at data/<work id>.json
+  in: data/works
+  # how to call the index file, relative to the first directory of the `in`
+  index: index.json
+
+before:
+  - run: mkdir -p {{ index .Data "in" }}
+
+work:
+  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for Hugo to [bold]{{ index .Data "in" }}/{{.Work.ID}}.json[reset]{{end}}']
+  - run: echo {{ .Work | json | escape }} > {{ index .Data "in" }}/{{.Work.ID}}.json
+
+after:
+  - log: [Exporting, cyan, '{{ if .Verbose}}Index database to {{ index .Data "in" | splitList "/" | first }}/{{ index .Data "index" }}{{ end }}']
+  - run: echo {{ .Database.AsSlice | json | escape }} > {{ index .Data "in" | splitList "/" | first }}/{{ index .Data "index" }}
