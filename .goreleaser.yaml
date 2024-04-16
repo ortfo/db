@@ -117,7 +117,7 @@ aurs:
           install -Dm644 "./completions/ortfodb.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/ortfodb.fish"
 
           # man pages
-          for manpage in manpages; do
+          for manpage in manpages/*; do
               install -Dm644 "$manpage" "${pkgdir}/usr/share/man/man1/$(basename manpage)"
           done
 
