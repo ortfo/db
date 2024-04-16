@@ -71,7 +71,7 @@ nfpms:
         recommends: [gifsicle, poppler-utils]
       apk:
         dependencies: [imagemagick, ffmpeg]
-        recommends: [gifsicle, poppler-utils]
+        recommends: [gifsicle, poppler]
       archlinux:
         dependencies: [imagemagick, ffmpeg]
         recommends: [gifsicle, poppler]
@@ -145,26 +145,33 @@ aurs:
 #           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
 #       grade: stable
 
-# chocolateys:
-#     - name: ortfodb
-#       package_source_url: https://github.com/ortfo/db
-#       owners: Ewen Le Bihan
-#       title: ortfo/db
-#       authors: Ewen Le Bihan
-#       project_url: https://ortfo.org
-#       url_template: "https://github.com/ortfo/db/releases/download/download/{{ .Tag }}/{{ .ArtifactName }}"
-#       icon_url: https://ortfo.org/android-chrome-512x512.png
-#       license_url: https://github.com/ortfo/db/blob/main/LICENSE
-#       docs_url: https://ortfo.org/db
-#       bug_tracker_url: https://github.com/ortfo/db/issues
-#       summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
-#       description: |
-#           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
-#       release_notes: https://ortfo.org/db/changelog#{{ .Version }}
-#       # TODO
-#       # dependencies:
-#       api_key: "{{ .Env.CHOCO_API_KEY }}"
-#       source_repo: https://push.chocolatey.org
+chocolateys:
+    - name: ortfodb
+      package_source_url: https://github.com/ortfo/db
+      owners: Ewen Le Bihan
+      title: ortfo/db
+      authors: Ewen Le Bihan
+      project_url: https://ortfo.org
+      url_template: "https://github.com/ortfo/db/releases/download/download/{{ .Tag }}/{{ .ArtifactName }}"
+      icon_url: https://ortfo.org/android-chrome-512x512.png
+      license_url: https://github.com/ortfo/db/blob/main/LICENSE
+      docs_url: https://ortfo.org/db
+      bug_tracker_url: https://github.com/ortfo/db/issues
+      summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      description: |
+          ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
+      release_notes: https://ortfo.org/db/changelog#{{ .Version }}
+      dependencies:
+          - id: ffmpeg
+            version: 7.0.0
+          - id: imagemagick
+            version: 7.1.1.2900
+          - id: gifsicle # optional
+            version: 1.95.0
+        # poppler-utils: not found
+        # poppler: idk if it's just the lib or if it provides pdftoppm
+      api_key: "{{ .Env.CHOCO_API_KEY }}"
+      source_repo: https://push.chocolatey.org
 
 scoops:
     - name: ortfodb
@@ -172,6 +179,7 @@ scoops:
       homepage: https://ortfo.org
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
       license: MIT
+      depends: [imagemagick, ffmpeg] #optional: gifsicle #not in repos: poppler-utils
       repository:
           owner: ortfo
           name: scoop-ortfodb
@@ -201,12 +209,19 @@ brews:
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
-      # TODO dependencies
+      dependencies:
+          - name: ffmpeg
+          - name: imagemagick
+          - name: gifsicle
+            type: optional
+          - name: poppler
+            type: optional
       repository:
           owner: ortfo
           name: homebrew-ortfodb
       homepage: https://ortfo.org
 
+# TODO
 nix:
     - name: ortfodb
       commit_author:
@@ -217,7 +232,12 @@ nix:
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: mit
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
-      # TODO dependencies
+      path: default.nix
+      dependencies:
+          - ffmpeg_5-full
+          - imagemagick
+            # - gifsicle optional
+            # - poppler_utils optional
       repository:
           owner: ortfo
           name: nix-ortfodb
@@ -237,7 +257,13 @@ winget:
 
       tags: [cli]
 
-      # TODO dependencies
+      dependencies:
+          - package_identifier: Gyan.FFmpeg
+            minimum_version: "6.0"
+          - package_identifier: ImageMagick.ImageMagick
+            minimum_version: "7.1.1.3"
+          # gifsicle: not found
+          # poppler(-utils) or pdftoppm: not found
 
       repository:
           owner: ortfo
