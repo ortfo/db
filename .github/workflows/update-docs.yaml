@@ -8,6 +8,8 @@ on:
 jobs:
     update-docs:
         runs-on: ubuntu-latest
+        permissions:
+            repository-projects: write
         steps:
             - name: Trigger submodule update on docs
               uses: peter-evans/repository-dispatch@v3
