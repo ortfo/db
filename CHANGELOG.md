@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - exporters init command: bootstrap a new exporter manifest file
 - exporters: [sprig](https://masterminds.github.io/sprig/) functions are now available in templates, along with shell-escape strings
+- env variables ORTFO_DEBUG and ORTFODB_DEBUG can now be used as alternatives to DEBUG to enable debug mode. as with DEBUG, the value must be "1" to enable debug mode
 
 ### Fixed
 

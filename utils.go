@@ -238,5 +238,5 @@ func ensureHttpPrefix(url string) string {
 }
 
 func debugging() bool {
-	return os.Getenv("DEBUG") == "1"
+	return os.Getenv("DEBUG") == "1" || os.Getenv("ORTFO_DEBUG") == "1" || os.Getenv("ORTFODB_DEBUG") == "1"
 }
