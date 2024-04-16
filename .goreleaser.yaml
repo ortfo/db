@@ -62,7 +62,7 @@ nfpms:
       formats: [apk, deb, rpm, termux.deb, archlinux]
       dependencies: [magick, ffmpeg, ffprobe]
       recommends: [gifsicle, pdftoppm]
-      release: "3"
+      release: '{{ if index .Env "REL"}}{{ .Env.REL }}{{ else }}1{{ end }}'
       contents:
           - src: manpages
             dst: /usr/share/man/man1
@@ -93,7 +93,7 @@ aurs:
       maintainers:
           - Ewen Le Bihan <ortfo@ewen.works>
       license: MIT
-      rel: "3"
+      rel: '{{ if index .Env "REL"}}{{ .Env.REL }}{{ else }}1{{ end }}'
       private_key: "{{ .Env.AUR_KEY }}"
       git_url: "ssh://aur@aur.archlinux.org/ortfodb-bin.git"
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
