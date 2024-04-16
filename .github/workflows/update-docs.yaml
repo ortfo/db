@@ -1,0 +1,20 @@
+name: Update docs website
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    update-docs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Trigger ortfo/website build workflow
+              uses: actions/github-script@v6
+              with:
+                script: |
+                    github.rest.actions.createWorkflowDispatch({
+                        owner: context.repo.owner,
+                        repo: 'website',
+                        workflow_id: 'build.yml',
+                        ref: 'main'
+                    })
