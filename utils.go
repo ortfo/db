@@ -236,3 +236,7 @@ func ensureHttpPrefix(url string) string {
 	}
 	return url
 }
+
+func debugging() bool {
+	return os.Getenv("DEBUG") == "1"
+}

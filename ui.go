@@ -25,7 +25,7 @@ func indentSubsequent(size int, text string) string {
 }
 
 func ExporterLogCustom(exporter Exporter, verb string, color string, message string, fmtArgs ...interface{}) {
-	if os.Getenv("DEBUG") == "1" {
+	if debugging() {
 		LogCustom(verb, color, fmt.Sprintf("[dim][bold](from exporter %s)[reset] %s", exporter.Name(), message), fmtArgs...)
 	} else {
 		LogCustom(verb, color, message, fmtArgs...)
@@ -33,7 +33,7 @@ func ExporterLogCustom(exporter Exporter, verb string, color string, message str
 }
 
 func ExporterLogCustomNoFormatting(exporter Exporter, verb string, color string, message string) {
-	if os.Getenv("DEBUG") == "1" {
+	if debugging() {
 		LogCustomNoFormatting(verb, color, colorstring.Color("[dim][bold](from exporter "+exporter.Name()+")[reset] ")+message)
 	} else {
 		LogCustomNoFormatting(verb, color, message)

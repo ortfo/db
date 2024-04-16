@@ -303,7 +303,7 @@ func directoriesLeftToBuild(all []string, built []string) []string {
 
 func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
 	for _, exporter := range ctx.Exporters {
-		if os.Getenv("DEBUG") == "1" {
+		if debugging() {
 			LogCustom("Exporting", "magenta", "%s to %s", work.ID, exporter.Name())
 		}
 		options, _ := ctx.Config.Exporters[exporter.Name()]
