@@ -71,13 +71,14 @@ publish-client-libraries:
 package:
 	wget https://ortfo.org/android-chrome-512x512.png -O icon.png
 	printf 'FROM scratch\nENTRYPOINT ["ortfodb"]\nCOPY ortfodb /\n' > Dockerfile
-	AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release || rm icon.png Dockerfile; exit 1
+	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release || rm icon.png Dockerfile; exit 1
 	rm icon.png Dockerfile
 
 build-client-libraries version:
 	just build-typescript {{version}}
 	just build-python {{version}}
 	just build-rust {{version}}
+	just build-ruby {{version}}
 	just build-php {{version}}
 
 build-php version:
