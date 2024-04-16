@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/acarl005/stripansi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -67,7 +66,7 @@ editLink: false
 
 	if len(cmd.Example) > 0 {
 		buf.WriteString("## Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```shellsession\n%s\n```\n\n", trimEachLine(stripansi.Strip(cmd.Example))))
+		buf.WriteString(fmt.Sprintf("```ansi\n%s\n```\n\n", trimEachLine(cmd.Example)))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
@@ -227,4 +226,3 @@ func trimEachLine(s string) string {
 	}
 	return strings.Join(lines, "\n")
 }
-
