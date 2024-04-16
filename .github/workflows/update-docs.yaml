@@ -17,5 +17,5 @@ jobs:
                 client-payload: >
                     {
                         "sha": "${{github.sha}}",
-                        "module": "ortfodb",
+                        "module": "ortfodb"
                     }
