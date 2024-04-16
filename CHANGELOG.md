@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- exporters: sub-commands list and help
+- exporters: sub-commands list and doc
 - new exporter "webhook" to send a POST to some URL with the built database
 
 ### Changed
