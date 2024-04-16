@@ -14,6 +14,7 @@ jobs:
             - name: Trigger submodule update on docs
               uses: peter-evans/repository-dispatch@v3
               with:
+                token: ${{ secrets.PAT_PUSH_TO_ORTFO_WEBSITE }}
                 event-type: update-submodule
                 repository: ortfo/website
                 client-payload: >
