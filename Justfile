@@ -23,9 +23,19 @@ render-demo-gif:
 	jq 'delpaths([[".ortfo", ".centraverse", ".onset"]])' < database.json | sponge database.json
 	vhs ~/projects/ortfo/db/demo.tape -o ~/projects/ortfo/db/demo.gif
 
+update-completions:
+	#!/usr/bin/env bash
+	set -euxo pipefail
+	just build
+	mkdir -p completions
+	for shell in fish bash zsh; do
+		./ortfodb completion $shell > completions/ortfodb.$shell
+	done
+
 prepare-release $VERSION:
 	./tools/update_meta_go.py $VERSION
-	git add meta.go
+	just update-completions
+	git add meta.go completions/*
 	git commit -m "temp commit for release $VERSION"
 	git tag v$VERSION
 	# only build & create archives, publishing & packaging is done later.
