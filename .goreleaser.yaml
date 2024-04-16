@@ -60,21 +60,22 @@ nfpms:
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
       formats: [apk, deb, rpm, termux.deb, archlinux]
-      deb:
-        dependencies: [imagemagick, ffmpeg]
-        recommends: [gifsicle, poppler-utils]
-      termux.deb:
-        dependencies: [imagemagick, ffmpeg]
-        recommends: [gifsicle] #, poppler-utils] poppler-utils not available on termux
-      rpm:
-        dependencies: [imagemagick, ffmpeg-free]
-        recommends: [gifsicle, poppler-utils]
-      apk:
-        dependencies: [imagemagick, ffmpeg]
-        recommends: [gifsicle, poppler]
-      archlinux:
-        dependencies: [imagemagick, ffmpeg]
-        recommends: [gifsicle, poppler]
+      overrides:
+        deb:
+          dependencies: [imagemagick, ffmpeg]
+          recommends: [gifsicle, poppler-utils]
+        termux.deb:
+          dependencies: [imagemagick, ffmpeg]
+          recommends: [gifsicle] #, poppler-utils] poppler-utils not available on termux
+        rpm:
+          dependencies: [imagemagick, ffmpeg-free]
+          recommends: [gifsicle, poppler-utils]
+        apk:
+          dependencies: [imagemagick, ffmpeg]
+          recommends: [gifsicle, poppler]
+        archlinux:
+          dependencies: [imagemagick, ffmpeg]
+          recommends: [gifsicle, poppler]
 
       release: '{{ if index .Env "REL"}}{{ .Env.REL }}{{ else }}1{{ end }}'
       contents:
