@@ -7,6 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
+	"gopkg.in/alessio/shellescape.v1"
+
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -71,11 +74,11 @@ func (e *CustomExporter) After(ctx *RunContext, opts ExporterOptions, db *Databa
 func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []ExporterCommand, additionalData map[string]any) error {
 	for _, command := range commands {
 		if command.Run != "" {
-			commandline := e.renderCommandParts(ctx, []string{command.Run}, additionalData)[0]
+			commandline := e.renderCommandParts(ctx, []string{command.Run}, additionalData, true)[0]
 			if commandline == "" {
 				continue
 			}
-			if verbose {
+			if verbose && (len(commandline) <= 100 || debugging()) {
 				ExporterLogCustom(e, "Running", "yellow", commandline)
 			}
 
@@ -130,8 +133,10 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 				return fmt.Errorf("while running %s: %w", commandline, err)
 			}
 		} else {
-			logParts := e.renderCommandParts(ctx, command.Log, additionalData)
-			ExporterLogCustom(e, logParts[0], logParts[1], logParts[2])
+			logParts := e.renderCommandParts(ctx, command.Log, additionalData, true)
+			if strings.TrimSpace(logParts[2]) != "" {
+				ExporterLogCustom(e, logParts[0], logParts[1], logParts[2])
+			}
 		}
 	}
 	return nil
@@ -145,19 +150,26 @@ var funcmap = template.FuncMap{
 		}
 		return string(bytes)
 	},
+	"escape": func(data string) string {
+		return shellescape.Quote(data)
+	},
 }
 
-func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, additionalData map[string]any) []string {
+func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, additionalData map[string]any, recursive bool) []string {
 	output := make([]string, 0, len(commands))
 	for _, command := range commands {
-		tmpl, err := template.New("top").Funcs(funcmap).Parse(command)
+		tmpl, err := template.New("top").Funcs(sprig.TxtFuncMap()).Funcs(funcmap).Parse(command)
 		if err != nil {
 			ctx.DisplayError("custom exporter: while parsing command %s", err, command)
 			return []string{}
 		}
 		var buf strings.Builder
+		renderedData := e.data
+		if recursive {
+			renderedData = e.renderData(ctx)
+		}
 		err = tmpl.Execute(&buf, merge(additionalData, map[string]any{
-			"Data":    e.data,
+			"Data":    renderedData,
 			"Ctx":     ctx,
 			"Verbose": e.verbose,
 			"DryRun":  e.dryRun,
@@ -169,4 +181,17 @@ func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, 
 		output = append(output, buf.String())
 	}
 	return output
+}
+
+func (e *CustomExporter) renderData(ctx *RunContext) map[string]any {
+	rendered := make(map[string]any)
+	for key, value := range e.data {
+		switch value := value.(type) {
+		case string:
+			rendered[key] = e.renderCommandParts(ctx, []string{value}, map[string]any{}, false)[0]
+		default:
+			rendered[key] = value
+		}
+	}
+	return rendered
 }
