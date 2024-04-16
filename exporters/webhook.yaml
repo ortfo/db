@@ -1,0 +1,31 @@
+name: Webhook
+description: Trigger a webhook when the database is built. The webhook issues a POST request to the given URL, with the database contents as the body.
+
+requires:
+    - curl
+
+data:
+    # url to trigger on
+    url:
+    # addition headers to add to the request
+    headers: {}
+    dry run: false
+
+after:
+    - log:
+          - Triggering
+          - cyan
+          - 'webhook [bold]{{
+                index .Data "url"
+                | trimPrefix "http://"
+                | trimPrefix "https://"
+            }}[reset]'
+    - run: >-
+          {{if .DryRun}} echo {{end}}
+          curl -X POST
+          {{if not .Verbose }} -sS {{ end }}
+          -d @{{ .Ctx.OutputDatabaseFile }}
+          {{ range $name, $value := (index .Data "headers") }}
+          -H "{{ $name }}: {{ $value }}"
+          {{ end }}
+          {{ index .Data "url" }}
