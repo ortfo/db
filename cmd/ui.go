@@ -11,6 +11,7 @@ import (
 	"github.com/mitchellh/colorstring"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/term"
 )
 
 // Most functions in this file are copied from cobra/pflags' source code. All because setting a custom template for the usage line of flags is not possible :/
@@ -91,7 +92,6 @@ func customUsage(c *cobra.Command) error {
 	}
 	return err
 }
-
 
 // customFlagsUsage is functionnaly equivalent to pflag.FlagUsages but
 // with a different output format.
@@ -275,4 +275,15 @@ func wrapN(i, slop int, s string) (string, string) {
 		return s[:nlPos], s[nlPos+1:]
 	}
 	return s[:w], s[w+1:]
+}
+
+func terminalWidth(min, max int) (width int) {
+	width, _, _  = term.GetSize(0)
+	if width < min {
+		return min
+	}
+	if width > max {
+		return max
+	}
+	return
 }

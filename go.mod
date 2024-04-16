@@ -27,6 +27,7 @@ require (
 	github.com/ssttevee/go-ffmpeg v0.2.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	github.com/xeipuuv/gojsonschema v1.2.0
+	golang.org/x/term v0.19.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -69,7 +70,6 @@ require (
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
