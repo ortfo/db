@@ -63,6 +63,8 @@ nfpms:
       deb:
         dependencies: [imagemagick, ffmpeg]
         recommends: [gifsicle, poppler-utils]
+        fields:
+          Bugs: https://github.com/ortfo/db/issues
       termux.deb:
         dependencies: [imagemagick, ffmpeg]
         recommends: [gifsicle] #, poppler-utils] poppler-utils not available on termux
@@ -75,6 +77,7 @@ nfpms:
       archlinux:
         dependencies: [imagemagick, ffmpeg]
         recommends: [gifsicle, poppler]
+        packager: Ewen Le Bihan <ortfo@ewen.works>
 
       release: '{{ if index .Env "REL"}}{{ .Env.REL }}{{ else }}1{{ end }}'
       contents:
@@ -95,11 +98,6 @@ nfpms:
 
           - src: dist/{{ .Binary }}{{ .ArtifactExt }}
             dst: /usr/bin/ortfodb
-      deb:
-          fields:
-              Bugs: https://github.com/ortfo/db/issues
-      archlinux:
-          packager: Ewen Le Bihan <ortfo@ewen.works>
 
 aurs:
     - homepage: https://ortfo.org
