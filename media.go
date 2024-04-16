@@ -31,7 +31,7 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/gen2brain/go-fitz"
+	// "github.com/gen2brain/go-fitz" // FIXME requires cgo, which goreleaser has a hard time with
 	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
 	recurcopy "github.com/plus3it/gorecurcopy"
@@ -292,6 +292,8 @@ func AnalyzeAudio(file *os.File) uint {
 
 // AnalyzePDF returns an ImageDimensions struct for the first page of the PDF file at filename. It also returns the number of pages.
 func AnalyzePDF(filename string) (dimensions ImageDimensions, pagesCount uint, err error) {
+	return ImageDimensions{}, 0, errors.New("PDF analysis is disabled")
+	/* fitz requires cgo, which goreleaser has a hard time with.
 	document, err := fitz.New(filename)
 	if err != nil {
 		return dimensions, pagesCount, fmt.Errorf("while opening PDF: %w", err)
@@ -312,6 +314,7 @@ func AnalyzePDF(filename string) (dimensions ImageDimensions, pagesCount uint, e
 		Height:      int(height),
 		AspectRatio: float32(width) / float32(height),
 	}, uint(document.NumPage()), nil
+	*/
 }
 
 // AnalyzeVideo returns an ImageDimensions struct with the video's height, width and aspect ratio and a duration in seconds.

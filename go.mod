@@ -78,7 +78,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/PuerkitoBio/goquery v1.9.1 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
-	github.com/gen2brain/go-fitz v1.23.7
 	github.com/hullerob/go.farbfeld v0.0.0-20181222022525-3661193c725f
 	github.com/jbuchbinder/gopnm v0.0.0-20220507095634-e31f54490ce0
 	github.com/k3a/html2text v1.2.1
