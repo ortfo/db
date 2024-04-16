@@ -37,8 +37,12 @@ archives:
 #   - enabled: true
 #     compress: best
 
+# github releases are handled by release-it
+release:
+    disable: true
+
 signs:
-  - artifacts: checksum
+    - artifacts: checksum
 
 nfpms:
     - package_name: ortfodb
@@ -68,6 +72,7 @@ aurs:
       license: MIT
       private_key: "{{ .Env.AUR_KEY }}"
       git_url: "ssh://aur@aur.archlinux.org/ortfodb.git"
+      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
       commit_author:
           name: Ewen Le Bihan
           email: hey@ewen.works
@@ -126,6 +131,7 @@ scoops:
     - name: ortfodb
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       homepage: https://ortfo.org
+      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
       license: MIT
       repository:
           owner: ortfo
@@ -134,7 +140,7 @@ scoops:
           name: Ewen Le Bihan
           email: ortfo@ewen.works
       shortcuts:
-        - [ortfodb.exe, ortfodb]
+          - [ortfodb.exe, ortfodb]
 
 dockers:
     - image_templates:
@@ -155,6 +161,7 @@ brews:
       caveats: Requires ffmpeg, ffprobe, gifsicle (for GIFs generation), pdftoppm (for PDF thumbnailing) and imagemagick to be on your PATH.
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
+      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
       # TODO dependencies
       repository:
           owner: ortfo
@@ -170,6 +177,7 @@ nix:
       homepage: https://ortfo.org
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: mit
+      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
       # TODO dependencies
       repository:
           owner: ortfo
@@ -186,6 +194,7 @@ winget:
       short_description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
       release_notes_url: https://ortfo.org/db/changelog#{{ .Version }}
+      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
 
       tags: [cli]
 

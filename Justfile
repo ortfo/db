@@ -59,7 +59,7 @@ release name='${version}':
 
 publish:
 	just publish-client-libraries
-	just package
+	just package ''
 
 publish-client-libraries:
 	cd packages/python; poetry publish
@@ -68,11 +68,9 @@ publish-client-libraries:
 	cd packages/ruby; gem push ortfodb-*.gem; rm ortfodb-*.gem
 	# TODO: PHP. Packagist wants the repo all to itself, so I have to create a new repo, copy the code in it; etc.
 
-package:
-	wget https://ortfo.org/android-chrome-512x512.png -O icon.png
-	printf 'FROM scratch\nENTRYPOINT ["ortfodb"]\nCOPY ortfodb /\n' > Dockerfile
-	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release || rm icon.png Dockerfile; exit 1
-	rm icon.png Dockerfile
+package flags:
+	just build
+	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release {{flags}}
 
 build-client-libraries version:
 	just build-typescript {{version}}
