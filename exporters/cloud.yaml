@@ -6,15 +6,22 @@ requires:
     - rclone
 
 data:
-    # Path to the Google Drive folder
+    # Path to the folder
     path:
+
+    # Filename to copy in the folder as
+    name: '{{ .Ctx.OutputDatabaseFile }}'
 
     # Name of the rclone remote(s)
     remotes:
 
 after:
-    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to{{ range $remote := (index .Data "remotes") }} {{$remote}}:{{ index $.Data "path" }}, {{ end }}[dim]with rclone']
+    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to{{ range $remote := (index .Data "remotes") }} {{$remote}}:{{ index $.Data "path" }}/{{ index $.Data "name" }}, {{ end }}[dim]with rclone']
+    - run: mkdir -p .ortfo-cloud-exporter-tmp
+    - run: cp {{ $.Ctx.OutputDatabaseFile }} .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }}
     - run: >-
         {{ range $remote := (index .Data "remotes") }}
-            rclone copy --progress {{ $.Ctx.OutputDatabaseFile }} {{$remote}}:{{ index $.Data "path" }}
+            rclone copy --progress .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }} {{$remote}}:{{ index $.Data "path" }}
         {{ end }}
+    - run: rm .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }}
+    - run: rmdir .ortfo-cloud-exporter-tmp
