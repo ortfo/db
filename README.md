@@ -13,7 +13,7 @@ See the [documentation on installation](https://ortfo.org/db/getting-started#ins
 
 ## Usage
 
-See [documentation](https://ortfo.org/db) 
+See [documentation](https://ortfo.org/db)
 
 ```docopt
 Manage your portfolio's database — See https://github.com/ortfo/db for more information.
@@ -29,6 +29,7 @@ Available Commands:
   add         Add a new project to your portfolio
   build       Build the database
   completion  Generate the autocompletion script for the specified shell
+  exporters   Commands related to ortfo/db exporters
   help        Help about any command
   replicate   Replicate a database directory from a built database file.
   schemas     Output JSON schemas for ortfodb's various resources
