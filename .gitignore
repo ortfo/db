@@ -34,3 +34,4 @@ cmd/ortfodb/ortfodb
 /ortfodb
 
 dist/
+.env

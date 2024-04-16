@@ -65,7 +65,7 @@ prepare-release $VERSION:
 	just build-client-libraries $VERSION
 
 release name='${version}':
-	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName={{quote(name)}}
+	release-it --github.releaseName={{quote(name)}}
 
 publish:
 	just publish-client-libraries
@@ -80,9 +80,9 @@ publish-client-libraries:
 
 package flags:
 	just build
-	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release {{flags}}
-	curl -F package=@dist/ortfodb_*_linux_amd64.deb https://$(rbw get 'fury.io push token')@push.fury.io/ortfo/
-	curl -F package=@dist/ortfodb_*_linux_amd64.rpm https://$(rbw get 'fury.io push token')@push.fury.io/ortfo/
+	goreleaser --verbose release {{flags}}
+	curl -F package=@dist/ortfodb_*_linux_amd64.deb https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
+	curl -F package=@dist/ortfodb_*_linux_amd64.rpm https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
 
 build-client-libraries version:
 	just build-typescript {{version}}
