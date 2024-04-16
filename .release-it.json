@@ -23,6 +23,6 @@
 	},
 	"hooks": {
 		"after:bump": [ "just prepare-release ${version}" ],
-		"after:release": [ "echo run just publish to publish new versions everywhere :)" ]
+		"after:release": [ "echo to publish new versions everywhere:", "echo \"just publish ${version}\"" ]
 	}
 }

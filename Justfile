@@ -61,9 +61,9 @@ prepare-release $VERSION:
 release name='${version}':
 	release-it --github.releaseName={{quote(name)}}
 
-publish:
+publish version:
 	just publish-client-libraries
-	just package ''
+	just package {{ version }}
 
 publish-client-libraries:
 	cd packages/python; poetry publish
@@ -72,11 +72,11 @@ publish-client-libraries:
 	cd packages/ruby; gem push ortfodb-*.gem; rm ortfodb-*.gem
 	# TODO: PHP. Packagist wants the repo all to itself, so I have to create a new repo, copy the code in it; etc.
 
-package flags:
+package version flags='':
 	just build
-	goreleaser --verbose release {{flags}}
-	curl -F package=@dist/ortfodb_*_linux_amd64.deb https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
-	curl -F package=@dist/ortfodb_*_linux_amd64.rpm https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
+	goreleaser release --skip validate --clean {{flags}}
+	curl -F package=@dist/ortfodb_{{version}}_linux_amd64.deb https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
+	curl -F package=@dist/ortfodb_{{version}}_linux_amd64.rpm https://$FURY_PUSH_TOKEN@push.fury.io/ortfo/
 
 build-client-libraries version:
 	just build-typescript {{version}}

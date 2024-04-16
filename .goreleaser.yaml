@@ -77,7 +77,7 @@ nfpms:
           dependencies: [imagemagick, ffmpeg]
           recommends: [gifsicle, poppler]
 
-      release: '{{ if index .Env "REL"}}{{ .Env.REL }}{{ else }}1{{ end }}'
+      release: '1'
       contents:
           - src: manpages
             dst: /usr/share/man/man1
@@ -146,33 +146,34 @@ aurs:
 #           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
 #       grade: stable
 
-chocolateys:
-    - name: ortfodb
-      package_source_url: https://github.com/ortfo/db
-      owners: Ewen Le Bihan
-      title: ortfo/db
-      authors: Ewen Le Bihan
-      project_url: https://ortfo.org
-      url_template: "https://github.com/ortfo/db/releases/download/download/{{ .Tag }}/{{ .ArtifactName }}"
-      icon_url: https://ortfo.org/android-chrome-512x512.png
-      license_url: https://github.com/ortfo/db/blob/main/LICENSE
-      docs_url: https://ortfo.org/db
-      bug_tracker_url: https://github.com/ortfo/db/issues
-      summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
-      description: |
-          ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
-      release_notes: https://ortfo.org/db/changelog#{{ .Version }}
-      dependencies:
-          - id: ffmpeg
-            version: 7.0.0
-          - id: imagemagick
-            version: 7.1.1.2900
-          - id: gifsicle # optional
-            version: 1.95.0
-        # poppler-utils: not found
-        # poppler: idk if it's just the lib or if it provides pdftoppm
-      api_key: "{{ .Env.CHOCO_API_KEY }}"
-      source_repo: https://push.chocolatey.org
+# needs the `choco` CLI tool, which isn't installable on linux :/
+# chocolateys:
+#     - name: ortfodb
+#       package_source_url: https://github.com/ortfo/db
+#       owners: Ewen Le Bihan
+#       title: ortfo/db
+#       authors: Ewen Le Bihan
+#       project_url: https://ortfo.org
+#       url_template: "https://github.com/ortfo/db/releases/download/download/{{ .Tag }}/{{ .ArtifactName }}"
+#       icon_url: https://ortfo.org/android-chrome-512x512.png
+#       license_url: https://github.com/ortfo/db/blob/main/LICENSE
+#       docs_url: https://ortfo.org/db
+#       bug_tracker_url: https://github.com/ortfo/db/issues
+#       summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+#       description: |
+#           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
+#       release_notes: https://ortfo.org/db/changelog#{{ .Version }}
+#       dependencies:
+#           - id: ffmpeg
+#             version: 7.0.0
+#           - id: imagemagick
+#             version: 7.1.1.2900
+#           - id: gifsicle # optional
+#             version: 1.95.0
+#         # poppler-utils: not found
+#         # poppler: idk if it's just the lib or if it provides pdftoppm
+#       api_key: "{{ .Env.CHOCO_API_KEY }}"
+#       source_repo: https://push.chocolatey.org
 
 scoops:
     - name: ortfodb
