@@ -32,3 +32,5 @@ cmd/ortfodb/ortfodb
 
 .wakatime-project
 /ortfodb
+
+dist/

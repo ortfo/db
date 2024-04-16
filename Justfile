@@ -25,23 +25,56 @@ render-demo-gif:
 
 prepare-release $VERSION:
 	./tools/update_meta_go.py $VERSION
+	git add meta.go
+	git commit -m "temp commit for release $VERSION"
+	git tag v$VERSION
+	# only build & create archives, publishing & packaging is done later.
+	# i can't use goreleaser --prepare because i don't have like 15 fking dollars to spend each month on developer tooling lmao
+	goreleaser release --clean \
+		--skip announce \
+		--skip aur \
+		--skip chocolatey \
+		--skip docker \
+		--skip homebrew \
+		--skip ko \
+		--skip nfpm \
+		--skip nix \
+		--skip publish \
+		--skip sbom \
+		--skip scoop \
+		--skip sign \
+		--skip snapcraft \
+		--skip validate \
+		--skip winget
+	git reset --soft HEAD^
+	git tag -d v$VERSION
 	just build
 	just docs
 	./tools/generate_schemas.py
 	./tools/build_readme.py
-	just build-packages $VERSION
+	just build-client-libraries $VERSION
 
 release name='${version}':
 	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') release-it --github.releaseName={{quote(name)}}
 
-publish-packages:
+publish:
+	just publish-client-libraries
+	just package
+
+publish-client-libraries:
 	cd packages/python; poetry publish
 	cd packages/typescript; npm publish
 	cd packages/rust; cargo publish
 	cd packages/ruby; gem push ortfodb-*.gem; rm ortfodb-*.gem
 	# TODO: PHP. Packagist wants the repo all to itself, so I have to create a new repo, copy the code in it; etc.
 
-build-packages version:
+package:
+	wget https://ortfo.org/android-chrome-512x512.png -O icon.png
+	printf 'FROM scratch\nENTRYPOINT ["ortfodb"]\nCOPY ortfodb /\n' > Dockerfile
+	AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release || rm icon.png Dockerfile; exit 1
+	rm icon.png Dockerfile
+
+build-client-libraries version:
 	just build-typescript {{version}}
 	just build-python {{version}}
 	just build-rust {{version}}

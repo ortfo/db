@@ -1,0 +1,196 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+project_name: ortfodb
+
+before:
+    hooks:
+        - go mod tidy
+        - go generate ./...
+
+builds:
+    - env:
+          - CGO_ENABLED=0
+      dir: cmd
+      binary: ortfodb_{{ .Os }}_{{ .Arch }}
+      no_unique_dist_dir: true
+      goos:
+          - linux
+          - windows
+          - darwin
+
+archives:
+    - format: tar.gz
+      name_template: >-
+          {{ .ProjectName }}_
+          {{- title .Os }}_
+          {{- if eq .Arch "amd64" }}x86_64
+          {{- else if eq .Arch "386" }}i386
+          {{- else }}{{ .Arch }}{{ end }}
+          {{- if .Arm }}v{{ .Arm }}{{ end }}
+      format_overrides:
+          - goos: windows
+            format: zip
+# upx:
+#   - enabled: true
+#     compress: best
+
+signs:
+  - artifacts: checksum
+
+nfpms:
+    - package_name: ortfodb
+      vendor: ortfo
+      homepage: https://ortfo.org
+      maintainer: Ewen Le Bihan <ortfo@ewen.works>
+      description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      license: MIT
+      formats: [apk, deb, rpm, termux.deb, archlinux]
+      dependencies: [magick, ffmpeg, ffprobe]
+      recommends: [gifsicle, pdftoppm]
+      release: "1"
+      contents:
+          - src: manpages
+            dst: /usr/share/man/man1
+      deb:
+          fields:
+              Bugs: https://github.com/ortfo/db/issues
+      archlinux:
+          packager: Ewen Le Bihan <ortfo@ewen.works>
+
+aurs:
+    - homepage: https://ortfo.org
+      description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      maintainers:
+          - Ewen Le Bihan <ortfo@ewen.works>
+      license: MIT
+      private_key: "{{ .Env.AUR_KEY }}"
+      git_url: "ssh://aur@aur.archlinux.org/ortfodb.git"
+      commit_author:
+          name: Ewen Le Bihan
+          email: hey@ewen.works
+      package: |-
+          # bin
+          install -Dm755 "./ortfodb" "${pkgdir}/usr/bin/ortfodb"
+
+          # license
+          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/goreleaser/LICENSE"
+
+          # completions
+          mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+          mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+          mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+          install -Dm644 "./completions.bash" "${pkgdir}/usr/share/bash-completion/completions/ortfodb"
+          install -Dm644 "./completions.zsh" "${pkgdir}/usr/share/zsh/site-functions/_ortfodb"
+          install -Dm644 "./completions.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/ortfodb.fish"
+
+          # man pages
+          for manpage in manpages; do
+              install -Dm644 "$manpage" "${pkgdir}/usr/share/man/man1/$manpage"
+          done
+
+# snapcrafts:
+#     - id: ortfodb
+#       title: ortfo/db
+#       icon: icon.png
+#       publish: true
+#       summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+#       description: |
+#           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
+#       grade: stable
+
+# chocolateys:
+#     - name: ortfodb
+#       package_source_url: https://github.com/ortfo/db
+#       owners: Ewen Le Bihan
+#       title: ortfo/db
+#       authors: Ewen Le Bihan
+#       project_url: https://ortfo.org
+#       url_template: "https://github.com/ortfo/db/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#       icon_url: https://ortfo.org/android-chrome-512x512.png
+#       license_url: https://github.com/ortfo/db/blob/main/LICENSE
+#       docs_url: https://ortfo.org/db
+#       bug_tracker_url: https://github.com/ortfo/db/issues
+#       summary: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+#       description: |
+#           ortfo/db is a simple, readable, easy and enjoyable way to manage portfolio databases using directories and text files. Learn more at ortfo.org/db
+#       release_notes: https://ortfo.org/db/changelog#{{ .Version }}
+#       # TODO
+#       # dependencies:
+#       api_key: "{{ .Env.CHOCO_API_KEY }}"
+#       source_repo: https://push.chocolatey.org
+
+scoops:
+    - name: ortfodb
+      description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      homepage: https://ortfo.org
+      license: MIT
+      repository:
+          owner: ortfo
+          name: scoop-ortfodb
+      commit_author:
+          name: Ewen Le Bihan
+          email: ortfo@ewen.works
+      shortcuts:
+        - [ortfodb.exe, ortfodb]
+
+dockers:
+    - image_templates:
+          - uwun/ortfodb:latest
+          - uwun/ortfodb:{{ .Tag }}
+      build_flag_templates:
+          - "--label=org.opencontainers.image.created={{.Date}}"
+          - "--label=org.opencontainers.image.title={{.ProjectName}}"
+          - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+          - "--label=org.opencontainers.image.version={{.Version}}"
+
+brews:
+    - name: ortfodb
+      commit_author:
+          name: Ewen Le Bihan
+          email: ortfo@ewen.works
+      commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+      caveats: Requires ffmpeg, ffprobe, gifsicle (for GIFs generation), pdftoppm (for PDF thumbnailing) and imagemagick to be on your PATH.
+      description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      license: MIT
+      # TODO dependencies
+      repository:
+          owner: ortfo
+          name: homebrew-ortfodb
+      homepage: https://ortfo.org
+
+nix:
+    - name: ortfodb
+      commit_author:
+          name: Ewen Le Bihan
+          email: ortfo@ewen.works
+
+      homepage: https://ortfo.org
+      description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      license: mit
+      # TODO dependencies
+      repository:
+          owner: ortfo
+          name: nix-ortfodb
+
+winget:
+    - publisher: ortfo
+      package_identifier: ortfo.db
+      publisher_url: https://ortfo.org
+      commit_author:
+          name: Ewen Le Bihan
+          email: ortfo@ewen.works
+
+      short_description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
+      license: MIT
+      release_notes_url: https://ortfo.org/db/changelog#{{ .Version }}
+
+      tags: [cli]
+
+      # TODO dependencies
+
+      repository:
+          owner: ortfo
+          name: winget-ortfodb

@@ -5,7 +5,7 @@
 	"github": {
 		"release": true,
 		"releaseName": "${version}",
-		"assets": ["ortfodb", "schemas/*.schema.json"]
+		"assets": ["dist/ortfodb_*", "schemas/*.schema.json", "dist/ortfodb_*.*"]
 	},
 	"plugins": {
 		"@release-it/keep-a-changelog": {
@@ -23,6 +23,6 @@
 	},
 	"hooks": {
 		"after:bump": [ "just prepare-release ${version}" ],
-		"after:release": [ "just publish-packages" ]
+		"after:release": [ "echo run just publish to publish new versions everywhere :)" ]
 	}
 }
