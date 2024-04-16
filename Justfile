@@ -35,12 +35,9 @@ update-completions:
 prepare-release $VERSION:
 	./tools/update_meta_go.py $VERSION
 	just update-completions
-	git add meta.go completions/*
-	git commit -m "temp commit for release $VERSION"
-	git tag v$VERSION
 	# only build & create archives, publishing & packaging is done later.
 	# i can't use goreleaser --prepare because i don't have like 15 fking dollars to spend each month on developer tooling lmao
-	goreleaser release --clean \
+	goreleaser release --skip validate --clean \
 		--skip announce \
 		--skip aur \
 		--skip chocolatey \
@@ -54,10 +51,7 @@ prepare-release $VERSION:
 		--skip scoop \
 		--skip sign \
 		--skip snapcraft \
-		--skip validate \
 		--skip winget
-	git reset --soft HEAD^
-	git tag -d v$VERSION
 	just build
 	just docs
 	./tools/generate_schemas.py
