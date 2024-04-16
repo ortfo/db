@@ -23,6 +23,14 @@ builds:
 
 archives:
     - format: tar.gz
+      files:
+          - LICENSE*
+          - README*
+          - CHANGELOG*
+          - manpages/*
+          - completions/*
+          - src: dist/{{ .Binary }}{{ .ArtifactExt }}
+            dst: ortfodb
       name_template: >-
           {{ .ProjectName }}_
           {{- title .Os }}_
@@ -54,10 +62,25 @@ nfpms:
       formats: [apk, deb, rpm, termux.deb, archlinux]
       dependencies: [magick, ffmpeg, ffprobe]
       recommends: [gifsicle, pdftoppm]
-      release: "1"
+      release: "3"
       contents:
           - src: manpages
             dst: /usr/share/man/man1
+
+          - src: LICENSE
+            dst: /usr/share/licenses/ortfodb/LICENSE
+
+          - src: completions/ortfodb.bash
+            dst: /usr/share/bash-completion/completions/ortfodb
+
+          - src: completions/ortfodb.zsh
+            dst: /usr/share/zsh/site-functions/_ortfodb
+
+          - src: completions/ortfodb.fish
+            dst: /usr/share/fish/vendor_completions.d/ortfodb.fish
+
+          - src: dist/{{ .Binary }}{{ .ArtifactExt }}
+            dst: /usr/bin/ortfodb
       deb:
           fields:
               Bugs: https://github.com/ortfo/db/issues
@@ -70,30 +93,32 @@ aurs:
       maintainers:
           - Ewen Le Bihan <ortfo@ewen.works>
       license: MIT
+      rel: "3"
       private_key: "{{ .Env.AUR_KEY }}"
-      git_url: "ssh://aur@aur.archlinux.org/ortfodb.git"
-      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
+      git_url: "ssh://aur@aur.archlinux.org/ortfodb-bin.git"
+      url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
+
       commit_author:
           name: Ewen Le Bihan
           email: hey@ewen.works
       package: |-
           # bin
-          install -Dm755 "./ortfodb" "${pkgdir}/usr/bin/ortfodb"
+          install -Dm755 "./ortfodb_linux_amd64" "${pkgdir}/usr/bin/ortfodb"
 
           # license
-          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/goreleaser/LICENSE"
+          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/ortfodb/LICENSE"
 
           # completions
           mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
           mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
           mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
-          install -Dm644 "./completions.bash" "${pkgdir}/usr/share/bash-completion/completions/ortfodb"
-          install -Dm644 "./completions.zsh" "${pkgdir}/usr/share/zsh/site-functions/_ortfodb"
-          install -Dm644 "./completions.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/ortfodb.fish"
+          install -Dm644 "./completions/ortfodb.bash" "${pkgdir}/usr/share/bash-completion/completions/ortfodb"
+          install -Dm644 "./completions/ortfodb.zsh" "${pkgdir}/usr/share/zsh/site-functions/_ortfodb"
+          install -Dm644 "./completions/ortfodb.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/ortfodb.fish"
 
           # man pages
           for manpage in manpages; do
-              install -Dm644 "$manpage" "${pkgdir}/usr/share/man/man1/$manpage"
+              install -Dm644 "$manpage" "${pkgdir}/usr/share/man/man1/$(basename manpage)"
           done
 
 # snapcrafts:
@@ -113,7 +138,7 @@ aurs:
 #       title: ortfo/db
 #       authors: Ewen Le Bihan
 #       project_url: https://ortfo.org
-#       url_template: "https://github.com/ortfo/db/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#       url_template: "https://github.com/ortfo/db/releases/download/download/{{ .Tag }}/{{ .ArtifactName }}"
 #       icon_url: https://ortfo.org/android-chrome-512x512.png
 #       license_url: https://github.com/ortfo/db/blob/main/LICENSE
 #       docs_url: https://ortfo.org/db
@@ -131,7 +156,7 @@ scoops:
     - name: ortfodb
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       homepage: https://ortfo.org
-      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
+      url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
       license: MIT
       repository:
           owner: ortfo
@@ -161,7 +186,7 @@ brews:
       caveats: Requires ffmpeg, ffprobe, gifsicle (for GIFs generation), pdftoppm (for PDF thumbnailing) and imagemagick to be on your PATH.
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
-      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
+      url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
       # TODO dependencies
       repository:
           owner: ortfo
@@ -177,7 +202,7 @@ nix:
       homepage: https://ortfo.org
       description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: mit
-      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
+      url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
       # TODO dependencies
       repository:
           owner: ortfo
@@ -194,7 +219,7 @@ winget:
       short_description: A readable, easy and enjoyable way to manage portfolio databases using directories and text files.
       license: MIT
       release_notes_url: https://ortfo.org/db/changelog#{{ .Version }}
-      url_template: https://github.com/ortfo/db/releases/{{.Tag}}/{{ .ArtifactName }}
+      url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
 
       tags: [cli]
 

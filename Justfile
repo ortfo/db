@@ -81,6 +81,8 @@ publish-client-libraries:
 package flags:
 	just build
 	GITHUB_TOKEN=$(rbw get 'GitHub VSCode PAT') AUR_KEY=~/.ssh/id_arch_aur goreleaser --verbose release {{flags}}
+	curl -F package=@dist/ortfodb_*_linux_amd64.deb https://$(rbw get 'fury.io push token')@push.fury.io/ortfo/
+	curl -F package=@dist/ortfodb_*_linux_amd64.rpm https://$(rbw get 'fury.io push token')@push.fury.io/ortfo/
 
 build-client-libraries version:
 	just build-typescript {{version}}
