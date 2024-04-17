@@ -1,6 +1,6 @@
 [package]
 name = "ortfodb"
-version = "1.4.0"
+version = "1.4.1"
 edition = "2021"
 description = "An ortfodb (https://github.com/ortfo/db) client library for Rust."
 license = "MIT"
