@@ -62,19 +62,19 @@ nfpms:
       formats: [apk, deb, rpm, termux.deb, archlinux]
       overrides:
         deb:
-          dependencies: [imagemagick, ffmpeg]
+          dependencies: [imagemagick, ffmpeg, webp]
           recommends: [gifsicle, poppler-utils]
         termux.deb:
-          dependencies: [imagemagick, ffmpeg]
+          dependencies: [imagemagick, ffmpeg, libwebp]
           recommends: [gifsicle] #, poppler-utils] poppler-utils not available on termux
         rpm:
-          dependencies: [imagemagick, ffmpeg-free]
+          dependencies: [ImageMagick, ffmpeg-free, libwebp-tools]
           recommends: [gifsicle, poppler-utils]
         apk:
-          dependencies: [imagemagick, ffmpeg]
+          dependencies: [imagemagick, ffmpeg, libwebp]
           recommends: [gifsicle, poppler]
         archlinux:
-          dependencies: [imagemagick, ffmpeg]
+          dependencies: [imagemagick, ffmpeg, libwebp]
           recommends: [gifsicle, poppler]
 
       release: '1'
@@ -113,6 +113,10 @@ aurs:
       git_url: "ssh://aur@aur.archlinux.org/ortfodb-bin.git"
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
 
+      depends: [imagemagick, ffmpeg, libwebp]
+      optdepends:
+        - "gifsicle: to convert videos to GIFs"
+        - "poppler: to process PDFs"
       commit_author:
           name: Ewen Le Bihan
           email: hey@ewen.works
@@ -181,7 +185,7 @@ scoops:
       homepage: https://ortfo.org
       url_template: https://github.com/ortfo/db/releases/download/{{.Tag}}/{{ .ArtifactName }}
       license: MIT
-      depends: [imagemagick, ffmpeg] #optional: gifsicle #not in repos: poppler-utils
+      depends: [imagemagick, ffmpeg, libwebp] #optional: gifsicle #not in repos: poppler-utils
       repository:
           owner: ortfo
           name: scoop-ortfodb
@@ -214,6 +218,7 @@ brews:
       dependencies:
           - name: ffmpeg
           - name: imagemagick
+          - name: webp
           - name: gifsicle
             type: optional
           - name: poppler
@@ -238,6 +243,7 @@ nix:
       dependencies:
           - ffmpeg_5-full
           - imagemagick
+          - libwebp
             # - gifsicle optional
             # - poppler_utils optional
       repository:
@@ -266,6 +272,7 @@ winget:
             minimum_version: "7.1.1.3"
           # gifsicle: not found
           # poppler(-utils) or pdftoppm: not found
+          # (lib)webp or gif2webp: not found
 
       repository:
           owner: ortfo
