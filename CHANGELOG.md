@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - move `Log*` functions out of `RunContext`
 
+### Fixed
+
+- the default configuration included the media directory in the media.at value, making ortfodb write media files in `media/media/`
+
 ## [1.4.0] - 2024-04-16
 
 ### Added
