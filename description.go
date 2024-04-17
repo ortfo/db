@@ -71,7 +71,7 @@ func ParseDescription[Metadata interface{}](ctx *RunContext, markdownRaw string)
 	metadata, markdownRaw = ParseYAMLHeader[Metadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
-	ctx.LogDebug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
+	LogDebug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
 	localized := len(localizedRawBlocks) > 0
 	var allLanguages []string
 	if localized {
@@ -492,7 +492,7 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		blocks[i].Paragraph = ReplaceAbbreviations(block.Paragraph, abbreviations)
 	}
 
-	ctx.LogDebug("Parsed description into blocks: %#v", blocks)
+	LogDebug("Parsed description into blocks: %#v", blocks)
 	return
 }
 

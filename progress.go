@@ -36,9 +36,9 @@ func (ctx *RunContext) StartProgressBar(total int) {
 	}
 
 	if isInteractiveTerminal() {
-		ctx.LogDebug("terminal is interactive, starting progress bar")
+		LogDebug("terminal is interactive, starting progress bar")
 	} else {
-		ctx.LogDebug("not starting progress bar because not in an interactive terminal")
+		LogDebug("not starting progress bar because not in an interactive terminal")
 		return
 	}
 
@@ -135,7 +135,7 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	}
 
 	if err := ctx.appendToProgressFile(workID, phase, details...); err != nil {
-		ctx.DisplayWarning("could not append progress info to file", err)
+		DisplayWarning("could not append progress info to file", err)
 	}
 }
 

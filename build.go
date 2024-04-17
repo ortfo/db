@@ -190,7 +190,7 @@ func AcquireBuildLock(outputFilename string) error {
 func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
 	err := os.Remove(BuildLockFilepath(outputFilename))
 	if err != nil {
-		ctx.DisplayError("could not release build lockfile %s", err, BuildLockFilepath(outputFilename))
+		DisplayError("could not release build lockfile %s", err, BuildLockFilepath(outputFilename))
 	}
 	return err
 }
@@ -205,9 +205,9 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 	}
 
 	if ctx.ProgressInfoFile != "" {
-		ctx.LogDebug("Removing progress info file %s", ctx.ProgressInfoFile)
+		LogDebug("Removing progress info file %s", ctx.ProgressInfoFile)
 		if err := os.Remove(ctx.ProgressInfoFile); err != nil {
-			ctx.LogDebug("Could not remove progress info file %s: %s", ctx.ProgressInfoFile, err.Error())
+			LogDebug("Could not remove progress info file %s: %s", ctx.ProgressInfoFile, err.Error())
 		}
 	}
 
@@ -225,18 +225,18 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		ctx.Exporters = append(ctx.Exporters, exporter)
 	}
 
-	ctx.LogDebug("Running with configuration %#v", &config)
+	LogDebug("Running with configuration %#v", &config)
 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			ctx.DisplayError("No previously built database file %s to use", err, outputFilename)
+			DisplayError("No previously built database file %s to use", err, outputFilename)
 		}
 		ctx.PreviousBuiltDatabase = Database{}
 	} else {
 		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
 		if err != nil {
-			ctx.DisplayError("Couldn't use previous built database file %s", err, outputFilename)
+			DisplayError("Couldn't use previous built database file %s", err, outputFilename)
 			ctx.PreviousBuiltDatabase = Database{}
 		}
 	}
@@ -251,7 +251,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 	}
 
 	if ctx.Config.IsDefault {
-		ctx.LogInfo("No configuration file found. The default configuration was used.")
+		LogInfo("No configuration file found. The default configuration was used.")
 	}
 
 	err = os.MkdirAll(config.Media.At, 0o755)
@@ -349,13 +349,13 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	// worker count divided by two because each worker has two workers for thumbnail generation
 	for i := 0; i < flags.WorkersCount/2; i++ {
 		i := i
-		ctx.LogDebug("worker #%d: starting", i)
+		LogDebug("worker #%d: starting", i)
 		go func() {
-			ctx.LogDebug("worker #%d: starting", i)
+			LogDebug("worker #%d: starting", i)
 			for {
 				dirEntry := <-workDirectoriesChannel
 				workID := dirEntry.Name()
-				ctx.LogDebug("worker #%d: starting with work %s", i, workID)
+				LogDebug("worker #%d: starting with work %s", i, workID)
 				oldWork, presentBefore := ctx.PreviousBuiltDatabase[workID]
 				var included bool
 				if include == "*" {
@@ -384,7 +384,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 					if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
 						// Skip it!
-						// ctx.LogInfo("%s: Build skipped: description file unmodified", workID)
+						// LogInfo("%s: Build skipped: description file unmodified", workID)
 						ctx.Status(workID, PhaseUnchanged)
 						ctx.RunExporters(&oldWork)
 					} else {
@@ -392,7 +392,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 						// Build it
 						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
 						if err != nil {
-							ctx.DisplayError("while building %s", err, workID)
+							DisplayError("while building %s", err, workID)
 							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
 							continue
 						}
@@ -404,49 +404,49 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 						newWork.DescriptionHash = newDescriptionHash
 
 						// Update in database
-						ctx.LogDebug("worker #%d: sending freshly built work %s", i, workID)
+						LogDebug("worker #%d: sending freshly built work %s", i, workID)
 						builtChannel <- builtItem{work: newWork, workID: workID}
 						continue
 					}
 				} else if presentBefore {
 					// Nothing to do, old work will be kept as-is.
-					ctx.LogDebug("worker #%d: nothing to do for work %s", i, workID)
+					LogDebug("worker #%d: nothing to do for work %s", i, workID)
 				} else {
-					ctx.LogDebug("worker #%d: Build skipped: not included by %s, not present in previous database file.", i, include)
+					LogDebug("worker #%d: Build skipped: not included by %s, not present in previous database file.", i, include)
 				}
-				ctx.LogDebug("worker #%d: reusing old work %s", i, workID)
+				LogDebug("worker #%d: reusing old work %s", i, workID)
 				builtChannel <- builtItem{reuseOld: true, workID: workID}
 			}
 		}()
 	}
 
-	ctx.LogDebug("main: filling work directories")
+	LogDebug("main: filling work directories")
 	for _, workDirectory := range workDirectories {
 		workDirectoriesChannel <- workDirectory
 	}
 
 	// Collect all newly-built works
-	ctx.LogDebug("main: collecting results")
+	LogDebug("main: collecting results")
 	for len(builtDirectories) < len(workDirectories) {
 		result := <-builtChannel
-		ctx.LogDebug("main: got result %v", result)
+		LogDebug("main: got result %v", result)
 		if result.err != nil {
-			ctx.LogDebug("main: got error, returning early")
+			LogDebug("main: got error, returning early")
 			return Database{}, result.err
 		}
 		if !result.reuseOld {
-			ctx.LogDebug("main: updating work %s", result.workID)
+			LogDebug("main: updating work %s", result.workID)
 			works[result.workID] = result.work
 		}
 		ctx.WriteDatabase(works, flags, outputFilename, true)
 		builtDirectories = append(builtDirectories, result.workID)
-		ctx.LogDebug("main: built dirs: %d out of %d", len(builtDirectories), len(workDirectories))
-		ctx.LogDebug("main: left to build: %v", directoriesLeftToBuild(workDirectoriesNames, builtDirectories))
+		LogDebug("main: built dirs: %d out of %d", len(builtDirectories), len(workDirectories))
+		LogDebug("main: left to build: %v", directoriesLeftToBuild(workDirectoriesNames, builtDirectories))
 	}
 
 	for _, exporter := range ctx.Exporters {
 		options := ctx.Config.Exporters[exporter.Name()]
-		ctx.LogDebug("Running exporter %s's after hook with options %#v", exporter.Name(), options)
+		LogDebug("Running exporter %s's after hook with options %#v", exporter.Name(), options)
 		exporter.After(ctx, options, &works)
 	}
 
@@ -454,7 +454,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 }
 
 func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename string, partial bool) {
-	ctx.LogDebug("Writing database (partial=%v) to %s", partial, outputFilename)
+	LogDebug("Writing database (partial=%v) to %s", partial, outputFilename)
 	worksWithDatabaseMetadata := make(Database, 0)
 	for id, work := range works {
 		work.Metadata.DatabaseMetadata = DatabaseMeta{Partial: partial}
@@ -507,7 +507,7 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		}
 		// If it's not there, this directory is not a project worth scanning.
 		if _, err := os.Stat(descriptionFilename); os.IsNotExist(err) {
-			ctx.LogDebug("skipping %s as it has no description file: %s does not exist", dirEntry.Name(), descriptionFilename)
+			LogDebug("skipping %s as it has no description file: %s does not exist", dirEntry.Name(), descriptionFilename)
 			continue
 		}
 
@@ -546,7 +546,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 			if block.Type != "media" {
 				continue
 			}
-			ctx.LogDebug("Handling media %#v", block.Media)
+			LogDebug("Handling media %#v", block.Media)
 			analyzed, anchor, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
 			if err != nil {
 				return AnalyzedWork{}, err

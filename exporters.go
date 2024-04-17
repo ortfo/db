@@ -134,7 +134,7 @@ func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
 		return LoadExporter(name, rawManifest, ctx.Config.Exporters[name])
 	} else if isValidURL(ensureHttpPrefix(name)) {
 		url := ensureHttpPrefix(name)
-		ctx.LogDebug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
+		LogDebug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
 		return DownloadExporter(name, url, ctx.Config.Exporters[name])
 	}
 	return nil, fmt.Errorf("no exporter named %s", name)

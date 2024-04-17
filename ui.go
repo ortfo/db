@@ -86,25 +86,25 @@ func displayValidationErrorFieldPath(field string, rootPath ...string) string {
 }
 
 // LogError logs non-fatal errors.
-func (ctx *RunContext) LogError(message string, fmtArgs ...interface{}) {
+func LogError(message string, fmtArgs ...interface{}) {
 	LogCustom("Error", "red", message, fmtArgs...)
 }
 
-func (ctx *RunContext) DisplayError(msg string, err error, fmtArgs ...interface{}) {
-	ctx.LogError(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
+func DisplayError(msg string, err error, fmtArgs ...interface{}) {
+	LogError(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
 }
 
-func (ctx *RunContext) DisplayWarning(msg string, err error, fmtArgs ...interface{}) {
-	ctx.LogWarning(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
+func DisplayWarning(msg string, err error, fmtArgs ...interface{}) {
+	LogWarning(formatErrors(fmt.Errorf(msg+": %w", append(fmtArgs, err)...)))
 }
 
 // LogInfo logs infos.
-func (ctx *RunContext) LogInfo(message string, fmtArgs ...interface{}) {
+func LogInfo(message string, fmtArgs ...interface{}) {
 	LogCustom("Info", "blue", message, fmtArgs...)
 }
 
 // LogDebug logs debug information.
-func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
+func LogDebug(message string, fmtArgs ...interface{}) {
 	if os.Getenv("DEBUG") == "" {
 		return
 	}
@@ -112,7 +112,7 @@ func (ctx *RunContext) LogDebug(message string, fmtArgs ...interface{}) {
 }
 
 // LogWarning logs warnings.
-func (ctx *RunContext) LogWarning(message string, fmtArgs ...interface{}) {
+func LogWarning(message string, fmtArgs ...interface{}) {
 	LogCustom("Warning", "yellow", message, fmtArgs...)
 }
 

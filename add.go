@@ -148,7 +148,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	if fileExists(readmePath) {
 		readmeTitle, readmeBody, err := fromReadme(readmePath)
 		if err != nil {
-			ctx.DisplayWarning("couldn't extract info from README.md", err)
+			DisplayWarning("couldn't extract info from README.md", err)
 		}
 
 		if readmeTitle != "" {
@@ -160,7 +160,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	detectedStartDate, err := DetectStartDate(ctx.PathToWorkFolder(workId))
 	defaultStartedAt := ""
 	if err != nil {
-		ctx.DisplayWarning("while detecting start date of %s", err, workId)
+		DisplayWarning("while detecting start date of %s", err, workId)
 	} else {
 		defaultStartedAt = detectedStartDate.Format("2006-01-02")
 		LogCustom("Detected", "cyan", "start date to be [bold][blue]%s[reset]", defaultStartedAt)
@@ -179,7 +179,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	autodetectedTechs, err := ctx.DetectTechnologies(workId)
 	if err != nil {
-		ctx.LogWarning(formatErrors(fmt.Errorf("while autodetecting technologies for %s: %w", workId, err)))
+		LogWarning(formatErrors(fmt.Errorf("while autodetecting technologies for %s: %w", workId, err)))
 	} else {
 		displayTags := make([]string, 0, len(autodetectedTechs))
 		for _, tech := range autodetectedTechs {
@@ -193,7 +193,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	autodetectedTags, err := ctx.DetectTags(workId, autodetectedTechs)
 	if err != nil {
-		ctx.DisplayWarning("while autodetecting tags for %s", err, workId)
+		DisplayWarning("while autodetecting tags for %s", err, workId)
 	} else {
 		for _, tag := range autodetectedTags {
 			metadata.Tags = append(metadata.Tags, tag.String())
@@ -220,7 +220,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 				Value(&metadata.MadeWith).
 				Options(allTechsOptions...).
 				Validate(func(s []string) error {
-					ctx.LogDebug("Selected %v", s)
+					LogDebug("Selected %v", s)
 					return nil
 				}).
 				Height(2+6),

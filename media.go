@@ -144,7 +144,7 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 // TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, analyzedMedia Media, anchor string, err error) {
-	ctx.LogDebug("Analyzing media %#v", embedDeclaration)
+	LogDebug("Analyzing media %#v", embedDeclaration)
 
 	// Compute absolute filepath to media
 	var filename string
@@ -171,7 +171,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	} else {
 		usedCache, cachedAnalysis := ctx.UseCache(filename, embedDeclaration, workID)
 		if usedCache && cachedAnalysis.ContentType != "" {
-			ctx.LogDebug("Reusing cached analysis %#v", cachedAnalysis)
+			LogDebug("Reusing cached analysis %#v", cachedAnalysis)
 			return true, cachedAnalysis, anchor, nil
 		}
 
@@ -206,7 +206,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if ctx.Config.ExtractColors.Enabled && canExtractColors(contentType) {
 			colors, err = ExtractColors(filename)
 			if err != nil {
-				ctx.DisplayError("Could not extract colors from %s", err, filename)
+				DisplayError("Could not extract colors from %s", err, filename)
 				err = nil
 			}
 		}
@@ -245,7 +245,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		Colors:         colors,
 		Analyzed:       true,
 	}
-	ctx.LogDebug("Analyzed to %#v (no cache used)", analyzedMedia)
+	LogDebug("Analyzed to %#v (no cache used)", analyzedMedia)
 	return
 }
 
@@ -255,20 +255,20 @@ func (ctx *RunContext) UseCache(filename string, embedDeclaration Media, workID 
 	}
 	stat, err := os.Stat(filename)
 	if err != nil {
-		ctx.LogDebug("Cache miss for %s: file not found: %s", filename, err)
+		LogDebug("Cache miss for %s: file not found: %s", filename, err)
 		return
 	}
 
 	if found, analyzedMedia, builtAt := FindMedia(ctx.PreviousBuiltDatabase, embedDeclaration, workID); found {
-		ctx.LogDebug("cache hit for %s: using cache from embed decl %#v", filename, embedDeclaration)
+		LogDebug("cache hit for %s: using cache from embed decl %#v", filename, embedDeclaration)
 		if stat.ModTime().After(builtAt) {
-			ctx.LogDebug("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
+			LogDebug("Cache miss for %s: modification date is %v versus %v for date of building", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
 			return
 		}
 		return true, analyzedMedia
 	}
 
-	ctx.LogDebug("Cache miss for %s: media not found in previous database build", filename)
+	LogDebug("Cache miss for %s: media not found in previous database build", filename)
 	return
 
 }
@@ -408,11 +408,11 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 			go func() {
 				for {
 					size := <-sizesChan
-					ctx.LogDebug("Making thumbnail for %s#%s", media.RelativeSource, blockID)
+					LogDebug("Making thumbnail for %s#%s", media.RelativeSource, blockID)
 					saveTo := ctx.ComputeOutputThumbnailFilename(media, blockID, workID, size, language)
 
 					if _, err := os.Stat(string(saveTo.Absolute(ctx))); err == nil && usedCache {
-						ctx.LogDebug("Skipping thumbnail creation for %s#%s because it already exists", media.RelativeSource, blockID)
+						LogDebug("Skipping thumbnail creation for %s#%s because it already exists", media.RelativeSource, blockID)
 						resultsChan <- result{size: size, skipped: true}
 						return
 					}
@@ -432,7 +432,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 						resultsChan <- result{err: fmt.Errorf("while making thumbnail for %s: %w", workID, err)}
 						return
 					}
-					ctx.LogDebug("Made thumbnail %s", saveTo)
+					LogDebug("Made thumbnail %s", saveTo)
 					resultsChan <- result{size: size}
 				}
 			}()

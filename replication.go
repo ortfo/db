@@ -73,7 +73,7 @@ func (ctx *RunContext) replicateLocalizedBlock(work AnalyzedWork, language strin
 	// Then, for each block (ordered by the layout)
 	// spew.Dump(work)
 	for _, block := range content.Blocks {
-		ctx.LogDebug("replicating %s block #%s", block.Type, block.ID)
+		LogDebug("replicating %s block #%s", block.Type, block.ID)
 		switch block.Type {
 		case "media":
 			result += ctx.replicateMediaEmbed(block.Media) + end

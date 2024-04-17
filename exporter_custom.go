@@ -49,7 +49,7 @@ func (e *CustomExporter) OptionsType() any {
 }
 
 func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
-	ctx.LogDebug("Running before commands for %s", e.name)
+	LogDebug("Running before commands for %s", e.name)
 	err := e.VerifyRequiredPrograms()
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, 
 	for _, command := range commands {
 		tmpl, err := template.New("top").Funcs(sprig.TxtFuncMap()).Funcs(funcmap).Parse(command)
 		if err != nil {
-			ctx.DisplayError("custom exporter: while parsing command %s", err, command)
+			DisplayError("custom exporter: while parsing command %s", err, command)
 			return []string{}
 		}
 		var buf strings.Builder
@@ -175,7 +175,7 @@ func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, 
 			"DryRun":  e.dryRun,
 		}))
 		if err != nil {
-			ctx.DisplayError("custom exporter: while rendering command %s", err, command)
+			DisplayError("custom exporter: while rendering command %s", err, command)
 			return []string{}
 		}
 		output = append(output, buf.String())
