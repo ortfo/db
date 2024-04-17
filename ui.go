@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -16,7 +17,49 @@ func logWriter() io.Writer {
 	if progressBars != nil {
 		writer = progressBars.Bypass()
 	}
+	if !ShowingColors() {
+		writer = noAnsiCodesWriter{out: writer}
+	}
 	return writer
+}
+
+// noAnsiCodesWriter is an io.Writer that writes to the underlying writer, but strips ANSI color codes beforehand
+type noAnsiCodesWriter struct {
+	out io.Writer
+}
+
+func (w noAnsiCodesWriter) Write(p []byte) (n int, err error) {
+	return w.out.Write(stripansicolors(p))
+}
+
+// Println is like fmt.Println but automatically strips ANSI color codes if colors are disabled
+func Println(a ...interface{}) {
+	var writer io.Writer
+	writer = os.Stdout
+	if !ShowingColors() {
+		writer = noAnsiCodesWriter{out: writer}
+	}
+	fmt.Fprintln(writer, a...)
+}
+
+// Printf is like fmt.Printf but automatically strips ANSI color codes if colors are disabled
+func Printf(format string, a ...interface{}) {
+	var writer io.Writer
+	writer = os.Stdout
+	if !ShowingColors() {
+		writer = noAnsiCodesWriter{out: writer}
+	}
+	fmt.Fprintf(writer, format, a...)
+}
+
+// Print is like fmt.Print but automatically strips ANSI color codes if colors are disabled
+func Print(a ...interface{}) {
+	var writer io.Writer
+	writer = os.Stdout
+	if !ShowingColors() {
+		writer = noAnsiCodesWriter{out: writer}
+	}
+	fmt.Fprint(writer, a...)
 }
 
 func indentSubsequent(size int, text string) string {
@@ -42,6 +85,11 @@ func ExporterLogCustomNoFormatting(exporter Exporter, verb string, color string,
 
 func LogCustom(verb string, color string, message string, fmtArgs ...interface{}) {
 	LogCustomNoFormatting(verb, color, colorstring.Color(fmt.Sprintf(message, fmtArgs...)))
+}
+
+// LogCustomNoColor logs a message without applying colorstring syntax to message.
+func LogCustomNoColor(verb string, color string, message string, fmtArgs ...interface{}) {
+	LogCustomNoFormatting(verb, color, fmt.Sprintf(message, fmtArgs...))
 }
 
 func LogCustomNoFormatting(verb string, color string, message string) {
@@ -111,6 +159,14 @@ func LogDebug(message string, fmtArgs ...interface{}) {
 	LogCustom("Debug", "magenta", message, fmtArgs...)
 }
 
+// LogDebugNoColor logs debug information without applying colorstring syntax to message.
+func LogDebugNoColor(message string, fmtArgs ...interface{}) {
+	if os.Getenv("DEBUG") == "" {
+		return
+	}
+	LogCustomNoColor("Debug", "magenta", message, fmtArgs...)
+}
+
 // LogWarning logs warnings.
 func LogWarning(message string, fmtArgs ...interface{}) {
 	LogCustom("Warning", "yellow", message, fmtArgs...)
@@ -143,4 +199,16 @@ func formatErrors(err error) string {
 
 func isInteractiveTerminal() bool {
 	return isatty.IsTerminal(os.Stdout.Fd()) && isatty.IsTerminal(os.Stderr.Fd())
+}
+
+func stripansicolors(b []byte) []byte {
+	// TODO find a way to do this without converting to string
+	s := string(b)
+	s = regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(s, "")
+	return []byte(s)
+}
+
+// neutralizeColorstring strips colorstring syntax from s
+func neutralizeColostring(s string) string {
+	return string(stripansicolors([]byte(colorstring.Color(s))))
 }

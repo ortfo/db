@@ -14,6 +14,8 @@ import (
 var progressbar *uiprogress.Bar
 var progressBars *uiprogress.Progress
 var currentlyBuildingWorkIDs []string
+var builtWorksCount int
+var worksToBuildCount int
 
 type BuildPhase string
 
@@ -35,7 +37,9 @@ func (ctx *RunContext) StartProgressBar(total int) {
 		panic("progress bar already started")
 	}
 
-	if isInteractiveTerminal() {
+	worksToBuildCount = total
+
+	if isInteractiveTerminal() || os.Getenv("FORCE_PROGRESS_BAR") == "1" {
 		LogDebug("terminal is interactive, starting progress bar")
 	} else {
 		LogDebug("not starting progress bar because not in an interactive terminal")
@@ -50,12 +54,15 @@ func (ctx *RunContext) StartProgressBar(total int) {
 	progressbar.Head = '>'
 	progressbar.Width = 30
 	progressbar.PrependFunc(func(b *uiprogress.Bar) string {
-		return colorstring.Color(
-			fmt.Sprintf(
-				`[magenta][bold]%15s[reset]`,
-				"Building",
-			),
-		)
+		if ShowingColors() {
+			return colorstring.Color(
+				fmt.Sprintf(
+					`[magenta][bold]%15s[reset]`,
+					"Building",
+				),
+			)
+		}
+		return fmt.Sprintf("%15s", "Building")
 	})
 	progressbar.AppendFunc(func(b *uiprogress.Bar) string {
 		// truncatedCurrentlyBuildingWorkIDs := make([]string, 0, len(currentlyBuildingWorkIDs))
@@ -73,14 +80,26 @@ func (ctx *RunContext) StartProgressBar(total int) {
 }
 
 func (ctx *RunContext) IncrementProgress() {
+	builtWorksCount++
 	if progressbar == nil {
+		if builtWorksCount >= worksToBuildCount {
+			ctx.showFinishedMessage()
+		}
 		return
 	}
 
 	progressbar.Incr()
 	if progressbar.CompletedPercent() >= 100 {
+		ctx.showFinishedMessage()
 		ctx.StopProgressBar()
-		colorstring.Printf("[bold][green]%15s[reset] compiling to %s in %s\n", "Finished", ctx.OutputDatabaseFile, progressbar.TimeElapsedString())
+	}
+}
+
+func (ctx *RunContext) showFinishedMessage() {
+	if progressbar == nil {
+		LogCustom("Finished", "green", "compiling to %s\n", ctx.OutputDatabaseFile)
+	} else {
+		LogCustom("Finished", "green", "compiling to %s in %s\n", ctx.OutputDatabaseFile, progressbar.TimeElapsedString())
 	}
 }
 
@@ -113,13 +132,13 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	formattedMessage := colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID))
 
 	if progressBars != nil {
-		fmt.Fprintln(progressBars.Bypass(), formattedMessage)
-	} else {
-		if isInteractiveTerminal() {
-			fmt.Println(formattedMessage)
-		} else {
-			fmt.Printf(" %s %s %s\n", padPhaseVerb(phase), workID, strings.Join(details, " "))
+		writer := progressBars.Bypass()
+		if !ShowingColors() {
+			writer = noAnsiCodesWriter{out: writer}
 		}
+		fmt.Fprintln(writer, formattedMessage)
+	} else {
+		Println(formattedMessage)
 	}
 
 	if phase == PhaseBuilt || phase == PhaseUnchanged {
@@ -155,8 +174,8 @@ func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, det
 		return nil
 	}
 	event := ProgressInfoEvent{
-		WorksDone:  progressbar.Current(),
-		WorksTotal: progressbar.Total,
+		WorksDone:  builtWorksCount,
+		WorksTotal: worksToBuildCount,
 		WorkID:     workID,
 		Phase:      phase,
 		Details:    details,

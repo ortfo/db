@@ -447,7 +447,11 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	for _, exporter := range ctx.Exporters {
 		options := ctx.Config.Exporters[exporter.Name()]
 		LogDebug("Running exporter %s's after hook with options %#v", exporter.Name(), options)
-		exporter.After(ctx, options, &works)
+		err := exporter.After(ctx, options, &works)
+		if err != nil {
+			DisplayError("while running exporter %s's after hook: %s", err, exporter.Name())
+		}
+
 	}
 
 	return works, nil
@@ -472,7 +476,7 @@ func (ctx *RunContext) WriteDatabase(works Database, flags Flags, outputFilename
 
 	// Output it
 	if outputFilename == "-" {
-		fmt.Println(string(worksJSON))
+		Println(string(worksJSON))
 	} else {
 		err := writeFile(outputFilename, worksJSON)
 		if err != nil {

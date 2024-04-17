@@ -243,8 +243,17 @@ func debugging() bool {
 	return os.Getenv("DEBUG") == "1" || os.Getenv("ORTFO_DEBUG") == "1" || os.Getenv("ORTFODB_DEBUG") == "1"
 }
 
-func cgoEnabled() bool {
-	return os.Getenv("CGO_ENABLED") == "1"
+// ShowingColors returns true if colors (ANSI escape codes) should be printed.
+// Environment variables can control this: NO_COLOR=1 disables colors, and FORCE_COLOR=1 forces colors.
+// Otherwise, heuristics (such as whether the output is an interactive terminal) are used.
+func ShowingColors() bool {
+	if os.Getenv("NO_COLOR") == "1" {
+		return false
+	}
+	if os.Getenv("FORCE_COLOR") == "1" {
+		return true
+	}
+	return isInteractiveTerminal()
 }
 
 func writeYAML(v any, filename string) error {

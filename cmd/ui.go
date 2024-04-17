@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 	"unicode"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/mitchellh/colorstring"
+	ortfodb "github.com/ortfo/db"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
@@ -173,7 +175,11 @@ func customFlagsUsage(f *pflag.FlagSet) string {
 		fmt.Fprintln(buf, line[:sidx], spacing, wrap(maxlen+2, cols, line[sidx+1:]))
 	}
 
-	return buf.String()
+	s := buf.String()
+	if !ortfodb.ShowingColors() {
+		s = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`).ReplaceAllString(s, "")
+	}
+	return s
 }
 
 // defaultIsZeroValue returns true if the default value for this flag represents
@@ -278,7 +284,7 @@ func wrapN(i, slop int, s string) (string, string) {
 }
 
 func terminalWidth(min, max int) (width int) {
-	width, _, _  = term.GetSize(0)
+	width, _, _ = term.GetSize(0)
 	if width < min {
 		return min
 	}

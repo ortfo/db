@@ -62,7 +62,7 @@ var exportersListCmd = &cobra.Command{
 	Short: "List all available exporters",
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, exporter := range ortfodb.BuiltinExporters() {
-			fmt.Print(showExporter(exporter))
+			ortfodb.Print(showExporter(exporter))
 		}
 	},
 }
@@ -84,8 +84,8 @@ var exporterDocCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, exporter := range ortfodb.BuiltinExporters() {
 			if exporter.Name() == args[0] {
-				fmt.Print(showExporter(exporter))
-				fmt.Print(howToAdd(exporter, cmd.Flags()))
+				ortfodb.Print(showExporter(exporter))
+				ortfodb.Print(howToAdd(exporter, cmd.Flags()))
 				return
 			}
 		}
