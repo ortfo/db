@@ -16,7 +16,7 @@ after:
           - Triggering
           - cyan
           - 'webhook [bold]{{
-                index .Data "url"
+                .Data.url
                 | trimPrefix "http://"
                 | trimPrefix "https://"
             }}[reset]'
@@ -25,7 +25,7 @@ after:
           curl -X POST
           {{if not .Verbose }} -sS {{ end }}
           -d @{{ .Ctx.OutputDatabaseFile }}
-          {{ range $name, $value := (index .Data "headers") }}
+          {{ range $name, $value := .Data.headers }}
           -H "{{ $name }}: {{ $value }}"
           {{ end }}
-          {{ index .Data "url" }}
+          {{ .Data.url }}

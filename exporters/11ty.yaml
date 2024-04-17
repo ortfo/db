@@ -6,5 +6,5 @@ data:
   in: projects/
 
 work:
-  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for 11ty to [bold]{{ index .Data "in" }}/{{.Work.ID}}.11tydata.json[reset]{{end}}']
-  - run: echo {{ .Work | json | escape }} > {{ index .Data "in" }}/{{.Work.ID}}.11tydata.json
+  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for 11ty to [bold]{{ .Data.in }}/{{.Work.ID}}.11tydata.json[reset]{{end}}']
+  - run: echo {{ .Work | json | escape }} > {{ .Data.in }}/{{.Work.ID}}.11tydata.json

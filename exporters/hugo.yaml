@@ -9,12 +9,12 @@ data:
   index: index.json
 
 before:
-  - run: mkdir -p {{ index .Data "in" }}
+  - run: mkdir -p {{ .Data.in }}
 
 work:
-  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for Hugo to [bold]{{ index .Data "in" }}/{{.Work.ID}}.json[reset]{{end}}']
-  - run: echo {{ .Work | json | escape }} > {{ index .Data "in" }}/{{.Work.ID}}.json
+  - log: [Exporting, cyan, '{{if .Verbose}}{{.Work.ID}} for Hugo to [bold]{{ .Data.in }}/{{.Work.ID}}.json[reset]{{end}}']
+  - run: echo {{ .Work | json | escape }} > {{ .Data.in }}/{{.Work.ID}}.json
 
 after:
-  - log: [Exporting, cyan, '{{ if .Verbose}}Index database to {{ index .Data "in" | splitList "/" | first }}/{{ index .Data "index" }}{{ end }}']
-  - run: echo {{ .Database.AsSlice | json | escape }} > {{ index .Data "in" | splitList "/" | first }}/{{ index .Data "index" }}
+  - log: [Exporting, cyan, '{{ if .Verbose}}Index database to {{ .Data.in | splitList "/" | first }}/{{ .Data.index }}{{ end }}']
+  - run: echo {{ .Database.AsSlice | json | escape }} > {{ .Data.in | splitList "/" | first }}/{{ .Data.index }}

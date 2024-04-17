@@ -29,12 +29,12 @@ data:
 
 after:
     # - run: test ! -d .ortfodb-tmp || echo .ortfodb-tmp exists, please remove it >&2; exit 1
-    - log: [Cloning, blue, 'repository {{ index .Data "url" }}']
-    - run: git clone {{ index .Data "git_clone_flags" }} {{ index .Data "url" }} .ortfodb-tmp
+    - log: [Cloning, blue, 'repository {{ .Data.url }}']
+    - run: git clone {{ .Data.git_clone_flags }} {{ .Data.url }} .ortfodb-tmp
     - log: [Comitting, blue, "{{ .Ctx.OutputDatabaseFile }} to the repository"]
-    - run: cp {{ .Ctx.OutputDatabaseFile }} .ortfodb-tmp/{{ index .Data "path" }}
-    - run: cd .ortfodb-tmp && git add {{ index .Data "git_add_flags" }} {{ index .Data "path" }} && git commit {{ index .Data "git_commit_flags" }} -m '{{ index .Data "commit" }}'
+    - run: cp {{ .Ctx.OutputDatabaseFile }} .ortfodb-tmp/{{ .Data.path }}
+    - run: cd .ortfodb-tmp && git add {{ .Data.git_add_flags }} {{ .Data.path }} && git commit {{ .Data.git_commit_flags }} -m '{{ .Data.commit }}'
     - log: [Pushing, blue, "changes to the repository"]
-    - run: cd .ortfodb-tmp && git push {{ index .Data "git_push_flags" }}
+    - run: cd .ortfodb-tmp && git push {{ .Data.git_push_flags }}
     - log: [Cleaning up, dim, ".ortfodb-tmp directory"]
     - run: rm -rf .ortfodb-tmp

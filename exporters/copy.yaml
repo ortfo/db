@@ -5,8 +5,8 @@ data:
     paths: []
 
 after:
-  - log: [Copying, cyan, 'database to [bold]{{ index .Data "paths" | join ", " }}[reset]']
+  - log: [Copying, cyan, 'database to [bold]{{ .Data.paths | join ", " }}[reset]']
   - run: >-
-        {{ range $path := index .Data "paths" }}
+        {{ range $path := .Data.paths }}
             cp {{ if $.Verbose}}-v{{end}} {{ $.Ctx.OutputDatabaseFile }} {{$path}}
         {{ end }}

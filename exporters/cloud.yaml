@@ -16,12 +16,12 @@ data:
     remotes:
 
 after:
-    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to{{ range $remote := (index .Data "remotes") }} {{$remote}}:{{ index $.Data "path" }}/{{ index $.Data "name" }}, {{ end }}[dim]with rclone']
+    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to{{ range $remote := .Data.remotes }} {{$remote}}:{{ $.Data.path }}/{{ $.Data.name }}, {{ end }}[dim]with rclone']
     - run: mkdir -p .ortfo-cloud-exporter-tmp
-    - run: cp {{ $.Ctx.OutputDatabaseFile }} .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }}
+    - run: cp {{ $.Ctx.OutputDatabaseFile }} .ortfo-cloud-exporter-tmp/{{ $.Data.name }}
     - run: >-
-        {{ range $remote := (index .Data "remotes") }}
-            rclone copy --progress .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }} {{$remote}}:{{ index $.Data "path" }}
+        {{ range $remote := .Data.remotes }}
+            rclone copy --progress .ortfo-cloud-exporter-tmp/{{ $.Data.name }} {{$remote}}:{{ $.Data.path }}
         {{ end }}
-    - run: rm .ortfo-cloud-exporter-tmp/{{ index $.Data "name" }}
+    - run: rm .ortfo-cloud-exporter-tmp/{{ $.Data.name }}
     - run: rmdir .ortfo-cloud-exporter-tmp

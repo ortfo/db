@@ -14,8 +14,8 @@ data:
     dry run: false
 
 after:
-    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to {{if (index .Data "secure")}}s{{end}}ftp://{{ index .Data "host" }}/{{ index .Data "path" }}']
+    - log: [Uploading, blue, '{{ .Ctx.OutputDatabaseFile }} to {{if .Data.secure}}s{{end}}ftp://{{ .Data.host }}/{{ .Data.path }}']
     - run: >-
         {{if .DryRun}} echo {{end}}
         curl -T {{ .Ctx.OutputDatabaseFile }}
-        {{if (index .Data "secure")}}sftp://{{else}}ftp://{{end}}{{index .Data "username"}}:{{index .Data "password"}}@{{ index .Data "host" }}/{{ index .Data "path" }}
+        {{if .Data.secure}}sftp://{{else}}ftp://{{end}}{{.Data.username}}:{{.Data.password}}@{{ .Data.host }}/{{ .Data.path }}

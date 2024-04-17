@@ -18,12 +18,12 @@ after:
     - log:
           - Uploading
           - blue
-          - '{{ .Ctx.OutputDatabaseFile }} to [bold]{{ index .Data "ssh" }} [dim]using{{ if (index .Data "rsync") }} rsync {{ else }} scp {{ end }} [reset]'
+          - '{{ .Ctx.OutputDatabaseFile }} to [bold]{{ .Data.ssh }} [dim]using{{ if .Data.rsync }} rsync {{ else }} scp {{ end }} [reset]'
     - run: >-
           {{ $from := .Ctx.OutputDatabaseFile }}
-          {{ $to := index .Data "ssh" }}
+          {{ $to := .Data.ssh }}
           {{ if .DryRun }} echo {{end}}
-          {{ if (index .Data "rsync") }}
+          {{ if .Data.rsync }}
               rsync -r --info=progress {{$from}} {{$to}}
           {{ else }}
               scp {{$from}} {{$to}}
