@@ -54,7 +54,12 @@ func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	if err != nil {
 		return err
 	}
-	return e.runCommands(ctx, e.Manifest.Verbose, e.Manifest.Before, map[string]any{})
+	LogDebug("Setting user-supplied data for exporter %s: %v", e.name, opts)
+	e.data = merge(e.Manifest.Data, opts)
+	if e.Manifest.Verbose {
+		ExporterLogCustom(e, "Debug", "magenta", ".Data for %s is %v", e.name, e.data)
+	}
+	return e.runCommands(ctx, e.verbose, e.Manifest.Before, map[string]any{})
 
 }
 
@@ -65,7 +70,6 @@ func (e *CustomExporter) Export(ctx *RunContext, opts ExporterOptions, work *Ana
 }
 
 func (e *CustomExporter) After(ctx *RunContext, opts ExporterOptions, db *Database) error {
-
 	return e.runCommands(ctx, e.verbose, e.Manifest.After, map[string]any{
 		"Database": db,
 	})
@@ -74,7 +78,12 @@ func (e *CustomExporter) After(ctx *RunContext, opts ExporterOptions, db *Databa
 func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []ExporterCommand, additionalData map[string]any) error {
 	for _, command := range commands {
 		if command.Run != "" {
-			commandline := e.renderCommandParts(ctx, []string{command.Run}, additionalData, true)[0]
+			commandlines_, err := e.renderCommandParts(ctx, []string{command.Run}, additionalData, true)
+			if err != nil {
+				return fmt.Errorf("while rendering commandline for run instruction: %w", err)
+			}
+
+			commandline := commandlines_[0]
 			if commandline == "" {
 				continue
 			}
@@ -83,10 +92,11 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 			}
 
 			proc := exec.Command("bash", "-c", commandline)
+			LogDebug("exec.Command = %v", commandline)
 			proc.Dir = filepath.Dir(ctx.Config.source)
 			stderr, _ := proc.StderrPipe()
 			stdout, _ := proc.StdoutPipe()
-			err := proc.Start()
+			err = proc.Start()
 			if err != nil {
 				return fmt.Errorf("while starting command %q: %w", commandline, err)
 			}
@@ -110,30 +120,45 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 				}
 			}()
 
-			linesPrinterCount := 0
+			linesPrintedCount := 0
 
 			go func() {
 				for line := range outputChannel {
-					if linesPrinterCount > 5 {
+					if linesPrintedCount > 5 {
 						// Clear the line fives lines after the first output
 						fmt.Print("\033[5A\033[K")
 					}
 					outputBuffer.WriteString(line + "\n")
 					ExporterLogCustomNoFormatting(e, ">", "blue", line)
-					if linesPrinterCount > 5 {
+					if linesPrintedCount > 5 {
 						// Go back to last line
 						fmt.Print("\033[5B")
 					}
-					linesPrinterCount++
+					linesPrintedCount++
 				}
 			}()
 
-			if err = proc.Wait(); err != nil {
-				ExporterLogCustomNoFormatting(e, "Error", "red", fmt.Sprintf("While running %s\n%s", commandline, outputBuffer.String()))
+			err = proc.Wait()
+			close(outputChannel)
+			if err != nil {
+				// ExporterLogCustomNoFormatting(e, "Error", "red", fmt.Sprintf("While running %s\n%s", commandline, outputBuffer.String()))
 				return fmt.Errorf("while running %s: %w", commandline, err)
+			} else {
+				// Hide output atfter it's done if there's no errors
+				for i := 0; i < 6 && i < linesPrintedCount; i++ {
+					if debugging() {
+						LogDebug("would clear line %d", i)
+					} else {
+						fmt.Print("\033[1A\033[K")
+					}
+				}
 			}
 		} else {
-			logParts := e.renderCommandParts(ctx, command.Log, additionalData, true)
+			logParts, err := e.renderCommandParts(ctx, command.Log, additionalData, true)
+			if err != nil {
+				return fmt.Errorf("while rendering parts for a log instruction: %w", err)
+			}
+
 			if strings.TrimSpace(logParts[2]) != "" {
 				ExporterLogCustom(e, logParts[0], logParts[1], logParts[2])
 			}
@@ -155,43 +180,53 @@ var funcmap = template.FuncMap{
 	},
 }
 
-func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, additionalData map[string]any, recursive bool) []string {
+func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, additionalData map[string]any, recursive bool) ([]string, error) {
 	output := make([]string, 0, len(commands))
 	for _, command := range commands {
 		tmpl, err := template.New("top").Funcs(sprig.TxtFuncMap()).Funcs(funcmap).Parse(command)
 		if err != nil {
-			DisplayError("custom exporter: while parsing command %s", err, command)
-			return []string{}
+			return []string{}, fmt.Errorf("custom exporter %s: while parsing template part %q: %w", e.Manifest.Name, neutralizeColostring(command), err)
 		}
 		var buf strings.Builder
 		renderedData := e.data
 		if recursive {
-			renderedData = e.renderData(ctx)
+			renderedData, err = e.renderData(ctx)
+			if err != nil {
+				return []string{}, fmt.Errorf("while rendering data for command part: %w", err)
+			}
+
 		}
-		err = tmpl.Execute(&buf, merge(additionalData, map[string]any{
+		LogDebugNoColor("rendering command part %q, data=%v; renderedData=%v", command, e.data, renderedData)
+		completeData := merge(additionalData, map[string]any{
 			"Data":    renderedData,
 			"Ctx":     ctx,
 			"Verbose": e.verbose,
 			"DryRun":  e.dryRun,
-		}))
+		})
+		LogDebugNoColor("rendering (recursive=%v) part %q with data %v", recursive, command, completeData)
+		err = tmpl.Execute(&buf, completeData)
 		if err != nil {
-			DisplayError("custom exporter: while rendering command %s", err, command)
-			return []string{}
+			return []string{}, fmt.Errorf("custom exporter: while rendering template part %s: %w", neutralizeColostring(command), err)
 		}
 		output = append(output, buf.String())
 	}
-	return output
+	return output, nil
 }
 
-func (e *CustomExporter) renderData(ctx *RunContext) map[string]any {
+func (e *CustomExporter) renderData(ctx *RunContext) (map[string]any, error) {
 	rendered := make(map[string]any)
 	for key, value := range e.data {
 		switch value := value.(type) {
 		case string:
-			rendered[key] = e.renderCommandParts(ctx, []string{value}, map[string]any{}, false)[0]
+			_rendered, err := e.renderCommandParts(ctx, []string{value}, map[string]any{}, false)
+			if err != nil {
+				return rendered, fmt.Errorf("while rendering %q: %w", value, err)
+			}
+			rendered[key] = _rendered[0]
+
 		default:
 			rendered[key] = value
 		}
 	}
-	return rendered
+	return rendered, nil
 }

@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type ExporterOptions interface{}
+type ExporterOptions map[string]interface{}
 
 type Exporter interface {
 	Name() string
