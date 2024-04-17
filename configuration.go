@@ -95,11 +95,13 @@ func NewConfiguration(filename string) (Configuration, error) {
 	if filename == DefaultConfigurationFilename {
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			LogCustom("Writing", "yellow", "default configuration file at %s", filename)
-			defaultConfig, err := yaml.Marshal(DefaultConfiguration())
+			defaultConfig := DefaultConfiguration()
+			err := writeYAML(defaultConfig, filename)
 			if err != nil {
-				panic(err)
+				return Configuration{}, fmt.Errorf("while writing default configuration: %w", err)
 			}
-			os.WriteFile(DefaultConfigurationFilename, []byte(defaultConfig), 0o644)
+
+			LogWarning("default configuration assumes that your projects live in %s. Change this with [bold]projects at[reset] in the generated configuration file", defaultConfig.ProjectsDirectory)
 			return DefaultConfiguration(), nil
 		}
 	}

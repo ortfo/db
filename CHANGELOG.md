@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- warning about the `projects at` value when using default config file
+
 ### Changed
 
 - move `Log*` functions out of `RunContext`

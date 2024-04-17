@@ -1,6 +1,7 @@
 package ortfodb
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
+	"gopkg.in/yaml.v3"
 )
 
 // readFileBytes reads the content of filename and returns the contents as a byte array.
@@ -243,4 +245,16 @@ func debugging() bool {
 
 func cgoEnabled() bool {
 	return os.Getenv("CGO_ENABLED") == "1"
+}
+
+func writeYAML(v any, filename string) error {
+	encoded, err := yaml.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("while encoding to YAML: %w", err)
+	}
+	err = os.WriteFile(filename, encoded, 0o644)
+	if err != nil {
+		return fmt.Errorf("while writing encoded yaml contents to %q: %w", filename, err)
+	}
+	return nil
 }
