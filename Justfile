@@ -59,6 +59,7 @@ prepare-release $VERSION:
 	just build-client-libraries $VERSION
 
 release name='${version}':
+	source .env
 	release-it --github.releaseName={{quote(name)}}
 
 publish version:
