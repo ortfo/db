@@ -35,3 +35,4 @@ cmd/ortfodb/ortfodb
 
 dist/
 .env
+packages/php/vendor
