@@ -4,13 +4,13 @@ extern crate serde_derive;
 extern crate serde_json;
 
 mod configuration;
-pub use configuration::Configuration;
+pub use configuration::*;
 
 mod database;
-pub use database::Database;
+pub use database::*;
 
 mod tags;
-pub use tags::{Tag, Tags};
+pub use tags::*;
 
 mod technologies;
-pub use technologies::{Technologies, Technology};
+pub use technologies::*;
