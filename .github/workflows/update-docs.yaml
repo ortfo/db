@@ -3,6 +3,9 @@ name: Update docs website
 on:
     release:
         types: [published]
+    push:
+        branches: [main]
+        paths: [CHANGELOG.md] # update Unreleased section of changelog
     workflow_dispatch:
 
 jobs:
