@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - json schemas for tags.yaml and technologies.yaml: all fields were wrongly marked as required
+- json schemas configuration.yaml: all fields were wrongly marked as required
 
 ## [1.4.1] - 2024-04-17
 

@@ -24,21 +24,21 @@ type autodetectData struct {
 // Tag represents a category that can be assigned to a work. See https://ortfo.org/db/tags for more information.
 type Tag struct {
 	// Singular-form name of the tag. For example, "Book".
-	Singular         string   `yaml:"singular"`
+	Singular string `yaml:"singular"`
 	// Plural-form name of the tag. For example, "Books".
-	Plural           string   `yaml:"plural"`
-	Description      string   `yaml:"description,omitempty"`
+	Plural      string `yaml:"plural"`
+	Description string `yaml:"description,omitempty"`
 	// URL to a website where more information can be found about this tag.
-	LearnMoreAt      string   `yaml:"learn more at,omitempty"`
+	LearnMoreAt string `yaml:"learn more at,omitempty"`
 	// Other singular-form names of tags that refer to this tag. The names mentionned here should not be used to define other tags.
-	Aliases          []string `yaml:"aliases,omitempty"`
+	Aliases []string `yaml:"aliases,omitempty"`
 	// Various ways to automatically detect that a work is tagged with this tag.
 	DetectConditions struct {
 		// Consider the work to be tagged with this tag if it contains any of the files specified here. Glob patterns are supported.
 		// Files are searched relative to the work's folder (even in Scattered mode, files are not searched relative to the .ortfo folder)
-		Files    []string `yaml:"files,omitempty"`
+		Files []string `yaml:"files,omitempty"`
 		// To be implemented
-		Search   []string `yaml:"search,omitempty"`
+		Search []string `yaml:"search,omitempty"`
 		// Consider the work to be tagged with this tag if it was made with any of the technologies specified here.
 		MadeWith []string `yaml:"made with,omitempty"`
 	} `yaml:"detect,omitempty"`
@@ -67,8 +67,8 @@ func (t Tag) Detect(ctx *RunContext, workId string, techs []Technology) (bool, e
 type Technology struct {
 	// The slug is a unique identifier for this technology, that's suitable for use in a website's URL.
 	// For example, the page that shows all works using a technology with slug "a" could be at https://example.org/technologies/a.
-	Slug        string `yaml:"slug"`
-	Name        string `yaml:"name"`
+	Slug string `yaml:"slug"`
+	Name string `yaml:"name"`
 	// Name of the person or organization that created this technology.
 	By          string `yaml:"by,omitempty"`
 	Description string `yaml:"description,omitempty"`

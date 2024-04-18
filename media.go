@@ -203,11 +203,17 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if err != nil {
 			return
 		}
-		if ctx.Config.ExtractColors.Enabled && canExtractColors(contentType) {
-			colors, err = ExtractColors(filename)
-			if err != nil {
-				DisplayError("Could not extract colors from %s", err, filename)
-				err = nil
+		if ctx.Config.ExtractColors.Enabled {
+			if canExtractColors(contentType) {
+				LogDebug("Extracting colors from %s", filename)
+				colors, err = ExtractColors(filename)
+				if err != nil {
+					DisplayError("Could not extract colors from %s", err, filename)
+					err = nil
+				}
+				LogDebug("Colors extracted from %s: %#v", filename, colors)
+			} else {
+				LogDebug("Not extracting colors from %s: unsupported content type", filename)
 			}
 		}
 	}
@@ -217,11 +223,13 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if err != nil {
 			return
 		}
+		LogDebug("Video analyzed: dimensions=%#v, duration=%v, hasSound=%v", dimensions, duration, hasSound)
 	}
 
 	if isAudio {
 		duration = AnalyzeAudio(file)
 		hasSound = true
+		LogDebug("Audio analyzed: duration=%v", duration)
 	}
 
 	if isPDF {
@@ -229,6 +237,7 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if err != nil {
 			return
 		}
+		LogDebug("PDF analyzed: dimensions=%#v, duration=%v", dimensions, duration)
 	}
 
 	analyzedMedia = Media{

@@ -44,26 +44,34 @@ type BuildMetadata struct {
 	PreviousBuildDate time.Time
 }
 
+type TagsConfiguration struct {
+	// Path to file describing all tags.
+	Repository string
+}
+
+type TechnologiesConfiguration struct {
+	// Path to file describing all technologies.
+	Repository string
+}
+
+type MediaConfiguration struct {
+	// Path to the media directory.
+	At string
+}
+
 // Configuration represents what the ortfodb.yaml configuration file describes.
 type Configuration struct {
-	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors"`
-	MakeGifs              MakeGIFsConfiguration       `yaml:"make gifs"`
-	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails"`
-	BuildMetadataFilepath string                      `yaml:"build metadata file"`
-	Media                 struct{ At string }         `yaml:"media"`
-	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
 	// Signals whether the configuration was instanciated by DefaultConfiguration.
 	IsDefault bool `yaml:"-"`
 
-	Tags struct {
-		// Path to file describing all tags.
-		Repository string `yaml:"repository"`
-	} `yaml:"tags"`
-
-	Technologies struct {
-		// Path to file describing all technologies.
-		Repository string `yaml:"repository"`
-	} `yaml:"technologies"`
+	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors,omitempty"`
+	MakeGifs              MakeGIFsConfiguration       `yaml:"make gifs,omitempty"`
+	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails,omitempty"`
+	BuildMetadataFilepath string                      `yaml:"build metadata file,omitempty"`
+	Media                 MediaConfiguration          `yaml:"media,omitempty"`
+	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
+	Tags                  TagsConfiguration           `yaml:"tags,omitempty"`
+	Technologies          TechnologiesConfiguration   `yaml:"technologies,omitempty"`
 
 	// Path to the directory containing all projects. Must be absolute.
 	ProjectsDirectory string `yaml:"projects at"`
@@ -85,6 +93,7 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 	if err != nil {
 		return err
 	}
+	LogDebug("Loaded configuration from %s to %#v", filename, loadInto)
 	return nil
 }
 
