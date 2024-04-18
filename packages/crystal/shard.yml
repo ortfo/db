@@ -1,0 +1,9 @@
+name: ortfodb
+version: 0.1.0
+
+authors:
+  - Ewen Le Bihan <hey@ewen.works>
+
+crystal: '>= 1.12.1'
+
+license: MIT

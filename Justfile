@@ -72,6 +72,7 @@ publish-client-libraries:
 	cd packages/rust; cargo publish
 	cd packages/ruby; gem push ortfodb-*.gem; rm ortfodb-*.gem
 	# TODO: PHP. Packagist wants the repo all to itself, so I have to create a new repo, copy the code in it; etc.
+	# TODO: crystal. Same problem as with Packagist.
 
 package version flags='':
 	just build
@@ -85,6 +86,18 @@ build-client-libraries version:
 	just build-rust {{version}}
 	just build-ruby {{version}}
 	just build-php {{version}}
+	just build-crystal {{version}}
+
+build-crystal version:
+	#!/usr/bin/env bash
+	set -euxo pipefail
+	for schema in schemas/*.schema.json; do
+		outfile=packages/crystal/src/$(basename $schema .schema.json).cr
+		quicktype --src-lang schema -l crystal $schema -o $outfile
+		sed -i 's/require "json"/require "json"\n\nmodule Ortfodb/g' $outfile
+		echo 'end' >> $outfile
+	done
+
 
 build-php version:
 	#!/usr/bin/env bash

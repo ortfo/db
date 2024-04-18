@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- a crystal client library (work in progress)
+
 ### Fixed
 
 - json schemas for tags.yaml and technologies.yaml: all fields were wrongly marked as required
