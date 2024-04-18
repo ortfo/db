@@ -1,6 +1,7 @@
 package ortfodb
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"strings"
@@ -54,12 +55,23 @@ func kmeans(img image.Image) (ColorPalette, error) {
 	for _, centroid := range centroids {
 		colors = append(colors, centroid.AsString())
 	}
-	if len(colors) < 3 {
-		return ColorPalette{}, nil
+	if len(colors) == 0 {
+		return ColorPalette{}, fmt.Errorf("no colors found in given image")
 	}
+
+	primary := "#" + colors[0]
+	secondary := ""
+	tertiary := ""
+	if len(colors) > 1 {
+		secondary = "#" + colors[1]
+	}
+	if len(colors) > 2 {
+		tertiary = "#" + colors[2]
+	}
+
 	return ColorPalette{
-		Primary:   "#" + colors[0],
-		Secondary: "#" + colors[1],
-		Tertiary:  "#" + colors[2],
+		Primary:    primary,
+		Secondary:  secondary,
+		Tertiary:   tertiary,
 	}, nil
 }
