@@ -24,14 +24,14 @@ type autodetectData struct {
 type Tag struct {
 	Singular         string   `yaml:"singular"`
 	Plural           string   `yaml:"plural"`
-	Description      string   `yaml:"description"`
-	LearnMoreAt      string   `yaml:"learn more at"`
-	Aliases          []string `yaml:"aliases"`
+	Description      string   `yaml:"description,omitempty"`
+	LearnMoreAt      string   `yaml:"learn more at,omitempty"`
+	Aliases          []string `yaml:"aliases,omitempty"`
 	DetectConditions struct {
-		Files    []string `yaml:"files"`
-		Search   []string `yaml:"search"`
-		MadeWith []string `yaml:"made with"`
-	} `yaml:"detect"`
+		Files    []string `yaml:"files,omitempty"`
+		Search   []string `yaml:"search,omitempty"`
+		MadeWith []string `yaml:"made with,omitempty"`
+	} `yaml:"detect,omitempty"`
 }
 
 func (t Tag) String() string {
@@ -56,17 +56,17 @@ func (t Tag) Detect(ctx *RunContext, workId string, techs []Technology) (bool, e
 type Technology struct {
 	Slug        string `yaml:"slug"`
 	Name        string `yaml:"name"`
-	By          string `yaml:"by"`
-	Description string `yaml:"description"`
-	LearnMoreAt string `yaml:"learn more at"`
+	By          string `yaml:"by,omitempty"`
+	Description string `yaml:"description,omitempty"`
 
-	Aliases []string `yaml:"aliases"`
+	LearnMoreAt string `yaml:"learn more at,omitempty"`
 
+	Aliases []string `yaml:"aliases,omitempty"`
 	// Files contains a list of gitignore-style patterns. If the work contains any of the patterns specified, we consider that technology to be used in the work.
-	Files []string `yaml:"files"`
+	Files []string `yaml:"files,omitempty"`
 	// Autodetect contains an expression of the form 'CONTENT in PATH' where CONTENT is a free-form unquoted string and PATH is a filepath relative to the work folder.
 	// If CONTENT is found in PATH, we consider that technology to be used in the work.
-	Autodetect []string `yaml:"autodetect"`
+	Autodetect []string `yaml:"autodetect,omitempty"`
 }
 
 func (t Technology) String() string {
