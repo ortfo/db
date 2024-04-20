@@ -81,18 +81,25 @@ func (ctx *RunContext) StartProgressBar(total int) {
 
 func (ctx *RunContext) IncrementProgress() {
 	builtWorksCount++
-	if progressbar == nil {
-		if builtWorksCount >= worksToBuildCount {
-			ctx.showFinishedMessage()
-		}
-		return
+
+	if BuildIsFinished() {
+		ctx.showFinishedMessage()
+		os.Remove(ctx.ProgressInfoFile)
 	}
 
-	progressbar.Incr()
-	if progressbar.CompletedPercent() >= 100 {
-		ctx.showFinishedMessage()
-		ctx.StopProgressBar()
+	if progressbar != nil {
+		progressbar.Incr()
+		if BuildIsFinished() {
+			ctx.StopProgressBar()
+		}
 	}
+}
+
+func BuildIsFinished() bool {
+	if progressbar == nil {
+		return builtWorksCount >= worksToBuildCount
+	}
+	return progressbar.CompletedPercent() >= 100
 }
 
 func (ctx *RunContext) showFinishedMessage() {
@@ -171,6 +178,7 @@ type ProgressInfoEvent struct {
 
 func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, details ...string) error {
 	if ctx.ProgressInfoFile == "" {
+		LogDebug("not writing progress info to file because --write-progress is not set")
 		return nil
 	}
 	event := ProgressInfoEvent{
@@ -180,6 +188,7 @@ func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, det
 		Phase:      phase,
 		Details:    details,
 	}
+	LogDebug("Appending event %#v to progress file %s", event, ctx.ProgressInfoFile)
 	// append JSON marshalled event to file
 	file, err := os.OpenFile(ctx.ProgressInfoFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
