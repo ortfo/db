@@ -12,7 +12,7 @@ charset = utf-8
 indent_style = space
 indent_size = 2
 
-[*.{yaml,yml}]
+[*.{yaml,yml,py}]
 indent_style = space
 
 [./USAGE]
