@@ -1,3 +1,5 @@
+set dotenv-load := true
+
 build:
 	#!/usr/bin/env bash
 	set -euxo pipefail
@@ -59,7 +61,6 @@ prepare-release $VERSION:
 	just build-client-libraries $VERSION
 
 release name='${version}':
-	source .env
 	release-it --github.releaseName={{quote(name)}}
 
 publish version:
