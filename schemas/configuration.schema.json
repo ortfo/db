@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.4.1/schemas/configuration.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/configuration.schema.json",
   "$ref": "#/$defs/Configuration",
   "$defs": {
     "Configuration": {
@@ -18,43 +18,16 @@
           "type": "string"
         },
         "media": {
-          "properties": {
-            "at": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "at"
-          ]
+          "$ref": "#/$defs/MediaConfiguration"
         },
         "scattered mode folder": {
           "type": "string"
         },
         "tags": {
-          "properties": {
-            "repository": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "repository"
-          ]
+          "$ref": "#/$defs/TagsConfiguration"
         },
         "technologies": {
-          "properties": {
-            "repository": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "required": [
-            "repository"
-          ]
+          "$ref": "#/$defs/TechnologiesConfiguration"
         },
         "projects at": {
           "type": "string",
@@ -71,17 +44,11 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "extract colors",
-        "make gifs",
-        "make thumbnails",
-        "build metadata file",
-        "media",
         "scattered mode folder",
-        "tags",
-        "technologies",
         "projects at"
       ],
-      "description": "Configuration represents what the ortfodb.yaml configuration file describes."
+      "description": "Configuration represents what the ortfodb.yaml configuration file describes.",
+      "title": "Configuration"
     },
     "ExtractColorsConfiguration": {
       "properties": {
@@ -107,7 +74,8 @@
         "enabled",
         "extract",
         "default files"
-      ]
+      ],
+      "title": "ExtractColorsConfiguration"
     },
     "MakeGIFsConfiguration": {
       "properties": {
@@ -123,7 +91,8 @@
       "required": [
         "enabled",
         "file name template"
-      ]
+      ],
+      "title": "MakeGIFsConfiguration"
     },
     "MakeThumbnailsConfiguration": {
       "properties": {
@@ -150,7 +119,50 @@
         "sizes",
         "input file",
         "file name template"
-      ]
+      ],
+      "title": "MakeThumbnailsConfiguration"
+    },
+    "MediaConfiguration": {
+      "properties": {
+        "at": {
+          "type": "string",
+          "description": "Path to the media directory."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "at"
+      ],
+      "title": "MediaConfiguration"
+    },
+    "TagsConfiguration": {
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "Path to file describing all tags."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "repository"
+      ],
+      "title": "TagsConfiguration"
+    },
+    "TechnologiesConfiguration": {
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "Path to file describing all technologies."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "repository"
+      ],
+      "title": "TechnologiesConfiguration"
     }
   }
 }

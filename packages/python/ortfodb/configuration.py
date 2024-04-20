@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Optional, TypeVar, Callable, Type, cast
+from typing import List, Any, Optional, Dict, TypeVar, Callable, Type, cast
 
 
 T = TypeVar("T")
@@ -24,11 +24,6 @@ def from_int(x: Any) -> int:
     return x
 
 
-def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
-    assert isinstance(x, dict)
-    return { k: f(v) for (k, v) in x.items() }
-
-
 def from_none(x: Any) -> Any:
     assert x is None
     return x
@@ -43,12 +38,17 @@ def from_union(fs, x):
     assert False
 
 
+def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
+    assert isinstance(x, dict)
+    return { k: f(v) for (k, v) in x.items() }
+
+
 def to_class(c: Type[T], x: Any) -> dict:
     assert isinstance(x, c)
     return cast(Any, x).to_dict()
 
 
-class ExtractColors:
+class ExtractColorsConfiguration:
     default_files: List[str]
     enabled: bool
     extract: List[str]
@@ -59,12 +59,12 @@ class ExtractColors:
         self.extract = extract
 
     @staticmethod
-    def from_dict(obj: Any) -> 'ExtractColors':
+    def from_dict(obj: Any) -> 'ExtractColorsConfiguration':
         assert isinstance(obj, dict)
         default_files = from_list(from_str, obj.get("default files"))
         enabled = from_bool(obj.get("enabled"))
         extract = from_list(from_str, obj.get("extract"))
-        return ExtractColors(default_files, enabled, extract)
+        return ExtractColorsConfiguration(default_files, enabled, extract)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -74,7 +74,7 @@ class ExtractColors:
         return result
 
 
-class MakeGifs:
+class MakeGIFSConfiguration:
     enabled: bool
     file_name_template: str
 
@@ -83,11 +83,11 @@ class MakeGifs:
         self.file_name_template = file_name_template
 
     @staticmethod
-    def from_dict(obj: Any) -> 'MakeGifs':
+    def from_dict(obj: Any) -> 'MakeGIFSConfiguration':
         assert isinstance(obj, dict)
         enabled = from_bool(obj.get("enabled"))
         file_name_template = from_str(obj.get("file name template"))
-        return MakeGifs(enabled, file_name_template)
+        return MakeGIFSConfiguration(enabled, file_name_template)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -96,7 +96,7 @@ class MakeGifs:
         return result
 
 
-class MakeThumbnails:
+class MakeThumbnailsConfiguration:
     enabled: bool
     file_name_template: str
     input_file: str
@@ -109,13 +109,13 @@ class MakeThumbnails:
         self.sizes = sizes
 
     @staticmethod
-    def from_dict(obj: Any) -> 'MakeThumbnails':
+    def from_dict(obj: Any) -> 'MakeThumbnailsConfiguration':
         assert isinstance(obj, dict)
         enabled = from_bool(obj.get("enabled"))
         file_name_template = from_str(obj.get("file name template"))
         input_file = from_str(obj.get("input file"))
         sizes = from_list(from_int, obj.get("sizes"))
-        return MakeThumbnails(enabled, file_name_template, input_file, sizes)
+        return MakeThumbnailsConfiguration(enabled, file_name_template, input_file, sizes)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -126,17 +126,18 @@ class MakeThumbnails:
         return result
 
 
-class Media:
+class MediaConfiguration:
     at: str
+    """Path to the media directory."""
 
     def __init__(self, at: str) -> None:
         self.at = at
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Media':
+    def from_dict(obj: Any) -> 'MediaConfiguration':
         assert isinstance(obj, dict)
         at = from_str(obj.get("at"))
-        return Media(at)
+        return MediaConfiguration(at)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -144,17 +145,18 @@ class Media:
         return result
 
 
-class Tags:
+class TagsConfiguration:
     repository: str
+    """Path to file describing all tags."""
 
     def __init__(self, repository: str) -> None:
         self.repository = repository
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Tags':
+    def from_dict(obj: Any) -> 'TagsConfiguration':
         assert isinstance(obj, dict)
         repository = from_str(obj.get("repository"))
-        return Tags(repository)
+        return TagsConfiguration(repository)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -162,17 +164,18 @@ class Tags:
         return result
 
 
-class Technologies:
+class TechnologiesConfiguration:
     repository: str
+    """Path to file describing all technologies."""
 
     def __init__(self, repository: str) -> None:
         self.repository = repository
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Technologies':
+    def from_dict(obj: Any) -> 'TechnologiesConfiguration':
         assert isinstance(obj, dict)
         repository = from_str(obj.get("repository"))
-        return Technologies(repository)
+        return TechnologiesConfiguration(repository)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -183,22 +186,22 @@ class Technologies:
 class Configuration:
     """Configuration represents what the ortfodb.yaml configuration file describes."""
 
-    build_metadata_file: str
+    build_metadata_file: Optional[str]
     exporters: Optional[Dict[str, Dict[str, Any]]]
     """Exporter-specific configuration. Maps exporter names to their configuration."""
 
-    extract_colors: ExtractColors
-    make_gifs: MakeGifs
-    make_thumbnails: MakeThumbnails
-    media: Media
+    extract_colors: Optional[ExtractColorsConfiguration]
+    make_gifs: Optional[MakeGIFSConfiguration]
+    make_thumbnails: Optional[MakeThumbnailsConfiguration]
+    media: Optional[MediaConfiguration]
     projects_at: str
     """Path to the directory containing all projects. Must be absolute."""
 
     scattered_mode_folder: str
-    tags: Tags
-    technologies: Technologies
+    tags: Optional[TagsConfiguration]
+    technologies: Optional[TechnologiesConfiguration]
 
-    def __init__(self, build_metadata_file: str, exporters: Optional[Dict[str, Dict[str, Any]]], extract_colors: ExtractColors, make_gifs: MakeGifs, make_thumbnails: MakeThumbnails, media: Media, projects_at: str, scattered_mode_folder: str, tags: Tags, technologies: Technologies) -> None:
+    def __init__(self, build_metadata_file: Optional[str], exporters: Optional[Dict[str, Dict[str, Any]]], extract_colors: Optional[ExtractColorsConfiguration], make_gifs: Optional[MakeGIFSConfiguration], make_thumbnails: Optional[MakeThumbnailsConfiguration], media: Optional[MediaConfiguration], projects_at: str, scattered_mode_folder: str, tags: Optional[TagsConfiguration], technologies: Optional[TechnologiesConfiguration]) -> None:
         self.build_metadata_file = build_metadata_file
         self.exporters = exporters
         self.extract_colors = extract_colors
@@ -213,31 +216,38 @@ class Configuration:
     @staticmethod
     def from_dict(obj: Any) -> 'Configuration':
         assert isinstance(obj, dict)
-        build_metadata_file = from_str(obj.get("build metadata file"))
+        build_metadata_file = from_union([from_str, from_none], obj.get("build metadata file"))
         exporters = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], obj.get("exporters"))
-        extract_colors = ExtractColors.from_dict(obj.get("extract colors"))
-        make_gifs = MakeGifs.from_dict(obj.get("make gifs"))
-        make_thumbnails = MakeThumbnails.from_dict(obj.get("make thumbnails"))
-        media = Media.from_dict(obj.get("media"))
+        extract_colors = from_union([ExtractColorsConfiguration.from_dict, from_none], obj.get("extract colors"))
+        make_gifs = from_union([MakeGIFSConfiguration.from_dict, from_none], obj.get("make gifs"))
+        make_thumbnails = from_union([MakeThumbnailsConfiguration.from_dict, from_none], obj.get("make thumbnails"))
+        media = from_union([MediaConfiguration.from_dict, from_none], obj.get("media"))
         projects_at = from_str(obj.get("projects at"))
         scattered_mode_folder = from_str(obj.get("scattered mode folder"))
-        tags = Tags.from_dict(obj.get("tags"))
-        technologies = Technologies.from_dict(obj.get("technologies"))
+        tags = from_union([TagsConfiguration.from_dict, from_none], obj.get("tags"))
+        technologies = from_union([TechnologiesConfiguration.from_dict, from_none], obj.get("technologies"))
         return Configuration(build_metadata_file, exporters, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["build metadata file"] = from_str(self.build_metadata_file)
+        if self.build_metadata_file is not None:
+            result["build metadata file"] = from_union([from_str, from_none], self.build_metadata_file)
         if self.exporters is not None:
             result["exporters"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], self.exporters)
-        result["extract colors"] = to_class(ExtractColors, self.extract_colors)
-        result["make gifs"] = to_class(MakeGifs, self.make_gifs)
-        result["make thumbnails"] = to_class(MakeThumbnails, self.make_thumbnails)
-        result["media"] = to_class(Media, self.media)
+        if self.extract_colors is not None:
+            result["extract colors"] = from_union([lambda x: to_class(ExtractColorsConfiguration, x), from_none], self.extract_colors)
+        if self.make_gifs is not None:
+            result["make gifs"] = from_union([lambda x: to_class(MakeGIFSConfiguration, x), from_none], self.make_gifs)
+        if self.make_thumbnails is not None:
+            result["make thumbnails"] = from_union([lambda x: to_class(MakeThumbnailsConfiguration, x), from_none], self.make_thumbnails)
+        if self.media is not None:
+            result["media"] = from_union([lambda x: to_class(MediaConfiguration, x), from_none], self.media)
         result["projects at"] = from_str(self.projects_at)
         result["scattered mode folder"] = from_str(self.scattered_mode_folder)
-        result["tags"] = to_class(Tags, self.tags)
-        result["technologies"] = to_class(Technologies, self.technologies)
+        if self.tags is not None:
+            result["tags"] = from_union([lambda x: to_class(TagsConfiguration, x), from_none], self.tags)
+        if self.technologies is not None:
+            result["technologies"] = from_union([lambda x: to_class(TechnologiesConfiguration, x), from_none], self.technologies)
         return result
 
 

@@ -21,7 +21,7 @@ module Ortfodb
     String = Strict::String
   end
 
-  class ExporterSchema < Dry::Struct
+  class ExporterCommand < Dry::Struct
 
     # Log a message. The first argument is the verb, the second is the color, the third is the
     # message.
@@ -58,10 +58,10 @@ module Ortfodb
 
     # Commands to run after the build finishes. Go text template that receives .Data and
     # .Database, the built database.
-    attribute :after, Types.Array(ExporterSchema).optional
+    attribute :after, Types.Array(ExporterCommand).optional
 
     # Commands to run before the build starts. Go text template that receives .Data
-    attribute :before, Types.Array(ExporterSchema).optional
+    attribute :before, Types.Array(ExporterCommand).optional
 
     # Initial data
     attribute :data, Types::Hash.meta(of: Types::Any).optional
@@ -80,19 +80,19 @@ module Ortfodb
 
     # Commands to run during the build, for each work. Go text template that receives .Data and
     # .Work, the current work.
-    attribute :work, Types.Array(ExporterSchema).optional
+    attribute :work, Types.Array(ExporterCommand).optional
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        after:         d["after"]&.map { |x| ExporterSchema.from_dynamic!(x) },
-        before:        d["before"]&.map { |x| ExporterSchema.from_dynamic!(x) },
+        after:         d["after"]&.map { |x| ExporterCommand.from_dynamic!(x) },
+        before:        d["before"]&.map { |x| ExporterCommand.from_dynamic!(x) },
         data:          Types::Hash.optional[d["data"]]&.map { |k, v| [k, Types::Any[v]] }&.to_h,
         description:   d.fetch("description"),
         exporter_name: d.fetch("name"),
         requires:      d["requires"],
         verbose:       d["verbose"],
-        work:          d["work"]&.map { |x| ExporterSchema.from_dynamic!(x) },
+        work:          d["work"]&.map { |x| ExporterCommand.from_dynamic!(x) },
       )
     end
 

@@ -43,7 +43,7 @@ def to_class(c: Type[T], x: Any) -> dict:
     return cast(Any, x).to_dict()
 
 
-class ExporterSchema:
+class ExporterCommand:
     log: Optional[List[str]]
     """Log a message. The first argument is the verb, the second is the color, the third is the
     message.
@@ -56,11 +56,11 @@ class ExporterSchema:
         self.run = run
 
     @staticmethod
-    def from_dict(obj: Any) -> 'ExporterSchema':
+    def from_dict(obj: Any) -> 'ExporterCommand':
         assert isinstance(obj, dict)
         log = from_union([lambda x: from_list(from_str, x), from_none], obj.get("log"))
         run = from_union([from_str, from_none], obj.get("run"))
-        return ExporterSchema(log, run)
+        return ExporterCommand(log, run)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -72,11 +72,11 @@ class ExporterSchema:
 
 
 class Exporter:
-    after: Optional[List[ExporterSchema]]
+    after: Optional[List[ExporterCommand]]
     """Commands to run after the build finishes. Go text template that receives .Data and
     .Database, the built database.
     """
-    before: Optional[List[ExporterSchema]]
+    before: Optional[List[ExporterCommand]]
     """Commands to run before the build starts. Go text template that receives .Data"""
 
     data: Optional[Dict[str, Any]]
@@ -94,12 +94,12 @@ class Exporter:
     verbose: Optional[bool]
     """If true, will show every command that is run"""
 
-    work: Optional[List[ExporterSchema]]
+    work: Optional[List[ExporterCommand]]
     """Commands to run during the build, for each work. Go text template that receives .Data and
     .Work, the current work.
     """
 
-    def __init__(self, after: Optional[List[ExporterSchema]], before: Optional[List[ExporterSchema]], data: Optional[Dict[str, Any]], description: str, name: str, requires: Optional[List[str]], verbose: Optional[bool], work: Optional[List[ExporterSchema]]) -> None:
+    def __init__(self, after: Optional[List[ExporterCommand]], before: Optional[List[ExporterCommand]], data: Optional[Dict[str, Any]], description: str, name: str, requires: Optional[List[str]], verbose: Optional[bool], work: Optional[List[ExporterCommand]]) -> None:
         self.after = after
         self.before = before
         self.data = data
@@ -112,22 +112,22 @@ class Exporter:
     @staticmethod
     def from_dict(obj: Any) -> 'Exporter':
         assert isinstance(obj, dict)
-        after = from_union([lambda x: from_list(ExporterSchema.from_dict, x), from_none], obj.get("after"))
-        before = from_union([lambda x: from_list(ExporterSchema.from_dict, x), from_none], obj.get("before"))
+        after = from_union([lambda x: from_list(ExporterCommand.from_dict, x), from_none], obj.get("after"))
+        before = from_union([lambda x: from_list(ExporterCommand.from_dict, x), from_none], obj.get("before"))
         data = from_union([lambda x: from_dict(lambda x: x, x), from_none], obj.get("data"))
         description = from_str(obj.get("description"))
         name = from_str(obj.get("name"))
         requires = from_union([lambda x: from_list(from_str, x), from_none], obj.get("requires"))
         verbose = from_union([from_bool, from_none], obj.get("verbose"))
-        work = from_union([lambda x: from_list(ExporterSchema.from_dict, x), from_none], obj.get("work"))
+        work = from_union([lambda x: from_list(ExporterCommand.from_dict, x), from_none], obj.get("work"))
         return Exporter(after, before, data, description, name, requires, verbose, work)
 
     def to_dict(self) -> dict:
         result: dict = {}
         if self.after is not None:
-            result["after"] = from_union([lambda x: from_list(lambda x: to_class(ExporterSchema, x), x), from_none], self.after)
+            result["after"] = from_union([lambda x: from_list(lambda x: to_class(ExporterCommand, x), x), from_none], self.after)
         if self.before is not None:
-            result["before"] = from_union([lambda x: from_list(lambda x: to_class(ExporterSchema, x), x), from_none], self.before)
+            result["before"] = from_union([lambda x: from_list(lambda x: to_class(ExporterCommand, x), x), from_none], self.before)
         if self.data is not None:
             result["data"] = from_union([lambda x: from_dict(lambda x: x, x), from_none], self.data)
         result["description"] = from_str(self.description)
@@ -137,7 +137,7 @@ class Exporter:
         if self.verbose is not None:
             result["verbose"] = from_union([from_bool, from_none], self.verbose)
         if self.work is not None:
-            result["work"] = from_union([lambda x: from_list(lambda x: to_class(ExporterSchema, x), x), from_none], self.work)
+            result["work"] = from_union([lambda x: from_list(lambda x: to_class(ExporterCommand, x), x), from_none], self.work)
         return result
 
 

@@ -4,7 +4,7 @@
 # To parse this JSON, add 'dry-struct' and 'dry-types' gems, then do:
 #
 #   tags = Tags.from_json! "[…]"
-#   puts tags.first.detect.search.first
+#   puts tags.first.detect&.search&.first
 #
 # If from_json! succeeds, the value returned matches the schema.
 
@@ -20,17 +20,18 @@ module Ortfodb
     String = Strict::String
   end
 
+  # Various ways to automatically detect that a work is tagged with this tag.
   class Detect < Dry::Struct
-    attribute :files,     Types.Array(Types::String)
-    attribute :made_with, Types.Array(Types::String)
-    attribute :search,    Types.Array(Types::String)
+    attribute :files,     Types.Array(Types::String).optional
+    attribute :made_with, Types.Array(Types::String).optional
+    attribute :search,    Types.Array(Types::String).optional
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        files:     d.fetch("files"),
-        made_with: d.fetch("made with"),
-        search:    d.fetch("search"),
+        files:     d["files"],
+        made_with: d["made with"],
+        search:    d["search"],
       )
     end
 
@@ -51,21 +52,34 @@ module Ortfodb
     end
   end
 
+  # Tag represents a category that can be assigned to a work.
   class Tag < Dry::Struct
-    attribute :aliases,       Types.Array(Types::String)
-    attribute :description,   Types::String
-    attribute :detect,        Detect
-    attribute :learn_more_at, Types::String
-    attribute :plural,        Types::String
-    attribute :singular,      Types::String
+
+    # Other singular-form names of tags that refer to this tag. The names mentionned here
+    # should not be used to define other tags.
+    attribute :aliases, Types.Array(Types::String).optional
+
+    attribute :description, Types::String.optional
+
+    # Various ways to automatically detect that a work is tagged with this tag.
+    attribute :detect, Detect.optional
+
+    # URL to a website where more information can be found about this tag.
+    attribute :learn_more_at, Types::String.optional
+
+    # Plural-form name of the tag. For example, "Books".
+    attribute :plural, Types::String
+
+    # Singular-form name of the tag. For example, "Book".
+    attribute :singular, Types::String
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        aliases:       d.fetch("aliases"),
-        description:   d.fetch("description"),
-        detect:        Detect.from_dynamic!(d.fetch("detect")),
-        learn_more_at: d.fetch("learn more at"),
+        aliases:       d["aliases"],
+        description:   d["description"],
+        detect:        d["detect"] ? Detect.from_dynamic!(d["detect"]) : nil,
+        learn_more_at: d["learn more at"],
         plural:        d.fetch("plural"),
         singular:      d.fetch("singular"),
       )
@@ -79,7 +93,7 @@ module Ortfodb
       {
         "aliases"       => aliases,
         "description"   => description,
-        "detect"        => detect.to_dynamic,
+        "detect"        => detect&.to_dynamic,
         "learn more at" => learn_more_at,
         "plural"        => plural,
         "singular"      => singular,

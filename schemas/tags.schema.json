@@ -1,27 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.4.1/schemas/tags.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/tags.schema.json",
   "$ref": "#/$defs/tags",
   "$defs": {
     "Tag": {
       "properties": {
         "singular": {
-          "type": "string"
+          "type": "string",
+          "description": "Singular-form name of the tag. For example, \"Book\"."
         },
         "plural": {
-          "type": "string"
+          "type": "string",
+          "description": "Plural-form name of the tag. For example, \"Books\"."
         },
         "description": {
           "type": "string"
         },
         "learn more at": {
-          "type": "string"
+          "type": "string",
+          "description": "URL to a website where more information can be found about this tag."
         },
         "aliases": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Other singular-form names of tags that refer to this tag. The names mentionned here should not be used to define other tags."
         },
         "detect": {
           "properties": {
@@ -46,29 +50,24 @@
           },
           "additionalProperties": false,
           "type": "object",
-          "required": [
-            "files",
-            "search",
-            "made with"
-          ]
+          "description": "Various ways to automatically detect that a work is tagged with this tag."
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "singular",
-        "plural",
-        "description",
-        "learn more at",
-        "aliases",
-        "detect"
-      ]
+        "plural"
+      ],
+      "description": "Tag represents a category that can be assigned to a work.",
+      "title": "Tag"
     },
     "tags": {
       "items": {
         "$ref": "#/$defs/Tag"
       },
-      "type": "array"
+      "type": "array",
+      "title": "tags"
     }
   }
 }

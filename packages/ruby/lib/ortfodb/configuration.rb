@@ -4,7 +4,7 @@
 # To parse this JSON, add 'dry-struct' and 'dry-types' gems, then do:
 #
 #   configuration = Configuration.from_json! "{…}"
-#   puts configuration.technologies.repository
+#   puts configuration.technologies&.repository
 #
 # If from_json! succeeds, the value returned matches the schema.
 
@@ -22,7 +22,7 @@ module Ortfodb
     String  = Strict::String
   end
 
-  class ExtractColors < Dry::Struct
+  class ExtractColorsConfiguration < Dry::Struct
     attribute :default_files, Types.Array(Types::String)
     attribute :enabled,       Types::Bool
     attribute :extract,       Types.Array(Types::String)
@@ -53,7 +53,7 @@ module Ortfodb
     end
   end
 
-  class MakeGifs < Dry::Struct
+  class MakeGIFSConfiguration < Dry::Struct
     attribute :enabled,            Types::Bool
     attribute :file_name_template, Types::String
 
@@ -81,7 +81,7 @@ module Ortfodb
     end
   end
 
-  class MakeThumbnails < Dry::Struct
+  class MakeThumbnailsConfiguration < Dry::Struct
     attribute :enabled,            Types::Bool
     attribute :file_name_template, Types::String
     attribute :input_file,         Types::String
@@ -115,7 +115,9 @@ module Ortfodb
     end
   end
 
-  class Media < Dry::Struct
+  class MediaConfiguration < Dry::Struct
+
+    # Path to the media directory.
     attribute :at, Types::String
 
     def self.from_dynamic!(d)
@@ -140,7 +142,9 @@ module Ortfodb
     end
   end
 
-  class Tags < Dry::Struct
+  class TagsConfiguration < Dry::Struct
+
+    # Path to file describing all tags.
     attribute :repository, Types::String
 
     def self.from_dynamic!(d)
@@ -165,7 +169,9 @@ module Ortfodb
     end
   end
 
-  class Technologies < Dry::Struct
+  class TechnologiesConfiguration < Dry::Struct
+
+    # Path to file describing all technologies.
     attribute :repository, Types::String
 
     def self.from_dynamic!(d)
@@ -192,36 +198,36 @@ module Ortfodb
 
   # Configuration represents what the ortfodb.yaml configuration file describes.
   class Configuration < Dry::Struct
-    attribute :build_metadata_file, Types::String
+    attribute :build_metadata_file, Types::String.optional
 
     # Exporter-specific configuration. Maps exporter names to their configuration.
     attribute :exporters, Types::Hash.meta(of: Types::Hash.meta(of: Types::Any)).optional
 
-    attribute :extract_colors,  ExtractColors
-    attribute :make_gifs,       MakeGifs
-    attribute :make_thumbnails, MakeThumbnails
-    attribute :media,           Media
+    attribute :extract_colors,  ExtractColorsConfiguration.optional
+    attribute :make_gifs,       MakeGIFSConfiguration.optional
+    attribute :make_thumbnails, MakeThumbnailsConfiguration.optional
+    attribute :media,           MediaConfiguration.optional
 
     # Path to the directory containing all projects. Must be absolute.
     attribute :projects_at, Types::String
 
     attribute :scattered_mode_folder, Types::String
-    attribute :tags,                  Tags
-    attribute :technologies,          Technologies
+    attribute :tags,                  TagsConfiguration.optional
+    attribute :technologies,          TechnologiesConfiguration.optional
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        build_metadata_file:   d.fetch("build metadata file"),
+        build_metadata_file:   d["build metadata file"],
         exporters:             Types::Hash.optional[d["exporters"]]&.map { |k, v| [k, Types::Hash[v].map { |k, v| [k, Types::Any[v]] }.to_h] }&.to_h,
-        extract_colors:        ExtractColors.from_dynamic!(d.fetch("extract colors")),
-        make_gifs:             MakeGifs.from_dynamic!(d.fetch("make gifs")),
-        make_thumbnails:       MakeThumbnails.from_dynamic!(d.fetch("make thumbnails")),
-        media:                 Media.from_dynamic!(d.fetch("media")),
+        extract_colors:        d["extract colors"] ? ExtractColorsConfiguration.from_dynamic!(d["extract colors"]) : nil,
+        make_gifs:             d["make gifs"] ? MakeGIFSConfiguration.from_dynamic!(d["make gifs"]) : nil,
+        make_thumbnails:       d["make thumbnails"] ? MakeThumbnailsConfiguration.from_dynamic!(d["make thumbnails"]) : nil,
+        media:                 d["media"] ? MediaConfiguration.from_dynamic!(d["media"]) : nil,
         projects_at:           d.fetch("projects at"),
         scattered_mode_folder: d.fetch("scattered mode folder"),
-        tags:                  Tags.from_dynamic!(d.fetch("tags")),
-        technologies:          Technologies.from_dynamic!(d.fetch("technologies")),
+        tags:                  d["tags"] ? TagsConfiguration.from_dynamic!(d["tags"]) : nil,
+        technologies:          d["technologies"] ? TechnologiesConfiguration.from_dynamic!(d["technologies"]) : nil,
       )
     end
 
@@ -233,14 +239,14 @@ module Ortfodb
       {
         "build metadata file"   => build_metadata_file,
         "exporters"             => exporters,
-        "extract colors"        => extract_colors.to_dynamic,
-        "make gifs"             => make_gifs.to_dynamic,
-        "make thumbnails"       => make_thumbnails.to_dynamic,
-        "media"                 => media.to_dynamic,
+        "extract colors"        => extract_colors&.to_dynamic,
+        "make gifs"             => make_gifs&.to_dynamic,
+        "make thumbnails"       => make_thumbnails&.to_dynamic,
+        "media"                 => media&.to_dynamic,
         "projects at"           => projects_at,
         "scattered mode folder" => scattered_mode_folder,
-        "tags"                  => tags.to_dynamic,
-        "technologies"          => technologies.to_dynamic,
+        "tags"                  => tags&.to_dynamic,
+        "technologies"          => technologies&.to_dynamic,
       }
     end
 

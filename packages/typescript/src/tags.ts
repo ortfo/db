@@ -7,19 +7,41 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
+/**
+ * Tag represents a category that can be assigned to a work.
+ */
 export interface Tags {
-    aliases:         string[];
-    description:     string;
-    detect:          Detect;
-    "learn more at": string;
-    plural:          string;
-    singular:        string;
+    /**
+     * Other singular-form names of tags that refer to this tag. The names mentionned here
+     * should not be used to define other tags.
+     */
+    aliases?:     string[];
+    description?: string;
+    /**
+     * Various ways to automatically detect that a work is tagged with this tag.
+     */
+    detect?: Detect;
+    /**
+     * URL to a website where more information can be found about this tag.
+     */
+    "learn more at"?: string;
+    /**
+     * Plural-form name of the tag. For example, "Books".
+     */
+    plural: string;
+    /**
+     * Singular-form name of the tag. For example, "Book".
+     */
+    singular: string;
 }
 
+/**
+ * Various ways to automatically detect that a work is tagged with this tag.
+ */
 export interface Detect {
-    files:       string[];
-    "made with": string[];
-    search:      string[];
+    files?:       string[];
+    "made with"?: string[];
+    search?:      string[];
 }
 
 // Converts JSON strings to/from your types
@@ -188,16 +210,16 @@ function r(name: string) {
 
 const typeMap: any = {
     "Tags": o([
-        { json: "aliases", js: "aliases", typ: a("") },
-        { json: "description", js: "description", typ: "" },
-        { json: "detect", js: "detect", typ: r("Detect") },
-        { json: "learn more at", js: "learn more at", typ: "" },
+        { json: "aliases", js: "aliases", typ: u(undefined, a("")) },
+        { json: "description", js: "description", typ: u(undefined, "") },
+        { json: "detect", js: "detect", typ: u(undefined, r("Detect")) },
+        { json: "learn more at", js: "learn more at", typ: u(undefined, "") },
         { json: "plural", js: "plural", typ: "" },
         { json: "singular", js: "singular", typ: "" },
     ], false),
     "Detect": o([
-        { json: "files", js: "files", typ: a("") },
-        { json: "made with", js: "made with", typ: a("") },
-        { json: "search", js: "search", typ: a("") },
+        { json: "files", js: "files", typ: u(undefined, a("")) },
+        { json: "made with", js: "made with", typ: u(undefined, a("")) },
+        { json: "search", js: "search", typ: u(undefined, a("")) },
     ], false),
 };

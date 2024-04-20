@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.4.1/schemas/database.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/database.schema.json",
   "$ref": "#/$defs/Database",
   "$defs": {
     "AnalyzedWork": {
@@ -34,7 +34,8 @@
         "content",
         "Partial"
       ],
-      "description": "AnalyzedWork represents a complete work, with analyzed mediae."
+      "description": "AnalyzedWork represents a complete work, with analyzed mediae.",
+      "title": "AnalyzedWork"
     },
     "ColorPalette": {
       "properties": {
@@ -55,7 +56,8 @@
         "secondary",
         "tertiary"
       ],
-      "description": "ColorPalette reprensents the object in a Work's metadata.colors."
+      "description": "ColorPalette reprensents the object in a Work's metadata.colors.",
+      "title": "ColorPalette"
     },
     "ContentBlock": {
       "properties": {
@@ -159,13 +161,15 @@
         "text",
         "title",
         "url"
-      ]
+      ],
+      "title": "ContentBlock"
     },
     "Database": {
       "additionalProperties": {
         "$ref": "#/$defs/AnalyzedWork"
       },
-      "type": "object"
+      "type": "object",
+      "title": "Database"
     },
     "DatabaseMeta": {
       "properties": {
@@ -178,14 +182,16 @@
       "type": "object",
       "required": [
         "Partial"
-      ]
+      ],
+      "title": "DatabaseMeta"
     },
     "Footnotes": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object",
-      "description": "Footnotes represents the footnote declarations in a description.md file."
+      "description": "Footnotes represents the footnote declarations in a description.md file.",
+      "title": "Footnotes"
     },
     "ImageDimensions": {
       "properties": {
@@ -209,7 +215,8 @@
         "height",
         "aspectRatio"
       ],
-      "description": "ImageDimensions represents metadata about a media as it's extracted from its file."
+      "description": "ImageDimensions represents metadata about a media as it's extracted from its file.",
+      "title": "ImageDimensions"
     },
     "Layout": {
       "items": {
@@ -219,13 +226,15 @@
         "type": "array"
       },
       "type": "array",
-      "description": "Layout is a 2D array of content block IDs"
+      "description": "Layout is a 2D array of content block IDs",
+      "title": "Layout"
     },
     "LocalizableContent": {
       "additionalProperties": {
         "$ref": "#/$defs/LocalizedContent"
       },
-      "type": "object"
+      "type": "object",
+      "title": "LocalizableContent"
     },
     "LocalizedContent": {
       "properties": {
@@ -252,7 +261,8 @@
         "blocks",
         "title",
         "footnotes"
-      ]
+      ],
+      "title": "LocalizedContent"
     },
     "MediaAttributes": {
       "properties": {
@@ -286,7 +296,8 @@
         "playsinline",
         "controls"
       ],
-      "description": "MediaAttributes stores which HTML attributes should be added to the media."
+      "description": "MediaAttributes stores which HTML attributes should be added to the media.",
+      "title": "MediaAttributes"
     },
     "ThumbnailsMap": {
       "patternProperties": {
@@ -295,7 +306,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "title": "ThumbnailsMap"
     },
     "WorkMetadata": {
       "properties": {
@@ -364,7 +376,8 @@
         "private",
         "additionalMetadata",
         "databaseMetadata"
-      ]
+      ],
+      "title": "WorkMetadata"
     }
   }
 }

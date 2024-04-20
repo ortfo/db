@@ -18,10 +18,10 @@ use std::collections::HashMap;
 pub struct Exporter {
     /// Commands to run after the build finishes. Go text template that receives .Data and
     /// .Database, the built database.
-    pub after: Option<Vec<ExporterSchema>>,
+    pub after: Option<Vec<ExporterCommand>>,
 
     /// Commands to run before the build starts. Go text template that receives .Data
-    pub before: Option<Vec<ExporterSchema>>,
+    pub before: Option<Vec<ExporterCommand>>,
 
     /// Initial data
     pub data: Option<HashMap<String, Option<serde_json::Value>>>,
@@ -40,11 +40,11 @@ pub struct Exporter {
 
     /// Commands to run during the build, for each work. Go text template that receives .Data and
     /// .Work, the current work.
-    pub work: Option<Vec<ExporterSchema>>,
+    pub work: Option<Vec<ExporterCommand>>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ExporterSchema {
+pub struct ExporterCommand {
     /// Log a message. The first argument is the verb, the second is the color, the third is the
     /// message.
     pub log: Option<Vec<String>>,

@@ -24,7 +24,7 @@ module Ortfodb
   end
 
   # MediaAttributes stores which HTML attributes should be added to the media.
-  class Attributes < Dry::Struct
+  class MediaAttributes < Dry::Struct
 
     # Controlled with attribute character > (adds)
     attribute :autoplay, Types::Bool
@@ -33,7 +33,7 @@ module Ortfodb
     attribute :controls, Types::Bool
 
     # Controlled with attribute character ~ (adds)
-    attribute :attributes_loop, Types::Bool
+    attribute :media_attributes_loop, Types::Bool
 
     # Controlled with attribute character > (adds)
     attribute :muted, Types::Bool
@@ -44,11 +44,11 @@ module Ortfodb
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        autoplay:        d.fetch("autoplay"),
-        controls:        d.fetch("controls"),
-        attributes_loop: d.fetch("loop"),
-        muted:           d.fetch("muted"),
-        playsinline:     d.fetch("playsinline"),
+        autoplay:              d.fetch("autoplay"),
+        controls:              d.fetch("controls"),
+        media_attributes_loop: d.fetch("loop"),
+        muted:                 d.fetch("muted"),
+        playsinline:           d.fetch("playsinline"),
       )
     end
 
@@ -60,7 +60,7 @@ module Ortfodb
       {
         "autoplay"    => autoplay,
         "controls"    => controls,
-        "loop"        => attributes_loop,
+        "loop"        => media_attributes_loop,
         "muted"       => muted,
         "playsinline" => playsinline,
       }
@@ -72,7 +72,7 @@ module Ortfodb
   end
 
   # ColorPalette reprensents the object in a Work's metadata.colors.
-  class Colors < Dry::Struct
+  class ColorPalette < Dry::Struct
     attribute :primary,   Types::String
     attribute :secondary, Types::String
     attribute :tertiary,  Types::String
@@ -104,7 +104,7 @@ module Ortfodb
   end
 
   # ImageDimensions represents metadata about a media as it's extracted from its file.
-  class Dimensions < Dry::Struct
+  class ImageDimensions < Dry::Struct
 
     # width / height
     attribute :aspect_ratio, Types::Double
@@ -141,7 +141,7 @@ module Ortfodb
     end
   end
 
-  class Thumbnails < Dry::Struct
+  class ThumbnailsMap < Dry::Struct
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
@@ -163,22 +163,22 @@ module Ortfodb
     end
   end
 
-  class BlockElement < Dry::Struct
+  class ContentBlock < Dry::Struct
     attribute :alt, Types::String
 
     # whether the media has been analyzed
     attribute :analyzed, Types::Bool
 
     attribute :anchor,     Types::String
-    attribute :attributes, Attributes
+    attribute :attributes, MediaAttributes
     attribute :caption,    Types::String
-    attribute :colors,     Colors
+    attribute :colors,     ColorPalette
 
     # html
     attribute :content, Types::String
 
     attribute :content_type, Types::String
-    attribute :dimensions,   Dimensions
+    attribute :dimensions,   ImageDimensions
     attribute :dist_source,  Types::String
 
     # in seconds
@@ -193,39 +193,39 @@ module Ortfodb
     # in bytes
     attribute :size, Types::Integer
 
-    attribute :text,                 Types::String
-    attribute :thumbnails,           Thumbnails
-    attribute :thumbnails_built_at,  Types::String
-    attribute :title,                Types::String
-    attribute :database_schema_type, Types::String
-    attribute :url,                  Types::String
+    attribute :text,                Types::String
+    attribute :thumbnails,          ThumbnailsMap
+    attribute :thumbnails_built_at, Types::String
+    attribute :title,               Types::String
+    attribute :content_block_type,  Types::String
+    attribute :url,                 Types::String
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        alt:                  d.fetch("alt"),
-        analyzed:             d.fetch("analyzed"),
-        anchor:               d.fetch("anchor"),
-        attributes:           Attributes.from_dynamic!(d.fetch("attributes")),
-        caption:              d.fetch("caption"),
-        colors:               Colors.from_dynamic!(d.fetch("colors")),
-        content:              d.fetch("content"),
-        content_type:         d.fetch("contentType"),
-        dimensions:           Dimensions.from_dynamic!(d.fetch("dimensions")),
-        dist_source:          d.fetch("distSource"),
-        duration:             d.fetch("duration"),
-        has_sound:            d.fetch("hasSound"),
-        id:                   d.fetch("id"),
-        index:                d.fetch("index"),
-        online:               d.fetch("online"),
-        relative_source:      d.fetch("relativeSource"),
-        size:                 d.fetch("size"),
-        text:                 d.fetch("text"),
-        thumbnails:           Thumbnails.from_dynamic!(d.fetch("thumbnails")),
-        thumbnails_built_at:  d.fetch("thumbnailsBuiltAt"),
-        title:                d.fetch("title"),
-        database_schema_type: d.fetch("type"),
-        url:                  d.fetch("url"),
+        alt:                 d.fetch("alt"),
+        analyzed:            d.fetch("analyzed"),
+        anchor:              d.fetch("anchor"),
+        attributes:          MediaAttributes.from_dynamic!(d.fetch("attributes")),
+        caption:             d.fetch("caption"),
+        colors:              ColorPalette.from_dynamic!(d.fetch("colors")),
+        content:             d.fetch("content"),
+        content_type:        d.fetch("contentType"),
+        dimensions:          ImageDimensions.from_dynamic!(d.fetch("dimensions")),
+        dist_source:         d.fetch("distSource"),
+        duration:            d.fetch("duration"),
+        has_sound:           d.fetch("hasSound"),
+        id:                  d.fetch("id"),
+        index:               d.fetch("index"),
+        online:              d.fetch("online"),
+        relative_source:     d.fetch("relativeSource"),
+        size:                d.fetch("size"),
+        text:                d.fetch("text"),
+        thumbnails:          ThumbnailsMap.from_dynamic!(d.fetch("thumbnails")),
+        thumbnails_built_at: d.fetch("thumbnailsBuiltAt"),
+        title:               d.fetch("title"),
+        content_block_type:  d.fetch("type"),
+        url:                 d.fetch("url"),
       )
     end
 
@@ -256,7 +256,7 @@ module Ortfodb
         "thumbnails"        => thumbnails.to_dynamic,
         "thumbnailsBuiltAt" => thumbnails_built_at,
         "title"             => title,
-        "type"              => database_schema_type,
+        "type"              => content_block_type,
         "url"               => url,
       }
     end
@@ -266,8 +266,8 @@ module Ortfodb
     end
   end
 
-  class ContentValue < Dry::Struct
-    attribute :blocks,    Types.Array(BlockElement)
+  class LocalizedContent < Dry::Struct
+    attribute :blocks,    Types.Array(ContentBlock)
     attribute :footnotes, Types::Hash.meta(of: Types::String)
     attribute :layout,    Types.Array(Types.Array(Types::String))
     attribute :title,     Types::String
@@ -275,7 +275,7 @@ module Ortfodb
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        blocks:    d.fetch("blocks").map { |x| BlockElement.from_dynamic!(x) },
+        blocks:    d.fetch("blocks").map { |x| ContentBlock.from_dynamic!(x) },
         footnotes: Types::Hash[d.fetch("footnotes")].map { |k, v| [k, Types::String[v]] }.to_h,
         layout:    d.fetch("layout"),
         title:     d.fetch("title"),
@@ -300,7 +300,7 @@ module Ortfodb
     end
   end
 
-  class DatabaseMetadataClass < Dry::Struct
+  class DatabaseMeta < Dry::Struct
 
     # Partial is true if the database was not fully built.
     attribute :partial, Types::Bool
@@ -327,11 +327,11 @@ module Ortfodb
     end
   end
 
-  class Metadata < Dry::Struct
+  class WorkMetadata < Dry::Struct
     attribute :additional_metadata, Types::Hash.meta(of: Types::Any)
     attribute :aliases,             Types.Array(Types::String)
-    attribute :colors,              Colors
-    attribute :database_metadata,   DatabaseMetadataClass
+    attribute :colors,              ColorPalette
+    attribute :database_metadata,   DatabaseMeta
     attribute :finished,            Types::String
     attribute :made_with,           Types.Array(Types::String)
     attribute :page_background,     Types::String
@@ -347,8 +347,8 @@ module Ortfodb
       new(
         additional_metadata: Types::Hash[d.fetch("additionalMetadata")].map { |k, v| [k, Types::Any[v]] }.to_h,
         aliases:             d.fetch("aliases"),
-        colors:              Colors.from_dynamic!(d.fetch("colors")),
-        database_metadata:   DatabaseMetadataClass.from_dynamic!(d.fetch("databaseMetadata")),
+        colors:              ColorPalette.from_dynamic!(d.fetch("colors")),
+        database_metadata:   DatabaseMeta.from_dynamic!(d.fetch("databaseMetadata")),
         finished:            d.fetch("finished"),
         made_with:           d.fetch("madeWith"),
         page_background:     d.fetch("pageBackground"),
@@ -389,22 +389,22 @@ module Ortfodb
   end
 
   # AnalyzedWork represents a complete work, with analyzed mediae.
-  class DatabaseValue < Dry::Struct
+  class AnalyzedWork < Dry::Struct
     attribute :built_at,         Types::String
-    attribute :content,          Types::Hash.meta(of: ContentValue)
+    attribute :content,          Types::Hash.meta(of: LocalizedContent)
     attribute :description_hash, Types::String
     attribute :id,               Types::String
-    attribute :metadata,         Metadata
+    attribute :metadata,         WorkMetadata
     attribute :partial,          Types::Bool
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
         built_at:         d.fetch("builtAt"),
-        content:          Types::Hash[d.fetch("content")].map { |k, v| [k, ContentValue.from_dynamic!(v)] }.to_h,
+        content:          Types::Hash[d.fetch("content")].map { |k, v| [k, LocalizedContent.from_dynamic!(v)] }.to_h,
         description_hash: d.fetch("descriptionHash"),
         id:               d.fetch("id"),
-        metadata:         Metadata.from_dynamic!(d.fetch("metadata")),
+        metadata:         WorkMetadata.from_dynamic!(d.fetch("metadata")),
         partial:          d.fetch("Partial"),
       )
     end
@@ -432,7 +432,7 @@ module Ortfodb
   module Ortfodb
     class Database
       def self.from_json!(json)
-        Types::Hash[JSON.parse(json, quirks_mode: true)].map { |k, v| [k, DatabaseValue.from_dynamic!(v)] }.to_h
+        Types::Hash[JSON.parse(json, quirks_mode: true)].map { |k, v| [k, AnalyzedWork.from_dynamic!(v)] }.to_h
       end
     end
   end

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.4.1/schemas/exporter.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/exporter.schema.json",
   "$ref": "#/$defs/ExporterManifest",
   "$defs": {
     "ExporterCommand": {
@@ -18,7 +18,8 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "title": "ExporterCommand"
     },
     "ExporterManifest": {
       "properties": {
@@ -72,7 +73,8 @@
       "required": [
         "name",
         "description"
-      ]
+      ],
+      "title": "ExporterManifest"
     }
   }
 }

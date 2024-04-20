@@ -7,24 +7,44 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
+/**
+ * Technology represents a "technology" (in the very broad sense) that was used to create a
+ * work.
+ */
 export interface Technologies {
-    aliases: string[];
+    /**
+     * Other technology slugs that refer to this technology. The slugs mentionned here should
+     * not be used in the definition of other technologies.
+     */
+    aliases?: string[];
     /**
      * Autodetect contains an expression of the form 'CONTENT in PATH' where CONTENT is a
      * free-form unquoted string and PATH is a filepath relative to the work folder.
      * If CONTENT is found in PATH, we consider that technology to be used in the work.
      */
-    autodetect:  string[];
-    by:          string;
-    description: string;
+    autodetect?: string[];
+    /**
+     * Name of the person or organization that created this technology.
+     */
+    by?:          string;
+    description?: string;
     /**
      * Files contains a list of gitignore-style patterns. If the work contains any of the
      * patterns specified, we consider that technology to be used in the work.
      */
-    files:           string[];
-    "learn more at": string;
-    name:            string;
-    slug:            string;
+    files?: string[];
+    /**
+     * URL to a website where more information can be found about this technology.
+     */
+    "learn more at"?: string;
+    name:             string;
+    /**
+     * The slug is a unique identifier for this technology, that's suitable for use in a
+     * website's URL.
+     * For example, the page that shows all works using a technology with slug "a" could be at
+     * https://example.org/technologies/a.
+     */
+    slug: string;
 }
 
 // Converts JSON strings to/from your types
@@ -193,12 +213,12 @@ function r(name: string) {
 
 const typeMap: any = {
     "Technologies": o([
-        { json: "aliases", js: "aliases", typ: a("") },
-        { json: "autodetect", js: "autodetect", typ: a("") },
-        { json: "by", js: "by", typ: "" },
-        { json: "description", js: "description", typ: "" },
-        { json: "files", js: "files", typ: a("") },
-        { json: "learn more at", js: "learn more at", typ: "" },
+        { json: "aliases", js: "aliases", typ: u(undefined, a("")) },
+        { json: "autodetect", js: "autodetect", typ: u(undefined, a("")) },
+        { json: "by", js: "by", typ: u(undefined, "") },
+        { json: "description", js: "description", typ: u(undefined, "") },
+        { json: "files", js: "files", typ: u(undefined, a("")) },
+        { json: "learn more at", js: "learn more at", typ: u(undefined, "") },
         { json: "name", js: "name", typ: "" },
         { json: "slug", js: "slug", typ: "" },
     ], false),

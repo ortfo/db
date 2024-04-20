@@ -1,30 +1,34 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.4.1/schemas/technologies.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/technologies.schema.json",
   "$ref": "#/$defs/technologies",
   "$defs": {
     "Technology": {
       "properties": {
         "slug": {
-          "type": "string"
+          "type": "string",
+          "description": "The slug is a unique identifier for this technology, that's suitable for use in a website's URL.\nFor example, the page that shows all works using a technology with slug \"a\" could be at https://example.org/technologies/a."
         },
         "name": {
           "type": "string"
         },
         "by": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the person or organization that created this technology."
         },
         "description": {
           "type": "string"
         },
         "learn more at": {
-          "type": "string"
+          "type": "string",
+          "description": "URL to a website where more information can be found about this technology."
         },
         "aliases": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Other technology slugs that refer to this technology. The slugs mentionned here should not be used in the definition of other technologies."
         },
         "files": {
           "items": {
@@ -45,20 +49,17 @@
       "type": "object",
       "required": [
         "slug",
-        "name",
-        "by",
-        "description",
-        "learn more at",
-        "aliases",
-        "files",
-        "autodetect"
-      ]
+        "name"
+      ],
+      "description": "Technology represents a \"technology\" (in the very broad sense) that was used to create a work.",
+      "title": "Technology"
     },
     "technologies": {
       "items": {
         "$ref": "#/$defs/Technology"
       },
-      "type": "array"
+      "type": "array",
+      "title": "technologies"
     }
   }
 }

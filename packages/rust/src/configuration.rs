@@ -18,21 +18,21 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize)]
 pub struct Configuration {
     #[serde(rename = "build metadata file")]
-    pub build_metadata_file: String,
+    pub build_metadata_file: Option<String>,
 
     /// Exporter-specific configuration. Maps exporter names to their configuration.
     pub exporters: Option<HashMap<String, HashMap<String, Option<serde_json::Value>>>>,
 
     #[serde(rename = "extract colors")]
-    pub extract_colors: ExtractColors,
+    pub extract_colors: Option<ExtractColorsConfiguration>,
 
     #[serde(rename = "make gifs")]
-    pub make_gifs: MakeGifs,
+    pub make_gifs: Option<MakeGiFsConfiguration>,
 
     #[serde(rename = "make thumbnails")]
-    pub make_thumbnails: MakeThumbnails,
+    pub make_thumbnails: Option<MakeThumbnailsConfiguration>,
 
-    pub media: Media,
+    pub media: Option<MediaConfiguration>,
 
     /// Path to the directory containing all projects. Must be absolute.
     #[serde(rename = "projects at")]
@@ -41,13 +41,13 @@ pub struct Configuration {
     #[serde(rename = "scattered mode folder")]
     pub scattered_mode_folder: String,
 
-    pub tags: Tags,
+    pub tags: Option<TagsConfiguration>,
 
-    pub technologies: Technologies,
+    pub technologies: Option<TechnologiesConfiguration>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ExtractColors {
+pub struct ExtractColorsConfiguration {
     #[serde(rename = "default files")]
     pub default_files: Vec<String>,
 
@@ -57,7 +57,7 @@ pub struct ExtractColors {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MakeGifs {
+pub struct MakeGiFsConfiguration {
     pub enabled: bool,
 
     #[serde(rename = "file name template")]
@@ -65,7 +65,7 @@ pub struct MakeGifs {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MakeThumbnails {
+pub struct MakeThumbnailsConfiguration {
     pub enabled: bool,
 
     #[serde(rename = "file name template")]
@@ -78,16 +78,19 @@ pub struct MakeThumbnails {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Media {
+pub struct MediaConfiguration {
+    /// Path to the media directory.
     pub at: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Tags {
+pub struct TagsConfiguration {
+    /// Path to file describing all tags.
     pub repository: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Technologies {
+pub struct TechnologiesConfiguration {
+    /// Path to file describing all technologies.
     pub repository: String,
 }

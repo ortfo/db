@@ -12,11 +12,11 @@ export interface Exporter {
      * Commands to run after the build finishes. Go text template that receives .Data and
      * .Database, the built database.
      */
-    after?: ExporterSchema[];
+    after?: ExporterCommand[];
     /**
      * Commands to run before the build starts. Go text template that receives .Data
      */
-    before?: ExporterSchema[];
+    before?: ExporterCommand[];
     /**
      * Initial data
      */
@@ -41,10 +41,10 @@ export interface Exporter {
      * Commands to run during the build, for each work. Go text template that receives .Data and
      * .Work, the current work.
      */
-    work?: ExporterSchema[];
+    work?: ExporterCommand[];
 }
 
-export interface ExporterSchema {
+export interface ExporterCommand {
     /**
      * Log a message. The first argument is the verb, the second is the color, the third is the
      * message.
@@ -222,16 +222,16 @@ function r(name: string) {
 
 const typeMap: any = {
     "Exporter": o([
-        { json: "after", js: "after", typ: u(undefined, a(r("ExporterSchema"))) },
-        { json: "before", js: "before", typ: u(undefined, a(r("ExporterSchema"))) },
+        { json: "after", js: "after", typ: u(undefined, a(r("ExporterCommand"))) },
+        { json: "before", js: "before", typ: u(undefined, a(r("ExporterCommand"))) },
         { json: "data", js: "data", typ: u(undefined, m("any")) },
         { json: "description", js: "description", typ: "" },
         { json: "name", js: "name", typ: "" },
         { json: "requires", js: "requires", typ: u(undefined, a("")) },
         { json: "verbose", js: "verbose", typ: u(undefined, true) },
-        { json: "work", js: "work", typ: u(undefined, a(r("ExporterSchema"))) },
+        { json: "work", js: "work", typ: u(undefined, a(r("ExporterCommand"))) },
     ], false),
-    "ExporterSchema": o([
+    "ExporterCommand": o([
         { json: "log", js: "log", typ: u(undefined, a("")) },
         { json: "run", js: "run", typ: u(undefined, "") },
     ], false),

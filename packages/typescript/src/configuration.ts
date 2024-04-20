@@ -11,51 +11,60 @@
  * Configuration represents what the ortfodb.yaml configuration file describes.
  */
 export interface Configuration {
-    "build metadata file": string;
+    "build metadata file"?: string;
     /**
      * Exporter-specific configuration. Maps exporter names to their configuration.
      */
-    exporters?:        { [key: string]: { [key: string]: any } };
-    "extract colors":  ExtractColors;
-    "make gifs":       MakeGifs;
-    "make thumbnails": MakeThumbnails;
-    media:             Media;
+    exporters?:         { [key: string]: { [key: string]: any } };
+    "extract colors"?:  ExtractColorsConfiguration;
+    "make gifs"?:       MakeGIFSConfiguration;
+    "make thumbnails"?: MakeThumbnailsConfiguration;
+    media?:             MediaConfiguration;
     /**
      * Path to the directory containing all projects. Must be absolute.
      */
     "projects at":           string;
     "scattered mode folder": string;
-    tags:                    Tags;
-    technologies:            Technologies;
+    tags?:                   TagsConfiguration;
+    technologies?:           TechnologiesConfiguration;
 }
 
-export interface ExtractColors {
+export interface ExtractColorsConfiguration {
     "default files": string[];
     enabled:         boolean;
     extract:         string[];
 }
 
-export interface MakeGifs {
+export interface MakeGIFSConfiguration {
     enabled:              boolean;
     "file name template": string;
 }
 
-export interface MakeThumbnails {
+export interface MakeThumbnailsConfiguration {
     enabled:              boolean;
     "file name template": string;
     "input file":         string;
     sizes:                number[];
 }
 
-export interface Media {
+export interface MediaConfiguration {
+    /**
+     * Path to the media directory.
+     */
     at: string;
 }
 
-export interface Tags {
+export interface TagsConfiguration {
+    /**
+     * Path to file describing all tags.
+     */
     repository: string;
 }
 
-export interface Technologies {
+export interface TechnologiesConfiguration {
+    /**
+     * Path to file describing all technologies.
+     */
     repository: string;
 }
 
@@ -225,39 +234,39 @@ function r(name: string) {
 
 const typeMap: any = {
     "Configuration": o([
-        { json: "build metadata file", js: "build metadata file", typ: "" },
+        { json: "build metadata file", js: "build metadata file", typ: u(undefined, "") },
         { json: "exporters", js: "exporters", typ: u(undefined, m(m("any"))) },
-        { json: "extract colors", js: "extract colors", typ: r("ExtractColors") },
-        { json: "make gifs", js: "make gifs", typ: r("MakeGifs") },
-        { json: "make thumbnails", js: "make thumbnails", typ: r("MakeThumbnails") },
-        { json: "media", js: "media", typ: r("Media") },
+        { json: "extract colors", js: "extract colors", typ: u(undefined, r("ExtractColorsConfiguration")) },
+        { json: "make gifs", js: "make gifs", typ: u(undefined, r("MakeGIFSConfiguration")) },
+        { json: "make thumbnails", js: "make thumbnails", typ: u(undefined, r("MakeThumbnailsConfiguration")) },
+        { json: "media", js: "media", typ: u(undefined, r("MediaConfiguration")) },
         { json: "projects at", js: "projects at", typ: "" },
         { json: "scattered mode folder", js: "scattered mode folder", typ: "" },
-        { json: "tags", js: "tags", typ: r("Tags") },
-        { json: "technologies", js: "technologies", typ: r("Technologies") },
+        { json: "tags", js: "tags", typ: u(undefined, r("TagsConfiguration")) },
+        { json: "technologies", js: "technologies", typ: u(undefined, r("TechnologiesConfiguration")) },
     ], false),
-    "ExtractColors": o([
+    "ExtractColorsConfiguration": o([
         { json: "default files", js: "default files", typ: a("") },
         { json: "enabled", js: "enabled", typ: true },
         { json: "extract", js: "extract", typ: a("") },
     ], false),
-    "MakeGifs": o([
+    "MakeGIFSConfiguration": o([
         { json: "enabled", js: "enabled", typ: true },
         { json: "file name template", js: "file name template", typ: "" },
     ], false),
-    "MakeThumbnails": o([
+    "MakeThumbnailsConfiguration": o([
         { json: "enabled", js: "enabled", typ: true },
         { json: "file name template", js: "file name template", typ: "" },
         { json: "input file", js: "input file", typ: "" },
         { json: "sizes", js: "sizes", typ: a(0) },
     ], false),
-    "Media": o([
+    "MediaConfiguration": o([
         { json: "at", js: "at", typ: "" },
     ], false),
-    "Tags": o([
+    "TagsConfiguration": o([
         { json: "repository", js: "repository", typ: "" },
     ], false),
-    "Technologies": o([
+    "TechnologiesConfiguration": o([
         { json: "repository", js: "repository", typ: "" },
     ], false),
 };

@@ -14,29 +14,29 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-pub type Database = HashMap<String, DatabaseValue>;
+pub type Database = HashMap<String, AnalyzedWork>;
 
 /// AnalyzedWork represents a complete work, with analyzed mediae.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DatabaseValue {
+pub struct AnalyzedWork {
     pub built_at: String,
 
-    pub content: HashMap<String, ContentValue>,
+    pub content: HashMap<String, LocalizedContent>,
 
     pub description_hash: String,
 
     pub id: String,
 
-    pub metadata: Metadata,
+    pub metadata: WorkMetadata,
 
     #[serde(rename = "Partial")]
     pub partial: bool,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ContentValue {
-    pub blocks: Vec<BlockElement>,
+pub struct LocalizedContent {
+    pub blocks: Vec<ContentBlock>,
 
     pub footnotes: HashMap<String, String>,
 
@@ -47,7 +47,7 @@ pub struct ContentValue {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BlockElement {
+pub struct ContentBlock {
     pub alt: String,
 
     /// whether the media has been analyzed
@@ -55,18 +55,18 @@ pub struct BlockElement {
 
     pub anchor: String,
 
-    pub attributes: Attributes,
+    pub attributes: MediaAttributes,
 
     pub caption: String,
 
-    pub colors: Colors,
+    pub colors: ColorPalette,
 
     /// html
     pub content: String,
 
     pub content_type: String,
 
-    pub dimensions: Dimensions,
+    pub dimensions: ImageDimensions,
 
     pub dist_source: String,
 
@@ -88,21 +88,21 @@ pub struct BlockElement {
 
     pub text: String,
 
-    pub thumbnails: Thumbnails,
+    pub thumbnails: ThumbnailsMap,
 
     pub thumbnails_built_at: String,
 
     pub title: String,
 
     #[serde(rename = "type")]
-    pub database_schema_type: String,
+    pub content_block_type: String,
 
     pub url: String,
 }
 
 /// MediaAttributes stores which HTML attributes should be added to the media.
 #[derive(Serialize, Deserialize)]
-pub struct Attributes {
+pub struct MediaAttributes {
     /// Controlled with attribute character > (adds)
     pub autoplay: bool,
 
@@ -111,7 +111,7 @@ pub struct Attributes {
 
     /// Controlled with attribute character ~ (adds)
     #[serde(rename = "loop")]
-    pub attributes_loop: bool,
+    pub media_attributes_loop: bool,
 
     /// Controlled with attribute character > (adds)
     pub muted: bool,
@@ -122,7 +122,7 @@ pub struct Attributes {
 
 /// ColorPalette reprensents the object in a Work's metadata.colors.
 #[derive(Serialize, Deserialize)]
-pub struct Colors {
+pub struct ColorPalette {
     pub primary: String,
 
     pub secondary: String,
@@ -133,7 +133,7 @@ pub struct Colors {
 /// ImageDimensions represents metadata about a media as it's extracted from its file.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Dimensions {
+pub struct ImageDimensions {
     /// width / height
     pub aspect_ratio: f64,
 
@@ -145,19 +145,19 @@ pub struct Dimensions {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Thumbnails {
+pub struct ThumbnailsMap {
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Metadata {
+pub struct WorkMetadata {
     pub additional_metadata: HashMap<String, Option<serde_json::Value>>,
 
     pub aliases: Vec<String>,
 
-    pub colors: Colors,
+    pub colors: ColorPalette,
 
-    pub database_metadata: DatabaseMetadataClass,
+    pub database_metadata: DatabaseMeta,
 
     pub finished: String,
 
@@ -180,7 +180,7 @@ pub struct Metadata {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct DatabaseMetadataClass {
+pub struct DatabaseMeta {
     /// Partial is true if the database was not fully built.
     pub partial: bool,
 }

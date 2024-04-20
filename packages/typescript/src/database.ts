@@ -12,36 +12,36 @@
  */
 export interface Database {
     builtAt:         string;
-    content:         { [key: string]: ContentValue };
+    content:         { [key: string]: LocalizedContent };
     descriptionHash: string;
     id:              string;
-    metadata:        Metadata;
+    metadata:        WorkMetadata;
     Partial:         boolean;
 }
 
-export interface ContentValue {
-    blocks:    BlockElement[];
+export interface LocalizedContent {
+    blocks:    ContentBlock[];
     footnotes: { [key: string]: string };
     layout:    Array<string[]>;
     title:     string;
 }
 
-export interface BlockElement {
+export interface ContentBlock {
     alt: string;
     /**
      * whether the media has been analyzed
      */
     analyzed:   boolean;
     anchor:     string;
-    attributes: Attributes;
+    attributes: MediaAttributes;
     caption:    string;
-    colors:     Colors;
+    colors:     ColorPalette;
     /**
      * html
      */
     content:     string;
     contentType: string;
-    dimensions:  Dimensions;
+    dimensions:  ImageDimensions;
     distSource:  string;
     /**
      * in seconds
@@ -57,7 +57,7 @@ export interface BlockElement {
      */
     size:              number;
     text:              string;
-    thumbnails:        Thumbnails;
+    thumbnails:        ThumbnailsMap;
     thumbnailsBuiltAt: string;
     title:             string;
     type:              string;
@@ -67,7 +67,7 @@ export interface BlockElement {
 /**
  * MediaAttributes stores which HTML attributes should be added to the media.
  */
-export interface Attributes {
+export interface MediaAttributes {
     /**
      * Controlled with attribute character > (adds)
      */
@@ -93,7 +93,7 @@ export interface Attributes {
 /**
  * ColorPalette reprensents the object in a Work's metadata.colors.
  */
-export interface Colors {
+export interface ColorPalette {
     primary:   string;
     secondary: string;
     tertiary:  string;
@@ -102,7 +102,7 @@ export interface Colors {
 /**
  * ImageDimensions represents metadata about a media as it's extracted from its file.
  */
-export interface Dimensions {
+export interface ImageDimensions {
     /**
      * width / height
      */
@@ -117,14 +117,14 @@ export interface Dimensions {
     width: number;
 }
 
-export interface Thumbnails {
+export interface ThumbnailsMap {
 }
 
-export interface Metadata {
+export interface WorkMetadata {
     additionalMetadata: { [key: string]: any };
     aliases:            string[];
-    colors:             Colors;
-    databaseMetadata:   DatabaseMetadataClass;
+    colors:             ColorPalette;
+    databaseMetadata:   DatabaseMeta;
     finished:           string;
     madeWith:           string[];
     pageBackground:     string;
@@ -136,7 +136,7 @@ export interface Metadata {
     wip:                boolean;
 }
 
-export interface DatabaseMetadataClass {
+export interface DatabaseMeta {
     /**
      * Partial is true if the database was not fully built.
      */
@@ -310,28 +310,28 @@ function r(name: string) {
 const typeMap: any = {
     "Database": o([
         { json: "builtAt", js: "builtAt", typ: "" },
-        { json: "content", js: "content", typ: m(r("ContentValue")) },
+        { json: "content", js: "content", typ: m(r("LocalizedContent")) },
         { json: "descriptionHash", js: "descriptionHash", typ: "" },
         { json: "id", js: "id", typ: "" },
-        { json: "metadata", js: "metadata", typ: r("Metadata") },
+        { json: "metadata", js: "metadata", typ: r("WorkMetadata") },
         { json: "Partial", js: "Partial", typ: true },
     ], false),
-    "ContentValue": o([
-        { json: "blocks", js: "blocks", typ: a(r("BlockElement")) },
+    "LocalizedContent": o([
+        { json: "blocks", js: "blocks", typ: a(r("ContentBlock")) },
         { json: "footnotes", js: "footnotes", typ: m("") },
         { json: "layout", js: "layout", typ: a(a("")) },
         { json: "title", js: "title", typ: "" },
     ], false),
-    "BlockElement": o([
+    "ContentBlock": o([
         { json: "alt", js: "alt", typ: "" },
         { json: "analyzed", js: "analyzed", typ: true },
         { json: "anchor", js: "anchor", typ: "" },
-        { json: "attributes", js: "attributes", typ: r("Attributes") },
+        { json: "attributes", js: "attributes", typ: r("MediaAttributes") },
         { json: "caption", js: "caption", typ: "" },
-        { json: "colors", js: "colors", typ: r("Colors") },
+        { json: "colors", js: "colors", typ: r("ColorPalette") },
         { json: "content", js: "content", typ: "" },
         { json: "contentType", js: "contentType", typ: "" },
-        { json: "dimensions", js: "dimensions", typ: r("Dimensions") },
+        { json: "dimensions", js: "dimensions", typ: r("ImageDimensions") },
         { json: "distSource", js: "distSource", typ: "" },
         { json: "duration", js: "duration", typ: 3.14 },
         { json: "hasSound", js: "hasSound", typ: true },
@@ -341,36 +341,36 @@ const typeMap: any = {
         { json: "relativeSource", js: "relativeSource", typ: "" },
         { json: "size", js: "size", typ: 0 },
         { json: "text", js: "text", typ: "" },
-        { json: "thumbnails", js: "thumbnails", typ: r("Thumbnails") },
+        { json: "thumbnails", js: "thumbnails", typ: r("ThumbnailsMap") },
         { json: "thumbnailsBuiltAt", js: "thumbnailsBuiltAt", typ: "" },
         { json: "title", js: "title", typ: "" },
         { json: "type", js: "type", typ: "" },
         { json: "url", js: "url", typ: "" },
     ], false),
-    "Attributes": o([
+    "MediaAttributes": o([
         { json: "autoplay", js: "autoplay", typ: true },
         { json: "controls", js: "controls", typ: true },
         { json: "loop", js: "loop", typ: true },
         { json: "muted", js: "muted", typ: true },
         { json: "playsinline", js: "playsinline", typ: true },
     ], false),
-    "Colors": o([
+    "ColorPalette": o([
         { json: "primary", js: "primary", typ: "" },
         { json: "secondary", js: "secondary", typ: "" },
         { json: "tertiary", js: "tertiary", typ: "" },
     ], false),
-    "Dimensions": o([
+    "ImageDimensions": o([
         { json: "aspectRatio", js: "aspectRatio", typ: 3.14 },
         { json: "height", js: "height", typ: 0 },
         { json: "width", js: "width", typ: 0 },
     ], false),
-    "Thumbnails": o([
+    "ThumbnailsMap": o([
     ], false),
-    "Metadata": o([
+    "WorkMetadata": o([
         { json: "additionalMetadata", js: "additionalMetadata", typ: m("any") },
         { json: "aliases", js: "aliases", typ: a("") },
-        { json: "colors", js: "colors", typ: r("Colors") },
-        { json: "databaseMetadata", js: "databaseMetadata", typ: r("DatabaseMetadataClass") },
+        { json: "colors", js: "colors", typ: r("ColorPalette") },
+        { json: "databaseMetadata", js: "databaseMetadata", typ: r("DatabaseMeta") },
         { json: "finished", js: "finished", typ: "" },
         { json: "madeWith", js: "madeWith", typ: a("") },
         { json: "pageBackground", js: "pageBackground", typ: "" },
@@ -381,7 +381,7 @@ const typeMap: any = {
         { json: "titleStyle", js: "titleStyle", typ: "" },
         { json: "wip", js: "wip", typ: true },
     ], false),
-    "DatabaseMetadataClass": o([
+    "DatabaseMeta": o([
         { json: "Partial", js: "Partial", typ: true },
     ], false),
 };
