@@ -7,13 +7,29 @@ import (
 	"regexp"
 	"strings"
 
+	"time"
+
 	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/colorstring"
 	"github.com/xeipuuv/gojsonschema"
 )
 
-func logWriter() io.Writer {
-	var writer io.Writer = os.Stderr
+var LogFilePath string
+var PrependDateToLogs = false
+
+func logWriter(original io.Writer) io.Writer {
+	writer := original
+	if LogFilePath != "" {
+		logfile, err := os.OpenFile(LogFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err == nil {
+			writer = io.MultiWriter(writer, logfile)
+		}
+	}
+
+	if PrependDateToLogs {
+		writer = prependDateWriter{out: writer}
+	}
+
 	if progressBars != nil {
 		writer = progressBars.Bypass()
 	}
@@ -21,6 +37,18 @@ func logWriter() io.Writer {
 		writer = noAnsiCodesWriter{out: writer}
 	}
 	return writer
+}
+
+type prependDateWriter struct {
+	out io.Writer
+}
+
+func (w prependDateWriter) Write(p []byte) (n int, err error) {
+	return w.out.Write([]byte(
+		fmt.Sprintf("[%s] %s",
+			time.Now(),
+			strings.TrimLeft(string(p), " "),
+		)))
 }
 
 // noAnsiCodesWriter is an io.Writer that writes to the underlying writer, but strips ANSI color codes beforehand
@@ -44,21 +72,13 @@ func Println(a ...interface{}) {
 
 // Printf is like fmt.Printf but automatically strips ANSI color codes if colors are disabled
 func Printf(format string, a ...interface{}) {
-	var writer io.Writer
-	writer = os.Stdout
-	if !ShowingColors() {
-		writer = noAnsiCodesWriter{out: writer}
-	}
+	writer := logWriter(os.Stdout)
 	fmt.Fprintf(writer, format, a...)
 }
 
 // Print is like fmt.Print but automatically strips ANSI color codes if colors are disabled
 func Print(a ...interface{}) {
-	var writer io.Writer
-	writer = os.Stdout
-	if !ShowingColors() {
-		writer = noAnsiCodesWriter{out: writer}
-	}
+	writer := logWriter(os.Stdout)
 	fmt.Fprint(writer, a...)
 }
 
@@ -94,7 +114,7 @@ func LogCustomNoColor(verb string, color string, message string, fmtArgs ...inte
 
 func LogCustomNoFormatting(verb string, color string, message string) {
 	fmt.Fprintln(
-		logWriter(),
+		logWriter(os.Stderr),
 		colorstring.Color(fmt.Sprintf("[bold][%s]%15s[reset]", color, verb))+
 			" "+
 			indentSubsequent(15+1, message),
