@@ -40,6 +40,23 @@ func gitCommitDate(workingDirectory string, gitFlags ...string) (time.Time, erro
 	return time.Parse(time.RFC3339, lines[0])
 }
 
+func gitRemoteURL(workingDirectory string) (string, error) {
+	// Shell out to git
+	gitRemote := exec.Command("git", "remote", "get-url", "origin")
+	gitRemote.Dir = workingDirectory
+	out, err := gitRemote.Output()
+	if err != nil {
+		switch err := err.(type) {
+		case *exec.ExitError:
+			return "", fmt.Errorf("while getting remote URL from git in %s: %s (%w)", workingDirectory, string(err.Stderr), err)
+		default:
+			return "", fmt.Errorf("while getting remote URL from git in %s: %w", workingDirectory, err)
+		}
+	}
+
+	return strings.TrimSpace(string(out)), nil
+}
+
 func FirstGitCommitDate(workingDirectory string) (time.Time, error) {
 	return gitCommitDate(workingDirectory, "--reverse")
 }
@@ -55,9 +72,14 @@ func titleCase(s string) string {
 	)
 }
 
+func isGitRepo(workingDirectory string) bool {
+	_, err := os.Stat(filepath.Join(workingDirectory, ".git"))
+	return err == nil
+}
+
 func DetectStartDate(workingDirectory string) (time.Time, error) {
 	// If in a git repo, get the date of the first commit
-	if _, err := os.Stat(filepath.Join(workingDirectory, ".git")); err == nil {
+	if isGitRepo(workingDirectory) {
 		return FirstGitCommitDate(workingDirectory)
 	}
 	return time.Now(), fmt.Errorf("no way to autodetect start date of %s", workingDirectory)
@@ -292,6 +314,13 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	output += "# " + projectTitle + "\n\n"
 	output += summary + "\n\n"
+
+	if isGitRepo(ctx.PathToWorkFolder(workId)) {
+		remoteURL, err := gitRemoteURL(ctx.PathToWorkFolder(workId))
+		if err == nil {
+			output += fmt.Sprintf("[Source code](%s)\n\n", remoteURL)
+		}
+	}
 
 	os.MkdirAll(filepath.Dir(outputPath), 0o755)
 	os.WriteFile(outputPath, []byte(output), 0o644)

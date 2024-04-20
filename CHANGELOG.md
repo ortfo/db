@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - move ReleaseBuildLock out of RunContext
 - allow user to only specify some colors: unspecified colors will get their extracted color
 - the --write-progress progress file is now removed when the build is done
+- add command: add link block to source code if in a git repo
 
 ### Fixed
 
