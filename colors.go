@@ -21,6 +21,22 @@ func (colors ColorPalette) Empty() bool {
 	return colors.Primary == "" && colors.Secondary == "" && colors.Tertiary == ""
 }
 
+// MergeWith merges the colors of the current palette with other: if a color is missing in the current palette, it is
+// replaced by the one in other.
+func (colors ColorPalette) MergeWith(other ColorPalette) ColorPalette {
+	merged := colors
+	if merged.Primary == "" {
+		merged.Primary = other.Primary
+	}
+	if merged.Secondary == "" {
+		merged.Secondary = other.Secondary
+	}
+	if merged.Tertiary == "" {
+		merged.Tertiary = other.Tertiary
+	}
+	return merged
+}
+
 func canExtractColors(contentType string) bool {
 	switch strings.Split(contentType, "/")[1] {
 	case "jpeg", "png", "gif", "webp", "pbm", "ppm", "pgm":

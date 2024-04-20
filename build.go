@@ -563,21 +563,23 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 	}
 
 	// Extract colors
-	if ctx.Config.ExtractColors.Enabled && metadata.Colors.Empty() {
+	extractedColors := ColorPalette{}
+	if ctx.Config.ExtractColors.Enabled {
 		if metadata.Thumbnail != "" {
 		outer:
 			for _, m := range analyzedMediae {
 				if m.RelativeSource == metadata.Thumbnail {
-					metadata.Colors = m.Colors
+					extractedColors = m.Colors
 					break outer
 				}
 			}
 		} else {
 			if len(analyzedMediae) > 0 {
-				metadata.Colors = analyzedMediae[0].Colors
+				extractedColors = analyzedMediae[0].Colors
 			}
 		}
 	}
+	metadata.Colors = metadata.Colors.MergeWith(extractedColors)
 
 	localizedContent := make(map[string]LocalizedContent)
 

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - exposed all types in Rust and Python client libraries
 - move ReleaseBuildLock out of RunContext
+- allow user to only specify some colors: unspecified colors will get their extracted color
 
 ### Fixed
 
