@@ -187,7 +187,7 @@ func AcquireBuildLock(outputFilename string) error {
 	}
 }
 
-func (ctx *RunContext) ReleaseBuildLock(outputFilename string) error {
+func ReleaseBuildLock(outputFilename string) error {
 	err := os.Remove(BuildLockFilepath(outputFilename))
 	if err != nil {
 		DisplayError("could not release build lockfile %s", err, BuildLockFilepath(outputFilename))
@@ -316,7 +316,7 @@ func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
 }
 
 func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
-	defer ctx.ReleaseBuildLock(outputFilename)
+	defer ReleaseBuildLock(outputFilename)
 
 	type builtItem struct {
 		err      error

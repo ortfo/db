@@ -75,6 +75,6 @@ var buildCmd = &cobra.Command{
 
 func releaseLockFileSafe(ctx *ortfodb.RunContext, outputFilename string) {
 	if _, ok := os.Stat(ortfodb.BuildLockFilepath(outputFilename)); ok == nil {
-		ctx.ReleaseBuildLock(outputFilename)
+		ortfodb.ReleaseBuildLock(outputFilename)
 	}
 }

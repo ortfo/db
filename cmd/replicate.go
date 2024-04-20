@@ -38,7 +38,7 @@ var replicateCmd = &cobra.Command{
 
 		err = ctx.ReplicateAll(args[1], database)
 		handleError(err)
-		ctx.ReleaseBuildLock(args[0])
+		ortfodb.ReleaseBuildLock(args[0])
 	},
 }
 

@@ -58,11 +58,11 @@ var addCmd = &cobra.Command{
 
 		descriptionFilepath, err := context.CreateDescriptionFile(projectId, metadataItems, overwrite)
 		if err != nil {
-			context.ReleaseBuildLock(ortfodb.BuildLockFilepath("./fictional.json"))
+			ortfodb.ReleaseBuildLock(ortfodb.BuildLockFilepath("./fictional.json"))
 			handleError(fmt.Errorf("while creating description file: %w", err))
 		}
 
-		err = context.ReleaseBuildLock(ortfodb.BuildLockFilepath("./fictional.json"))
+		err = ortfodb.ReleaseBuildLock(ortfodb.BuildLockFilepath("./fictional.json"))
 		if err != nil {
 			handleError(fmt.Errorf("while releasing build lock: %w", err))
 		}
