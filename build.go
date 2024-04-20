@@ -590,7 +590,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 		}
 
 		localizedContent[lang] = LocalizedContent{
-			Layout:    layout,
+			Layout:    layout.Normalize(),
 			Title:     title[lang],
 			Footnotes: footnotes[lang],
 			Blocks:    localizedBlocks[lang],
