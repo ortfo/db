@@ -70,7 +70,7 @@ func ParseYAMLHeader[Metadata interface{}](descriptionRaw string) (Metadata, str
 // ParseDescription parses the markdown string from a description.md file.
 // Media content blocks are left unanalyzed.
 // BuiltAt and DescriptionHash are also not set.
-func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (AnalyzedWork, error) {
+func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (Work, error) {
 	defer TimeTrack(time.Now(), "ParseDescription", workID)
 	metadata, markdownRaw := ParseYAMLHeader[WorkMetadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
@@ -98,13 +98,13 @@ func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (Analy
 		var err error
 		content.Layout, err = ResolveLayout(metadata, language, content.Blocks)
 		if err != nil {
-			return AnalyzedWork{}, fmt.Errorf("while resolving %s layout: %w", language, err)
+			return Work{}, fmt.Errorf("while resolving %s layout: %w", language, err)
 		}
 
 		contentsPerLanguage[language] = content
 	}
 
-	return AnalyzedWork{
+	return Work{
 		ID:       workID,
 		Content:  contentsPerLanguage,
 		Metadata: metadata,
@@ -129,8 +129,8 @@ type Link struct {
 	URL   string     `json:"url"`
 }
 
-// AnalyzedWork represents a given work in the database. It may or not have analyzed media.
-type AnalyzedWork struct {
+// Work represents a given work in the database. It may or not have analyzed media.
+type Work struct {
 	ID              string             `json:"id"`
 	BuiltAt         time.Time          `json:"builtAt"`
 	DescriptionHash string             `json:"descriptionHash"`
@@ -139,7 +139,7 @@ type AnalyzedWork struct {
 	Partial         bool               `json:"Partial"`
 }
 
-func (w AnalyzedWork) ThumbnailBlock(language string) Media {
+func (w Work) ThumbnailBlock(language string) Media {
 	firstMatch := Media{}
 	for _, block := range w.Content.Localize(language).Blocks {
 		if !block.Type.IsMedia() {
@@ -157,11 +157,11 @@ func (w AnalyzedWork) ThumbnailBlock(language string) Media {
 	return firstMatch
 }
 
-func (w AnalyzedWork) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
+func (w Work) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
 	return w.ThumbnailBlock(language).Thumbnails.Closest(size)
 }
 
-func (w AnalyzedWork) Colors(language string) ColorPalette {
+func (w Work) Colors(language string) ColorPalette {
 	if !w.Metadata.Colors.Empty() {
 		return w.Metadata.Colors
 	}
@@ -376,7 +376,7 @@ type MediaAttributes struct {
 }
 
 // ParsedWork represents a work, but without analyzed media. All it contains is information from the description.md file.
-type ParsedWork AnalyzedWork
+type ParsedWork Work
 
 // SplitOnLanguageMarkers returns two values:
 //  1. the text before any language markers

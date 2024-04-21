@@ -33,7 +33,7 @@ func (e *LocalizeExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	return nil
 }
 
-func (e *LocalizeExporter) Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error {
+func (e *LocalizeExporter) Export(ctx *RunContext, opts ExporterOptions, work *Work) error {
 	return nil
 }
 

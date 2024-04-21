@@ -43,7 +43,7 @@ func (e *SqlExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	return nil
 }
 
-func (e *SqlExporter) Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error {
+func (e *SqlExporter) Export(ctx *RunContext, opts ExporterOptions, work *Work) error {
 	options := GetExporterOptions[SqlExporterOptions](e, opts)
 
 	_, summary := work.FirstParagraph(options.Language)

@@ -23,15 +23,15 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-type Database map[string]AnalyzedWork
+type Database map[string]Work
 
 type DatabaseMeta struct {
 	// Partial is true if the database was not fully built.
 	Partial bool
 }
 
-func (w Database) AsSlice() []AnalyzedWork {
-	works := make([]AnalyzedWork, 0)
+func (w Database) AsSlice() []Work {
+	works := make([]Work, 0)
 	for _, work := range w {
 		works = append(works, work)
 	}
@@ -39,13 +39,13 @@ func (w Database) AsSlice() []AnalyzedWork {
 }
 
 // Works gets the mapping of all works
-func (w Database) Works() map[string]AnalyzedWork {
+func (w Database) Works() map[string]Work {
 	return w
 }
 
 // WorksSlice gets the slice of all works in the database
-func (w Database) WorksSlice() []AnalyzedWork {
-	works := make([]AnalyzedWork, 0)
+func (w Database) WorksSlice() []Work {
+	works := make([]Work, 0)
 	for _, work := range w {
 		works = append(works, work)
 	}
@@ -53,12 +53,12 @@ func (w Database) WorksSlice() []AnalyzedWork {
 }
 
 // WorksByDate gets all the works sorted by date, with most recent works first.
-func (w Database) WorksByDate() []AnalyzedWork {
+func (w Database) WorksByDate() []Work {
 	return SortWorksByDate(mapValues(w.Works()))
 }
 
-func SortWorksByDate(works []AnalyzedWork) []AnalyzedWork {
-	worksByDate := make([]AnalyzedWork, 0)
+func SortWorksByDate(works []Work) []Work {
+	worksByDate := make([]Work, 0)
 	for _, work := range works {
 		worksByDate = append(worksByDate, work)
 	}
@@ -81,15 +81,15 @@ func SortWorksByDate(works []AnalyzedWork) []AnalyzedWork {
 }
 
 // GroupWorksByYear groups works by year, with most recent years first.
-func (w Database) GroupWorksByYear() [][]AnalyzedWork {
+func (w Database) GroupWorksByYear() [][]Work {
 	worksByDate := w.WorksByDate()
-	worksByYear := make([][]AnalyzedWork, 0)
+	worksByYear := make([][]Work, 0)
 	currentYear := 0
 	for _, work := range worksByDate {
 		year := work.Metadata.CreatedAt().Year()
 		if year != currentYear {
 			currentYear = year
-			worksByYear = append(worksByYear, make([]AnalyzedWork, 0))
+			worksByYear = append(worksByYear, make([]Work, 0))
 		}
 		worksByYear[len(worksByYear)-1] = append(worksByYear[len(worksByYear)-1], work)
 	}
@@ -145,12 +145,12 @@ func (ctx *RunContext) PreviouslyBuiltDatabase() Database {
 	return ctx.previousBuiltDatabase.Database
 }
 
-func (ctx *RunContext) PreviouslyBuiltWork(id string) (work AnalyzedWork, found bool) {
+func (ctx *RunContext) PreviouslyBuiltWork(id string) (work Work, found bool) {
 	work, found = ctx.PreviouslyBuiltDatabase()[id]
 	return
 }
 
-func (ctx *RunContext) PreviouslyBuiltMedia(workID string, embedDeclaration Media) (media Media, work AnalyzedWork, found bool) {
+func (ctx *RunContext) PreviouslyBuiltMedia(workID string, embedDeclaration Media) (media Media, work Work, found bool) {
 	work, found = ctx.PreviouslyBuiltWork(workID)
 	if !found {
 		return
@@ -356,7 +356,7 @@ func directoriesLeftToBuild(all []string, built []string) []string {
 	return remaining
 }
 
-func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
+func (ctx *RunContext) RunExporters(work *Work) error {
 	for _, exporter := range ctx.Exporters {
 		if debugging {
 			LogCustom("Exporting", "magenta", "%s to %s", work.ID, exporter.Name())
@@ -377,7 +377,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 	type builtItem struct {
 		err      error
-		work     AnalyzedWork
+		work     Work
 		workID   string
 		reuseOld bool
 	}
@@ -595,7 +595,7 @@ func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID stri
 
 // Build builds a single work given the database & output folders, as wells as a work ID.
 // BuiltAt is set and DescriptionHash are set.
-func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (work AnalyzedWork, usedCache bool, err error) {
+func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (work Work, usedCache bool, err error) {
 	hash := md5.Sum([]byte(descriptionRaw))
 	newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
 
@@ -606,7 +606,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 	} else {
 		work, err = ParseDescription(ctx, string(descriptionRaw), workID)
 		if err != nil {
-			return AnalyzedWork{}, false, fmt.Errorf("while parsing description for %s: %w", workID, err)
+			return Work{}, false, fmt.Errorf("while parsing description for %s: %w", workID, err)
 		}
 
 		work.DescriptionHash = newDescriptionHash
@@ -622,7 +622,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 			LogDebug("Handling media %#v", block.Media)
 			analyzed, anchor, usedCacheForMedia, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
 			if err != nil {
-				return AnalyzedWork{}, false, err
+				return Work{}, false, err
 			}
 
 			usedCache = usedCache && usedCacheForMedia

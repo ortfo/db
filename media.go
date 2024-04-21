@@ -290,7 +290,7 @@ func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, wo
 		return
 	}
 
-	var oldWork AnalyzedWork
+	var oldWork Work
 	var oldMedia Media
 	var oldMediaFound bool
 

@@ -25,7 +25,7 @@ func (ctx *RunContext) ReplicateAll(targetDatabase string, works Database) error
 }
 
 // ReplicateOne creates a description.md file in targetDatabase in the correct folder in order to replicate Work.
-func (ctx *RunContext) ReplicateOne(targetDatabase string, work AnalyzedWork) error {
+func (ctx *RunContext) ReplicateOne(targetDatabase string, work Work) error {
 	//TODO: make file mode configurable
 	workDirectory := path.Join(targetDatabase, work.ID)
 	os.MkdirAll(workDirectory, os.FileMode(0o0777))
@@ -39,7 +39,7 @@ func (ctx *RunContext) ReplicateOne(targetDatabase string, work AnalyzedWork) er
 }
 
 // ReplicateDescription reconstructs the contents of a description.md file from a Work struct.
-func (ctx *RunContext) ReplicateDescription(work AnalyzedWork) (string, error) {
+func (ctx *RunContext) ReplicateDescription(work Work) (string, error) {
 	var result string
 	// Start with the YAML header, this one is never localized
 	yamlHeader, err := ctx.replicateMetadata(work.Metadata)
@@ -60,7 +60,7 @@ func (ctx *RunContext) ReplicateDescription(work AnalyzedWork) (string, error) {
 	return strings.TrimSpace(result), nil
 }
 
-func (ctx *RunContext) replicateLocalizedBlock(work AnalyzedWork, language string) (string, error) {
+func (ctx *RunContext) replicateLocalizedBlock(work Work, language string) (string, error) {
 	var result string
 	end := "\n\n"
 	content := work.Content[language]

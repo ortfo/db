@@ -17,7 +17,7 @@ type Exporter interface {
 	Name() string
 	Description() string
 	Before(ctx *RunContext, opts ExporterOptions) error
-	Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error
+	Export(ctx *RunContext, opts ExporterOptions, work *Work) error
 	After(ctx *RunContext, opts ExporterOptions, built *Database) error
 	OptionsType() any
 }

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - building the database is now significantly faster!
+- renamed AnalyzedWork type to Work
 
 ### Fixed
 

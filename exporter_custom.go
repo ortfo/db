@@ -63,7 +63,7 @@ func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 
 }
 
-func (e *CustomExporter) Export(ctx *RunContext, opts ExporterOptions, work *AnalyzedWork) error {
+func (e *CustomExporter) Export(ctx *RunContext, opts ExporterOptions, work *Work) error {
 	return e.runCommands(ctx, e.verbose, e.Manifest.Work, map[string]any{
 		"Work": work,
 	})

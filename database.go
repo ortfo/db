@@ -46,7 +46,7 @@ func (db Database) FindMedia(mediaEmbed Media, workID string) (found bool, media
 }
 
 // FirstParagraph returns the first paragraph content block of the given work in the given language
-func (work AnalyzedWork) FirstParagraph(lang string) (found bool, paragraph ContentBlock) {
+func (work Work) FirstParagraph(lang string) (found bool, paragraph ContentBlock) {
 	for _, block := range work.Content[lang].Blocks {
 		if block.Type == "paragraph" {
 			return true, block
