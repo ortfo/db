@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - field abbreviations to paragraph blocks that maps abbreviations to their HTML definitions
+- `json` tags to Tag and Technology. could be useful to serialize to _JSON_ (and not YAML) the tags and or techs repository files, without having weird keys in the resulting JSON
 
 ### Changed
 

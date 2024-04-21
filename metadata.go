@@ -29,7 +29,7 @@ type Tag struct {
 	Plural      string `yaml:"plural"`
 	Description string `yaml:"description,omitempty"`
 	// URL to a website where more information can be found about this tag.
-	LearnMoreAt string `yaml:"learn more at,omitempty"`
+	LearnMoreAt string `yaml:"learn more at,omitempty" json:"learnMoreAt,omitempty"`
 	// Other singular-form names of tags that refer to this tag. The names mentionned here should not be used to define other tags.
 	Aliases []string `yaml:"aliases,omitempty"`
 	// Various ways to automatically detect that a work is tagged with this tag.
@@ -40,7 +40,7 @@ type Tag struct {
 		// To be implemented
 		Search []string `yaml:"search,omitempty"`
 		// Consider the work to be tagged with this tag if it was made with any of the technologies specified here.
-		MadeWith []string `yaml:"made with,omitempty"`
+		MadeWith []string `yaml:"made with,omitempty" json:"madeWith,omitempty"`
 	} `yaml:"detect,omitempty"`
 }
 
@@ -74,7 +74,7 @@ type Technology struct {
 	Description string `yaml:"description,omitempty"`
 
 	// URL to a website where more information can be found about this technology.
-	LearnMoreAt string `yaml:"learn more at,omitempty"`
+	LearnMoreAt string `yaml:"learn more at,omitempty" json:"learnMoreAt,omitempty"`
 
 	// Other technology slugs that refer to this technology. The slugs mentionned here should not be used in the definition of other technologies.
 	Aliases []string `yaml:"aliases,omitempty"`
