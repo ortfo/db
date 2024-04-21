@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - building the database is now significantly faster!
 
+### Fixed
+
+- weird "no non-transparent pixels found" error when trying to extract colors from .gif files. Turns out proeminent colors can't be extracted from .gif files
+
 ## [1.5.0] - 2024-04-20
 
 ### Added

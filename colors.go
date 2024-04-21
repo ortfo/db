@@ -39,7 +39,7 @@ func (colors ColorPalette) MergeWith(other ColorPalette) ColorPalette {
 
 func canExtractColors(contentType string) bool {
 	switch strings.Split(contentType, "/")[1] {
-	case "jpeg", "png", "gif", "webp", "pbm", "ppm", "pgm":
+	case "jpeg", "png", "webp", "pbm", "ppm", "pgm":
 		return true
 	default:
 		return false
@@ -86,8 +86,8 @@ func kmeans(img image.Image) (ColorPalette, error) {
 	}
 
 	return ColorPalette{
-		Primary:    primary,
-		Secondary:  secondary,
-		Tertiary:   tertiary,
+		Primary:   primary,
+		Secondary: secondary,
+		Tertiary:  tertiary,
 	}, nil
 }
