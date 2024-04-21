@@ -1,6 +1,8 @@
 package ortfodb
 
 import (
+	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +18,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
+
+var debugging = os.Getenv("DEBUG") == "1" || os.Getenv("ORTFO_DEBUG") == "1" || os.Getenv("ORTFODB_DEBUG") == "1"
 
 // readFileBytes reads the content of filename and returns the contents as a byte array.
 func readFileBytes(filename string) ([]byte, error) {
@@ -239,10 +243,6 @@ func ensureHttpPrefix(url string) string {
 	return url
 }
 
-func debugging() bool {
-	return os.Getenv("DEBUG") == "1" || os.Getenv("ORTFO_DEBUG") == "1" || os.Getenv("ORTFODB_DEBUG") == "1"
-}
-
 // ShowingColors returns true if colors (ANSI escape codes) should be printed.
 // Environment variables can control this: NO_COLOR=1 disables colors, and FORCE_COLOR=1 forces colors.
 // Otherwise, heuristics (such as whether the output is an interactive terminal) are used.
@@ -266,4 +266,50 @@ func writeYAML(v any, filename string) error {
 		return fmt.Errorf("while writing encoded yaml contents to %q: %w", filename, err)
 	}
 	return nil
+}
+
+func chunkSlice[T any](s []T, chunkSize int) [][]T {
+	chunks := make([][]T, 0)
+	for i := 0; i < len(s); i += chunkSize {
+		end := i + chunkSize
+		if end > len(s) {
+			end = len(s)
+		}
+		chunks = append(chunks, s[i:end])
+	}
+	return chunks
+}
+
+// copyFile copies src to dest using io.Copy
+func copyFile(src, dest string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("while opening source file %q: %w", src, err)
+	}
+	defer srcFile.Close()
+
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("while creating destination file %q: %w", dest, err)
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, srcFile)
+	if err != nil {
+		return fmt.Errorf("while copying contents from %q to %q: %w", src, dest, err)
+	}
+	return nil
+}
+
+func hashFile(filename string) (string, error) {
+	LogDebug("reading %s for hash computation", filename)
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return "", fmt.Errorf("while reading file %s for hashing: %w", filename, err)
+
+	}
+
+	LogDebug("computing hash of %s", filename)
+	hash := md5.Sum(content)
+	return base64.StdEncoding.EncodeToString(hash[:]), nil
 }

@@ -16,6 +16,7 @@ import (
 
 var LogFilePath string
 var PrependDateToLogs = false
+var showingTimingLogs = os.Getenv("DEBUG_TIMING") != ""
 
 func logWriter(original io.Writer) io.Writer {
 	writer := original
@@ -88,7 +89,7 @@ func indentSubsequent(size int, text string) string {
 }
 
 func ExporterLogCustom(exporter Exporter, verb string, color string, message string, fmtArgs ...interface{}) {
-	if debugging() {
+	if debugging {
 		LogCustom(verb, color, fmt.Sprintf("[dim][bold](from exporter %s)[reset] %s", exporter.Name(), message), fmtArgs...)
 	} else {
 		LogCustom(verb, color, message, fmtArgs...)
@@ -96,7 +97,7 @@ func ExporterLogCustom(exporter Exporter, verb string, color string, message str
 }
 
 func ExporterLogCustomNoFormatting(exporter Exporter, verb string, color string, message string) {
-	if debugging() {
+	if debugging {
 		LogCustomNoFormatting(verb, color, colorstring.Color("[dim][bold](from exporter "+exporter.Name()+")[reset] ")+message)
 	} else {
 		LogCustomNoFormatting(verb, color, message)
@@ -190,6 +191,31 @@ func LogDebugNoColor(message string, fmtArgs ...interface{}) {
 // LogWarning logs warnings.
 func LogWarning(message string, fmtArgs ...interface{}) {
 	LogCustom("Warning", "yellow", message, fmtArgs...)
+}
+
+// LogTiming logs timing debug logs. Mostly used with TimeTrack
+func LogTiming(job string, args []interface{}, timeTaken time.Duration) {
+	if !showingTimingLogs {
+		return
+	}
+	formattedArgs := ""
+	for i, arg := range args {
+		if i > 0 {
+			formattedArgs += " "
+		}
+		formattedArgs += fmt.Sprintf("%v", arg)
+	}
+	LogCustom("Timing", "dim", "[bold]%-30s[reset][dim]([reset]%-50s[dim])[reset] took [yellow]%s", job, formattedArgs, timeTaken)
+}
+
+// TimeTrack logs the time taken for a function to execute, and logs out the time taken.
+// Usage: at the top of your function, defer TimeTrack(time.Now(), "your job name")
+func TimeTrack(start time.Time, job string, args ...interface{}) {
+	if !showingTimingLogs {
+		return
+	}
+	elapsed := time.Since(start)
+	LogTiming(job, args, elapsed)
 }
 
 func formatList(list []string, format string, separator string) string {

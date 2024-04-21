@@ -87,7 +87,7 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 			if commandline == "" {
 				continue
 			}
-			if verbose && (len(commandline) <= 100 || debugging()) {
+			if verbose && (len(commandline) <= 100 || debugging) {
 				ExporterLogCustom(e, "Running", "yellow", commandline)
 			}
 
@@ -146,7 +146,7 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 			} else {
 				// Hide output atfter it's done if there's no errors
 				for i := 0; i < 6 && i < linesPrintedCount; i++ {
-					if debugging() {
+					if debugging {
 						LogDebug("would clear line %d", i)
 					} else {
 						fmt.Print("\033[1A\033[K")

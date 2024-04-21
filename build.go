@@ -133,6 +133,42 @@ func (w Database) Languages() []string {
 	return langs
 }
 
+type PreviouslyBuiltDatabase struct {
+	mu *sync.Mutex
+	Database
+}
+
+func (ctx *RunContext) PreviouslyBuiltDatabase() Database {
+	ctx.previousBuiltDatabase.mu = &sync.Mutex{}
+	ctx.previousBuiltDatabase.mu.Lock()
+	defer ctx.previousBuiltDatabase.mu.Unlock()
+	return ctx.previousBuiltDatabase.Database
+}
+
+func (ctx *RunContext) PreviouslyBuiltWork(id string) (work AnalyzedWork, found bool) {
+	work, found = ctx.PreviouslyBuiltDatabase()[id]
+	return
+}
+
+func (ctx *RunContext) PreviouslyBuiltMedia(workID string, embedDeclaration Media) (media Media, work AnalyzedWork, found bool) {
+	work, found = ctx.PreviouslyBuiltWork(workID)
+	if !found {
+		return
+	}
+	for _, localizedContent := range work.Content {
+		for _, block := range localizedContent.Blocks {
+			if block.Type != "media" {
+				continue
+			}
+			if block.Media.RelativeSource == embedDeclaration.RelativeSource {
+				return block.Media, work, true
+			}
+		}
+	}
+
+	return
+}
+
 // RunContext holds several "global" references used throughout all the functions of a command.
 type RunContext struct {
 	mu sync.Mutex
@@ -140,11 +176,14 @@ type RunContext struct {
 	Config                *Configuration
 	DatabaseDirectory     string
 	OutputDatabaseFile    string
-	PreviousBuiltDatabase Database
+	previousBuiltDatabase PreviouslyBuiltDatabase
 	Flags                 Flags
 	BuildMetadata         BuildMetadata
 	ProgressInfoFile      string
 	Exporters             []Exporter
+
+	// Number of concurrent goroutines to use to create thumbnails per work
+	thumbnailersPerWork int
 
 	TagsRepository         []Tag
 	TechnologiesRepository []Technology
@@ -202,7 +241,23 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		DatabaseDirectory:  databaseDirectory,
 		OutputDatabaseFile: outputFilename,
 		ProgressInfoFile:   flags.ProgressInfoFile,
+		previousBuiltDatabase: PreviouslyBuiltDatabase{
+			mu:       &sync.Mutex{},
+			Database: make(Database),
+		},
 	}
+
+	thumbnailSizesCount := len(ctx.Config.MakeThumbnails.Sizes)
+
+	if thumbnailSizesCount/2 > flags.WorkersCount {
+		LogDebug("ThumbnailSizesCount/2 (%d) > flags.WorkersCount (%d). Using 2 thumbnailers per work.", thumbnailSizesCount/2, flags.WorkersCount)
+		ctx.thumbnailersPerWork = 2
+	} else {
+		LogDebug("Configuration asks for %d thumbnail sizes. setting thumbnail workers count per work to half of that.", thumbnailSizesCount)
+		ctx.thumbnailersPerWork = thumbnailSizesCount / 2
+	}
+
+	LogDebug("Using %d thumbnailers threads per work", ctx.thumbnailersPerWork)
 
 	if ctx.ProgressInfoFile != "" {
 		LogDebug("Removing progress info file %s", ctx.ProgressInfoFile)
@@ -232,13 +287,13 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		if !os.IsNotExist(err) {
 			DisplayError("No previously built database file %s to use", err, outputFilename)
 		}
-		ctx.PreviousBuiltDatabase = Database{}
 	} else {
-		err = json.Unmarshal(previousBuiltDatabaseRaw, &ctx.PreviousBuiltDatabase)
+		previousDb := Database{}
+		err = json.Unmarshal(previousBuiltDatabaseRaw, &previousDb)
 		if err != nil {
 			DisplayError("Couldn't use previous built database file %s", err, outputFilename)
-			ctx.PreviousBuiltDatabase = Database{}
 		}
+		ctx.previousBuiltDatabase = PreviouslyBuiltDatabase{Database: previousDb}
 	}
 
 	raw, err := os.ReadFile(config.BuildMetadataFilepath)
@@ -303,10 +358,10 @@ func directoriesLeftToBuild(all []string, built []string) []string {
 
 func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
 	for _, exporter := range ctx.Exporters {
-		if debugging() {
+		if debugging {
 			LogCustom("Exporting", "magenta", "%s to %s", work.ID, exporter.Name())
 		}
-		options, _ := ctx.Config.Exporters[exporter.Name()]
+		options := ctx.Config.Exporters[exporter.Name()]
 		err := exporter.Export(ctx, options, work)
 		if err != nil {
 			return fmt.Errorf("while exporting %s: %w", exporter.Name(), err)
@@ -317,6 +372,8 @@ func (ctx *RunContext) RunExporters(work *AnalyzedWork) error {
 
 func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
 	defer ReleaseBuildLock(outputFilename)
+	defer ctx.WriteBuildMetadata()
+	defer ctx.UpdateBuildMetadata()
 
 	type builtItem struct {
 		err      error
@@ -326,7 +383,8 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 	}
 
 	// Initialize stuff
-	works := ctx.PreviousBuiltDatabase
+	works := ctx.PreviouslyBuiltDatabase()
+	// LogDebug("initialized works@%p from previous@%p", works, ctx.previousBuiltDatabase.Database)
 	workDirectories, err := ctx.ComputeProgressTotal()
 	if err != nil {
 		return Database{}, fmt.Errorf("while computing total number of works to build: %w", err)
@@ -345,9 +403,13 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 	ctx.StartProgressBar(len(workDirectories))
 
+	if flags.WorkersCount < ctx.thumbnailersPerWork {
+		LogWarning("Number of workers (%d) is less than the number of thumbnailers per work (%d). Setting number of workers to %d", ctx.Flags.WorkersCount, ctx.thumbnailersPerWork, ctx.thumbnailersPerWork)
+		flags.WorkersCount = ctx.thumbnailersPerWork
+	}
+
 	// Build works in parallel
-	// worker count divided by two because each worker has two workers for thumbnail generation
-	for i := 0; i < flags.WorkersCount/2; i++ {
+	for i := 0; i < flags.WorkersCount/ctx.thumbnailersPerWork; i++ {
 		i := i
 		LogDebug("worker #%d: starting", i)
 		go func() {
@@ -356,7 +418,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 				dirEntry := <-workDirectoriesChannel
 				workID := dirEntry.Name()
 				LogDebug("worker #%d: starting with work %s", i, workID)
-				oldWork, presentBefore := ctx.PreviousBuiltDatabase[workID]
+				_, presentBefore := ctx.PreviouslyBuiltWork(workID)
 				var included bool
 				if include == "*" {
 					included = true
@@ -378,36 +440,26 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 						continue
 					}
 
-					// Compare with hash of work in old database, to determine if we can skip it
-					hash := md5.Sum(descriptionRaw)
-					newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
-
-					if !flags.NoCache && newDescriptionHash == oldWork.DescriptionHash {
-						// Skip it!
-						// LogInfo("%s: Build skipped: description file unmodified", workID)
-						ctx.Status(workID, PhaseUnchanged)
-						ctx.RunExporters(&oldWork)
-					} else {
-						ctx.Status(workID, PhaseBuilding)
-						// Build it
-						newWork, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
-						if err != nil {
-							DisplayError("while building %s", err, workID)
-							builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
-							continue
-						}
-						ctx.RunExporters(&newWork)
-						ctx.Status(workID, PhaseBuilt)
-
-						// Set meta-info
-						newWork.BuiltAt = time.Now().String()
-						newWork.DescriptionHash = newDescriptionHash
-
-						// Update in database
-						LogDebug("worker #%d: sending freshly built work %s", i, workID)
-						builtChannel <- builtItem{work: newWork, workID: workID}
+					ctx.Status(workID, PhaseBuilding)
+					newWork, usedCache, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
+					if err != nil {
+						DisplayError("while building %s", err, workID)
+						builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}
 						continue
 					}
+
+					ctx.RunExporters(&newWork)
+					if usedCache {
+						ctx.Status(workID, PhaseUnchanged)
+					} else {
+						ctx.Status(workID, PhaseBuilt)
+					}
+
+					// Update in database
+					LogDebug("worker #%d: sending freshly built work %s", i, workID)
+					builtChannel <- builtItem{work: newWork, workID: workID}
+					continue
+					// }
 				} else if presentBefore {
 					// Nothing to do, old work will be kept as-is.
 					LogDebug("worker #%d: nothing to do for work %s", i, workID)
@@ -436,7 +488,9 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 		}
 		if !result.reuseOld {
 			LogDebug("main: updating work %s", result.workID)
+			ctx.previousBuiltDatabase.mu.Lock()
 			works[result.workID] = result.work
+			ctx.previousBuiltDatabase.mu.Unlock()
 		}
 		ctx.WriteDatabase(works, flags, outputFilename, true)
 		builtDirectories = append(builtDirectories, result.workID)
@@ -539,25 +593,41 @@ func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID stri
 	}
 }
 
-// Build builds a single work given the database & output folders, as wells as a work ID
-func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (AnalyzedWork, error) {
-	metadata, localizedBlocks, title, footnotes, _ := ParseDescription[WorkMetadata](ctx, string(descriptionRaw))
+// Build builds a single work given the database & output folders, as wells as a work ID.
+// BuiltAt is set and DescriptionHash are set.
+func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (work AnalyzedWork, usedCache bool, err error) {
+	hash := md5.Sum([]byte(descriptionRaw))
+	newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
+
+	if oldWork, found := ctx.PreviouslyBuiltWork(workID); found && oldWork.DescriptionHash == newDescriptionHash {
+		LogDebug("parsing description for %s: using cached work", workID)
+		work = oldWork
+		usedCache = true
+	} else {
+		work, err = ParseDescription(ctx, string(descriptionRaw), workID)
+		if err != nil {
+			return AnalyzedWork{}, false, fmt.Errorf("while parsing description for %s: %w", workID, err)
+		}
+
+		work.DescriptionHash = newDescriptionHash
+	}
 
 	// Handle mediae
 	analyzedMediae := make([]Media, 0)
-	for lang, blocks := range localizedBlocks {
-		for i, block := range blocks {
+	for lang, localizedContent := range work.Content {
+		for i, block := range localizedContent.Blocks {
 			if block.Type != "media" {
 				continue
 			}
 			LogDebug("Handling media %#v", block.Media)
-			analyzed, anchor, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
+			analyzed, anchor, usedCacheForMedia, err := ctx.HandleMedia(workID, block.ID, block.Media, lang)
 			if err != nil {
-				return AnalyzedWork{}, err
+				return AnalyzedWork{}, false, err
 			}
 
-			localizedBlocks[lang][i].Media = analyzed
-			localizedBlocks[lang][i].Anchor = anchor
+			usedCache = usedCache && usedCacheForMedia
+			work.Content[lang].Blocks[i].Media = analyzed
+			work.Content[lang].Blocks[i].Anchor = anchor
 			analyzedMediae = append(analyzedMediae, analyzed)
 		}
 	}
@@ -565,10 +635,10 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 	// Extract colors
 	extractedColors := ColorPalette{}
 	if ctx.Config.ExtractColors.Enabled {
-		if metadata.Thumbnail != "" {
+		if work.Metadata.Thumbnail != "" {
 		outer:
 			for _, m := range analyzedMediae {
-				if m.RelativeSource == metadata.Thumbnail {
+				if m.RelativeSource == work.Metadata.Thumbnail {
 					extractedColors = m.Colors
 					break outer
 				}
@@ -579,32 +649,14 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 			}
 		}
 	}
-	metadata.Colors = metadata.Colors.MergeWith(extractedColors)
+	work.Metadata.Colors = work.Metadata.Colors.MergeWith(extractedColors)
 
-	localizedContent := make(map[string]LocalizedContent)
-
-	for lang := range localizedBlocks {
-		layout, err := ResolveLayout(metadata, lang, localizedBlocks[lang])
-		if err != nil {
-			return AnalyzedWork{}, fmt.Errorf("while resolving %s layout of %s: %w", lang, workID, err)
-		}
-
-		localizedContent[lang] = LocalizedContent{
-			Layout:    layout.Normalize(),
-			Title:     title[lang],
-			Footnotes: footnotes[lang],
-			Blocks:    localizedBlocks[lang],
-		}
+	if !usedCache || work.BuiltAt.IsZero() {
+		work.BuiltAt = time.Now()
 	}
-	ctx.UpdateBuildMetadata()
-	ctx.WriteBuildMetadata()
 
 	// Return the finished work
-	return AnalyzedWork{
-		ID:       workID,
-		Metadata: metadata,
-		Content:  localizedContent,
-	}, nil
+	return work, usedCache, nil
 }
 
 // GetProjectPath returns the project's folder path with regard to databaseDirectory.

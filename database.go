@@ -2,8 +2,8 @@ package ortfodb
 
 import (
 	"errors"
+
 	jsoniter "github.com/json-iterator/go"
-	"time"
 )
 
 func LoadDatabase(at string, skipValidation bool) (database Database, err error) {
@@ -27,24 +27,22 @@ func LoadDatabase(at string, skipValidation bool) (database Database, err error)
 	return
 }
 
-func FindMedia(works Database, mediaEmbed Media, workID string) (found bool, media Media, builtAt time.Time) {
-	for _, w := range works {
-		if w.ID != workID {
-			continue
-		}
-		for _, wsl := range w.Content {
-			for _, b := range wsl.Blocks {
-				if b.Type == "media" && b.RelativeSource == mediaEmbed.RelativeSource {
-					builtAt, err := time.Parse(time.RFC3339, w.BuiltAt)
-					if err != nil {
-						return false, media, builtAt
-					}
-					return true, b.Media, builtAt
-				}
+func (db Database) FindMedia(mediaEmbed Media, workID string) (found bool, media Media) {
+	w, ok := db[workID]
+
+	if !ok {
+		return false, Media{}
+	}
+
+	for _, wsl := range w.Content {
+		for _, b := range wsl.Blocks {
+			if b.Type == "media" && b.RelativeSource == mediaEmbed.RelativeSource {
+				return true, b.Media
 			}
 		}
 	}
-	return
+
+	return false, Media{}
 }
 
 // FirstParagraph returns the first paragraph content block of the given work in the given language

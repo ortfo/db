@@ -3,6 +3,7 @@ package ortfodb
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -66,9 +67,12 @@ func ParseYAMLHeader[Metadata interface{}](descriptionRaw string) (Metadata, str
 	return metadata, markdownPart
 }
 
-// ParseDescription parses the markdown string from a description.md file and returns a ParsedDescription.
-func ParseDescription[Metadata interface{}](ctx *RunContext, markdownRaw string) (metadata Metadata, blocks map[string][]ContentBlock, title map[string]HTMLString, footnotes map[string]Footnotes, abbreviations map[string]Abbreviations) {
-	metadata, markdownRaw = ParseYAMLHeader[Metadata](markdownRaw)
+// ParseDescription parses the markdown string from a description.md file.
+// Media content blocks are left unanalyzed.
+// BuiltAt and DescriptionHash are also not set.
+func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (Work, error) {
+	defer TimeTrack(time.Now(), "ParseDescription", workID)
+	metadata, markdownRaw := ParseYAMLHeader[WorkMetadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
 	LogDebug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
@@ -80,19 +84,31 @@ func ParseDescription[Metadata interface{}](ctx *RunContext, markdownRaw string)
 		// TODO: make this configurable
 		allLanguages = []string{"default"}
 	}
-	blocks = make(map[string][]ContentBlock)
-	title = make(map[string]HTMLString)
-	footnotes = make(map[string]Footnotes)
-	abbreviations = make(map[string]Abbreviations)
+	contentsPerLanguage := LocalizableContent{}
 	for _, language := range allLanguages {
 		// Unlocalized stuff appears the same in every language.
 		raw := notLocalizedRaw
 		if localized {
 			raw += localizedRawBlocks[language]
 		}
-		title[language], blocks[language], footnotes[language], abbreviations[language] = ctx.ParseSingleLanguageDescription(raw)
+
+		content := LocalizedContent{}
+
+		content.Title, content.Blocks, content.Footnotes, content.Abbreviations = ctx.ParseSingleLanguageDescription(raw)
+		var err error
+		content.Layout, err = ResolveLayout(metadata, language, content.Blocks)
+		if err != nil {
+			return Work{}, fmt.Errorf("while resolving %s layout: %w", language, err)
+		}
+
+		contentsPerLanguage[language] = content
 	}
-	return
+
+	return Work{
+		ID:       workID,
+		Content:  contentsPerLanguage,
+		Metadata: metadata,
+	}, nil
 }
 
 // Abbreviations represents the abbreviations declared in a description.md file.
@@ -113,17 +129,17 @@ type Link struct {
 	URL   string     `json:"url"`
 }
 
-// AnalyzedWork represents a complete work, with analyzed mediae.
-type AnalyzedWork struct {
+// Work represents a given work in the database. It may or not have analyzed media.
+type Work struct {
 	ID              string             `json:"id"`
-	BuiltAt         string             `json:"builtAt"`
+	BuiltAt         time.Time          `json:"builtAt"`
 	DescriptionHash string             `json:"descriptionHash"`
 	Metadata        WorkMetadata       `json:"metadata"`
 	Content         LocalizableContent `json:"content"`
 	Partial         bool               `json:"Partial"`
 }
 
-func (w AnalyzedWork) ThumbnailBlock(language string) Media {
+func (w Work) ThumbnailBlock(language string) Media {
 	firstMatch := Media{}
 	for _, block := range w.Content.Localize(language).Blocks {
 		if !block.Type.IsMedia() {
@@ -141,11 +157,11 @@ func (w AnalyzedWork) ThumbnailBlock(language string) Media {
 	return firstMatch
 }
 
-func (w AnalyzedWork) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
+func (w Work) ThumbnailPath(language string, size int) FilePathInsideMediaRoot {
 	return w.ThumbnailBlock(language).Thumbnails.Closest(size)
 }
 
-func (w AnalyzedWork) Colors(language string) ColorPalette {
+func (w Work) Colors(language string) ColorPalette {
 	if !w.Metadata.Colors.Empty() {
 		return w.Metadata.Colors
 	}
@@ -242,10 +258,11 @@ func (c LocalizableContent) Localize(lang string) LocalizedContent {
 }
 
 type LocalizedContent struct {
-	Layout    Layout         `json:"layout"`
-	Blocks    []ContentBlock `json:"blocks"`
-	Title     HTMLString     `json:"title"`
-	Footnotes Footnotes      `json:"footnotes"`
+	Layout        Layout         `json:"layout"`
+	Blocks        []ContentBlock `json:"blocks"`
+	Title         HTMLString     `json:"title"`
+	Footnotes     Footnotes      `json:"footnotes"`
+	Abbreviations Abbreviations  `json:"abbreviations"`
 }
 
 type ContentBlock struct {
@@ -359,7 +376,7 @@ type MediaAttributes struct {
 }
 
 // ParsedWork represents a work, but without analyzed media. All it contains is information from the description.md file.
-type ParsedWork AnalyzedWork
+type ParsedWork Work
 
 // SplitOnLanguageMarkers returns two values:
 //  1. the text before any language markers
