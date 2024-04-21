@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mitchellh/go-homedir"
@@ -40,10 +39,6 @@ type BuildSteps struct {
 	MakeThumbnails MakeThumbnailsConfiguration `yaml:"make thumbnails"`
 }
 
-type BuildMetadata struct {
-	PreviousBuildDate time.Time
-}
-
 type TagsConfiguration struct {
 	// Path to file describing all tags.
 	Repository string
@@ -64,14 +59,13 @@ type Configuration struct {
 	// Signals whether the configuration was instanciated by DefaultConfiguration.
 	IsDefault bool `yaml:"-"`
 
-	ExtractColors         ExtractColorsConfiguration  `yaml:"extract colors,omitempty"`
-	MakeGifs              MakeGIFsConfiguration       `yaml:"make gifs,omitempty"`
-	MakeThumbnails        MakeThumbnailsConfiguration `yaml:"make thumbnails,omitempty"`
-	BuildMetadataFilepath string                      `yaml:"build metadata file,omitempty"`
-	Media                 MediaConfiguration          `yaml:"media,omitempty"`
-	ScatteredModeFolder   string                      `yaml:"scattered mode folder"`
-	Tags                  TagsConfiguration           `yaml:"tags,omitempty"`
-	Technologies          TechnologiesConfiguration   `yaml:"technologies,omitempty"`
+	ExtractColors       ExtractColorsConfiguration  `yaml:"extract colors,omitempty"`
+	MakeGifs            MakeGIFsConfiguration       `yaml:"make gifs,omitempty"`
+	MakeThumbnails      MakeThumbnailsConfiguration `yaml:"make thumbnails,omitempty"`
+	Media               MediaConfiguration          `yaml:"media,omitempty"`
+	ScatteredModeFolder string                      `yaml:"scattered mode folder"`
+	Tags                TagsConfiguration           `yaml:"tags,omitempty"`
+	Technologies        TechnologiesConfiguration   `yaml:"technologies,omitempty"`
 
 	// Path to the directory containing all projects. Must be absolute.
 	ProjectsDirectory string `yaml:"projects at"`
@@ -170,11 +164,6 @@ func NewConfiguration(filename string) (Configuration, error) {
 		return Configuration{}, fmt.Errorf("could not expand home directory symbol of media.at: %w", err)
 	}
 
-	config.BuildMetadataFilepath, err = homedir.Expand(config.BuildMetadataFilepath)
-	if err != nil {
-		return Configuration{}, fmt.Errorf("could not expand home directory symbol of build metadata filepath: %w", err)
-	}
-
 	return config, nil
 }
 
@@ -227,9 +216,8 @@ func DefaultConfiguration() Configuration {
 		Media: struct{ At string }{
 			At: "media/",
 		},
-		BuildMetadataFilepath: ".lastbuild.yaml",
-		ScatteredModeFolder:   DefaultScatteredModeFolder,
-		IsDefault:             true,
-		ProjectsDirectory:     absoluteFilepathToHere,
+		ScatteredModeFolder: DefaultScatteredModeFolder,
+		IsDefault:           true,
+		ProjectsDirectory:   absoluteFilepathToHere,
 	}
 }

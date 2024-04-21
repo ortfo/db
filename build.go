@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -178,7 +177,6 @@ type RunContext struct {
 	OutputDatabaseFile    string
 	previousBuiltDatabase PreviouslyBuiltDatabase
 	Flags                 Flags
-	BuildMetadata         BuildMetadata
 	ProgressInfoFile      string
 	Exporters             []Exporter
 
@@ -296,15 +294,6 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		ctx.previousBuiltDatabase = PreviouslyBuiltDatabase{Database: previousDb}
 	}
 
-	raw, err := os.ReadFile(config.BuildMetadataFilepath)
-	if err == nil {
-		var metadata BuildMetadata
-		err = json.Unmarshal(raw, &metadata)
-		if err == nil {
-			ctx.BuildMetadata = metadata
-		}
-	}
-
 	if ctx.Config.IsDefault {
 		LogInfo("No configuration file found. The default configuration was used.")
 	}
@@ -372,8 +361,6 @@ func (ctx *RunContext) RunExporters(work *Work) error {
 
 func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outputFilename string, flags Flags, config Configuration) (Database, error) {
 	defer ReleaseBuildLock(outputFilename)
-	defer ctx.WriteBuildMetadata()
-	defer ctx.UpdateBuildMetadata()
 
 	type builtItem struct {
 		err      error
@@ -682,29 +669,4 @@ func ReadDescriptionFile(directory string) (string, error) {
 		return "", nil
 	}
 	return readFile(descriptionFilepath)
-}
-
-// WriteBuildMetadata writes the latest build metadata file.
-func (ctx *RunContext) WriteBuildMetadata() error {
-	_, err := os.Stat(ctx.Config.BuildMetadataFilepath)
-
-	if errors.Is(err, os.ErrNotExist) {
-		os.MkdirAll(filepath.Dir(ctx.Config.BuildMetadataFilepath), os.ModePerm)
-	} else if err != nil {
-		return fmt.Errorf("while creating parent directories for build metadata file: %w", err)
-	}
-
-	raw, err := json.Marshal(ctx.BuildMetadata)
-	if err != nil {
-		return fmt.Errorf("while marshaling build metadata to JSON: %w", err)
-	}
-
-	return os.WriteFile(ctx.Config.BuildMetadataFilepath, []byte(raw), 0644)
-}
-
-// UpdateBuildMetadata updates metadata about the latest build.
-func (ctx *RunContext) UpdateBuildMetadata() {
-	ctx.mu.Lock()
-	ctx.BuildMetadata.PreviousBuildDate = time.Now()
-	ctx.mu.Unlock()
 }

@@ -302,7 +302,7 @@ func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, wo
 			LogDebug("cache hit by modtime for %s: using cache from embed decl %#v", filename, embedDeclaration)
 			return embedDeclaration.Hash, true, oldMedia, nil
 		} else {
-			LogDebug("file mtime of %s is newer than previous build (file modified at %s, previous build at %s), computing hash", filename, stat.ModTime(), ctx.BuildMetadata.PreviousBuildDate)
+			LogDebug("file mtime of %s is newer than previous build (file modified at %s, previous build at %s), computing hash", filename, stat.ModTime(), oldWork.BuiltAt)
 		}
 	} else {
 		LogDebug("mtime cache strategy: media %s of %s not found in previous database, will compute hash", filename, workID)

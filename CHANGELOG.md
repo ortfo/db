@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - building the database is now significantly faster!
 - renamed AnalyzedWork type to Work
 
+### Removed
+
+- build metadata file (`.lastbuild.yaml`)
+
 ### Fixed
 
 - weird "no non-transparent pixels found" error when trying to extract colors from .gif files. Turns out proeminent colors can't be extracted from .gif files
