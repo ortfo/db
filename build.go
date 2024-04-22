@@ -587,7 +587,7 @@ func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workI
 	hash := md5.Sum([]byte(descriptionRaw))
 	newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])
 
-	if oldWork, found := ctx.PreviouslyBuiltWork(workID); found && oldWork.DescriptionHash == newDescriptionHash {
+	if oldWork, found := ctx.PreviouslyBuiltWork(workID); found && oldWork.DescriptionHash == newDescriptionHash && !ctx.Flags.NoCache {
 		LogDebug("parsing description for %s: using cached work", workID)
 		work = oldWork
 		usedCache = true
