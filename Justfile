@@ -14,8 +14,10 @@ install:
 	chmod +x ~/.local/bin/ortfodb
 
 docs:
-	mkdir -p docs manpages
+	mkdir -p docs/commands manpages
 	./ortfodb makedocs
+	mv docs/*.md docs/commands/
+	cp CHANGELOG.md docs/changelog.md
 
 render-demo-gif:
 	#!/usr/bin/env bash
