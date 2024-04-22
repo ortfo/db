@@ -13,13 +13,12 @@ var force bool
 var replicateCmd = &cobra.Command{
 	Use:   "replicate <from-filepath> <to-filepath>",
 	Short: "Replicate a database directory from a built database file.",
-	Long: heredoc.Doc(`Replicate a database from <from-filepath> to <to-filepath>. Note that <to-filepath> must be an empty directory.
-
-	Example: ortfodb replicate ./database.json ./replicated-database/
+	Long: heredoc.Doc(`Replicate a database from from-filepath to to-filepath. Note that to-filepath must be an empty directory.
 
 	WARNING: This command is still kind-of a WIP, it works but there's minimal logging and error handling.
 	`),
-	Args: cobra.ExactArgs(2),
+	Example: "Example: ortfodb replicate ./database.json ./replicated-database/",
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		database, err := ortfodb.LoadDatabase(args[0], force)
 		if err != nil {

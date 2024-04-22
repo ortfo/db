@@ -13,13 +13,13 @@ ortfodb-build - Build the database
 
 .SH DESCRIPTION
 .PP
-Scan in the projects directory for folders with description.md files (and potential media files) and compile the whole database into a JSON file at \&.
+Scan in the projects directory for folders with description.md files (and potential media files) and compile the whole database into a JSON file at to-filepath.
 
 .PP
-If  is "-", the output will be written to stdout.
+If to-filepath is "-", the output will be written to stdout.
 
 .PP
-If [include-works] is provided, only works that match the pattern will be included in the database.
+If include-works is provided, only works that match the pattern will be included in the database.
 
 
 .SH OPTIONS
@@ -45,7 +45,7 @@ If [include-works] is provided, only works that match the pattern will be includ
 
 .PP
 \fB--workers\fP=12
-	Use  workers to build the database. Defaults to the number of CPU cores.
+	Choose the number of workers to build the database. Defaults to the number of CPU cores.
 
 .PP
 \fB--write-progress\fP=""

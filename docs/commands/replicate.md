@@ -8,15 +8,19 @@ Replicate a database directory from a built database file.
 
 ## Synopsis
 
-Replicate a database from <from-filepath> to <to-filepath>. Note that <to-filepath> must be an empty directory.
-
-Example: ortfodb replicate ./database.json ./replicated-database/
+Replicate a database from from-filepath to to-filepath. Note that to-filepath must be an empty directory.
 
 WARNING: This command is still kind-of a WIP, it works but there's minimal logging and error handling.
 
 
 ```
 ortfodb replicate <from-filepath> <to-filepath> [flags]
+```
+
+## Examples
+
+```ansi
+Example: ortfodb replicate ./database.json ./replicated-database/
 ```
 
 ## Options
