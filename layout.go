@@ -5,6 +5,9 @@ import (
 	"strconv"
 )
 
+// EmptyLayoutCell is a special value that represents an empty cell (used as a spacer, for example). Expressed in the user-provided layout as a nil value.
+var EmptyLayoutCell = "empty"
+
 // lcm returns the least common multiple of all the provided integers
 func lcm(integers ...int) int {
 	if len(integers) < 2 {
@@ -32,6 +35,7 @@ func lcm(integers ...int) int {
 
 // Normalize returns a normalized layout where every row has the same number of cells.
 func (layout Layout) Normalize() (normalized Layout) {
+	LogDebug("normalizing layout %#v", layout)
 	normalized = make(Layout, 0)
 
 	// Determine the common width
@@ -78,7 +82,8 @@ func (layout Layout) BlockIDs() (blockIDs []string) {
 
 // ResolveLayout returns a layout, given the parsed description.
 func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock) (Layout, error) {
-	layout := make([][]LayoutCell, 0)
+	LogDebug("Resolving layout from metadata %#v", metadata)
+	layout := make(Layout, 0)
 	userProvided := metadata.AdditionalMetadata["layout"]
 	// Handle case where the layout is explicitly specified.
 	if userProvided != "" && userProvided != nil {
@@ -86,16 +91,21 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 		if _, ok := userProvided.([]interface{}); ok {
 			for _, line := range userProvided.([]interface{}) {
 				layoutLine := make([]LayoutCell, 0)
-				switch line.(type) {
+				LogDebug("processing layout line %#v", line)
+				switch line := line.(type) {
 				case string:
-					cell, err := ResolveBlockID(blocks, language, line.(string))
+					cell, err := ResolveBlockID(blocks, language, line)
 					if err != nil {
-						return layout, fmt.Errorf("while resolving block reference %q to ID: %w", line.(string), err)
+						return layout, fmt.Errorf("while resolving block reference %q to ID: %w", line, err)
 					}
 
 					layoutLine = append(layoutLine, LayoutCell(cell))
+				case nil:
+					LogDebug("encountered nil value in layout single line, treating as empty cell")
+					layoutLine = append(layoutLine, LayoutCell(EmptyLayoutCell))
 				case []interface{}:
-					for _, cell := range line.([]interface{}) {
+					LogDebug("processing layout line %#v", line)
+					for _, cell := range line {
 						if val, ok := cell.(string); ok {
 							cell, err := ResolveBlockID(blocks, language, val)
 							if err != nil {
@@ -103,6 +113,9 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 							}
 
 							layoutLine = append(layoutLine, LayoutCell(cell))
+						} else if cell == nil {
+							LogDebug("encountered nil value in layout line, treating as empty cell")
+							layoutLine = append(layoutLine, LayoutCell(EmptyLayoutCell))
 						}
 					}
 				}
@@ -115,7 +128,8 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 			layout = append(layout, []LayoutCell{LayoutCell(block.ID)})
 		}
 	}
-	return layout, nil
+	LogDebug("Layout resolved to %#v", layout)
+	return layout.Normalize(), nil
 }
 
 // ResolveBlockID returns the ID of a block, given its ref (user-facing content block references comprising of a content block type shorthand and an index). This index is 1-based.
