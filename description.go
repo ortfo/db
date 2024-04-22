@@ -1,9 +1,11 @@
 package ortfodb
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -11,22 +13,50 @@ import (
 	"unicode/utf8"
 
 	"gopkg.in/yaml.v2"
+	"mvdan.cc/xurls/v2"
 
 	"github.com/anaskhan96/soup"
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/parser"
 	"github.com/k3a/html2text"
 	"github.com/metal3d/go-slugify"
 	"github.com/mitchellh/mapstructure"
 	"github.com/relvacode/iso8601"
+	"github.com/yuin/goldmark"
+	goldmarkHighlight "github.com/yuin/goldmark-highlighting"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
+	"github.com/zyedidia/generic/mapset"
+
+	// goldmarkFrontmatter "github.com/abhinav/goldmark-frontmatter"
+	goldmarkD2 "github.com/FurqanSoftware/goldmark-d2"
+	goldmarkKaTeX "github.com/FurqanSoftware/goldmark-katex"
 )
 
 const (
 	PatternLanguageMarker         string = `^::\s+(.+)$`
 	PatternAbbreviationDefinition string = `^\s*\*\[([^\]]+)\]:\s+(.+)$`
+	PatternYAMLSeparator          string = `^\s*-{3,}\s*$`
 	RuneLoop                      rune   = '~'
 	RuneAutoplay                  rune   = '>'
 	RuneHideControls              rune   = '='
+)
+
+var markdownParser = goldmark.New(
+	goldmark.WithExtensions(
+		extension.Footnote,
+		extension.NewLinkify(
+			extension.WithLinkifyURLRegexp(xurls.Relaxed()),
+		),
+		extension.Strikethrough,
+		extension.Table,
+		extension.Typographer,
+		extension.CJK,
+		goldmarkHighlight.NewHighlighting(),
+		&goldmarkKaTeX.Extender{},
+		&goldmarkD2.Extender{},
+	),
+	goldmark.WithRendererOptions(
+		html.WithUnsafe(),
+	),
 )
 
 // ParseYAMLHeader parses the YAML header of a description markdown file and returns the rest of the content (all except the YAML header).
@@ -40,7 +70,7 @@ func ParseYAMLHeader[Metadata interface{}](descriptionRaw string) (Metadata, str
 			line = strings.Repeat(" ", 4) + strings.TrimPrefix(line, "\t")
 		}
 		// A YAML header separator is 3 or more dashes on a line (without anything else on the same line)
-		if strings.Trim(line, "-") == "" && strings.Count(line, "-") >= 3 {
+		if regexp.MustCompile(PatternYAMLSeparator).MatchString(line) {
 			inYAMLHeader = !inYAMLHeader
 			continue
 		}
@@ -94,8 +124,12 @@ func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (Work,
 
 		content := LocalizedContent{}
 
-		content.Title, content.Blocks, content.Footnotes, content.Abbreviations = ctx.ParseSingleLanguageDescription(raw)
 		var err error
+		content.Title, content.Blocks, content.Footnotes, content.Abbreviations, err = ctx.ParseSingleLanguageDescription(raw)
+		if err != nil {
+			return Work{}, fmt.Errorf("while parsing %s description: %w", language, err)
+		}
+
 		content.Layout, err = ResolveLayout(metadata, language, content.Blocks)
 		if err != nil {
 			return Work{}, fmt.Errorf("while resolving %s layout: %w", language, err)
@@ -413,27 +447,46 @@ func (b ContentBlock) generateID() string {
 		dataToUse = b.Link.URL
 	}
 	hash := md5.Sum([]byte(string(b.Type) + dataToUse))
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(hash[:])[:10]
+	id := base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(hash[:])[:10]
+	if id == "" {
+		panic("block ID generator returned an empty ID. this is not supposed to happen.")
+	}
+	return id
 }
 
 // ParseSingleLanguageDescription takes in raw markdown without language markers (called on splitOnLanguageMarker's output).
 // and returns parsed arrays of structs that make up each language's part in ParsedDescription's maps.
 // order contains an array of nanoids that represent the order of the content blocks as they are in the original file.
-func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, blocks []ContentBlock, footnotes Footnotes, abbreviations Abbreviations) {
+func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title HTMLString, blocks []ContentBlock, footnotes Footnotes, abbreviations Abbreviations, err error) {
 	markdownRaw = HandleAltMediaEmbedSyntax(markdownRaw)
-	htmlRaw := MarkdownToHTML(markdownRaw)
+	htmlRaw, err := MarkdownToHTML(markdownRaw)
+	if err != nil {
+		err = fmt.Errorf("while converting markdown to HTML: %w", err)
+		return
+	}
+
 	htmlTree := soup.HTMLParse(htmlRaw)
+	if htmlTree.Error != nil {
+		err = fmt.Errorf("while parsing HTML (converted from markdown): %w", htmlTree.Error)
+	}
 	blocks = make([]ContentBlock, 0)
 	footnotes = make(Footnotes)
 	abbreviations = make(Abbreviations)
 	paragraphLike := make([]soup.Root, 0)
 	paragraphLikeTagNames := "p ol ul h2 h3 h4 h5 h6 dl blockquote hr pre"
-	for _, element := range htmlTree.Find("body").Children() {
+	body := htmlTree.Find("body")
+	if body.Error != nil {
+		err = fmt.Errorf("cannot find body in resulting HTML: %w", body.Error)
+		return
+	}
+
+	for _, element := range body.Children() {
 		// Check if it's a paragraph-like tag
 		if strings.Contains(paragraphLikeTagNames, element.NodeValue) {
 			paragraphLike = append(paragraphLike, element)
 		}
 	}
+
 	for _, paragraph := range paragraphLike {
 		childrenCount := len(paragraph.Children())
 		firstChild := soup.Root{}
@@ -443,13 +496,24 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		if childrenCount == 1 && firstChild.NodeValue == "img" {
 			// A media embed
 			alt, attributes := ExtractAttributesFromAlt(firstChild.Attrs()["alt"])
+			rawSrc, found := firstChild.Attrs()["src"]
+			if !found {
+				err = fmt.Errorf("media block %s has no source URL", firstChild.HTML())
+				return
+			}
+			var src string
+			src, err = url.QueryUnescape(rawSrc)
+			if err != nil {
+				err = fmt.Errorf("while unescaping media source URL %q: %w", rawSrc, err)
+				return
+			}
 			block := ContentBlock{
 				Type:   "media",
-				Anchor: slugify.Marshal(firstChild.Attrs()["src"]),
+				Anchor: slugify.Marshal(src),
 				Media: Media{
 					Alt:            alt,
 					Caption:        firstChild.Attrs()["title"],
-					RelativeSource: FilePathInsidePortfolioFolder(firstChild.Attrs()["src"]),
+					RelativeSource: FilePathInsidePortfolioFolder(src),
 					Attributes:     attributes,
 				},
 			}
@@ -466,6 +530,11 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 					URL:   firstChild.Attrs()["href"],
 				},
 			}
+			if block.URL == "" {
+				err = fmt.Errorf("link block %s has no URL", firstChild.HTML())
+				return
+			}
+
 			block.ID = block.generateID()
 			blocks = append(blocks, block)
 		} else if regexpMatches(PatternAbbreviationDefinition, string(innerHTML(paragraph))) {
@@ -498,7 +567,20 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 			}
 		}
 	}
+	seenBlockIDs := mapset.New[string]()
 	for i, block := range blocks {
+		if seenBlockIDs.Has(block.ID) {
+			switch block.Type {
+			case "paragraph":
+				err = fmt.Errorf("two different paragraphs have the exact same content")
+			case "media":
+				err = fmt.Errorf("two different media blocks have the exact same source")
+			case "link":
+				err = fmt.Errorf("two different links have the exact same URL")
+			}
+			return
+		}
+		seenBlockIDs.Put(block.ID)
 		if block.Type != "paragraph" {
 			continue
 		}
@@ -587,18 +669,12 @@ func innerHTML(element soup.Root) HTMLString {
 }
 
 // MarkdownToHTML converts markdown markdownRaw into an HTML string.
-func MarkdownToHTML(markdownRaw string) string {
-	// TODO: add (ctx *RunContext) receiver, take markdown configuration into account when activating extensions
-	extensions := parser.CommonExtensions | // Common stuff
-		parser.Footnotes | // [^1]: footnotes
-		parser.AutoHeadingIDs | // Auto-add [id] to headings
-		parser.Attributes | // Specify attributes manually with {} above block
-		parser.HardLineBreak | // \n becomes <br>
-		parser.OrderedListStart | // Starting an <ol> with 5. will make them start at 5 in the output HTML
-		parser.EmptyLinesBreakList // 2 empty lines break out of list
-		// TODO: smart fractions, LaTeX-style dash parsing, smart quotes (see https://pkg.go.dev/github.com/gomarkdown/markdown@v0.0.0-20210514010506-3b9f47219fe7#readme-extensions)
-
-	return string(markdown.ToHTML([]byte(markdownRaw), parser.NewWithExtensions(extensions), nil))
+func MarkdownToHTML(markdownRaw string) (string, error) {
+	var buf bytes.Buffer
+	if err := markdownParser.Convert([]byte(markdownRaw), &buf); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // ReplaceAbbreviations processes the given Paragraph to replace abbreviations.

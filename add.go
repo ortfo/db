@@ -117,7 +117,13 @@ func fromReadme(readmePath string) (title string, firstParagraph string, err err
 		return
 	}
 
-	readmeTree := soup.HTMLParse(MarkdownToHTML(string(readme)))
+	html, err := MarkdownToHTML(string(readme))
+	if err != nil {
+		err = fmt.Errorf("while parsing markdown from README: %w", err)
+		return
+	}
+
+	readmeTree := soup.HTMLParse(html)
 	title = readmeTree.Find("h1").FullText()
 	firstParagraph = HTMLString(readmeTree.Find("p").HTML()).Markdown()
 	return
@@ -171,12 +177,12 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 		readmeTitle, readmeBody, err := fromReadme(readmePath)
 		if err != nil {
 			DisplayWarning("couldn't extract info from README.md", err)
+		} else {
+			if readmeTitle != "" {
+				defaultProjectTitle = readmeTitle
+			}
+			defaultSummary = readmeBody
 		}
-
-		if readmeTitle != "" {
-			defaultProjectTitle = readmeTitle
-		}
-		defaultSummary = readmeBody
 	}
 
 	detectedStartDate, err := DetectStartDate(ctx.PathToWorkFolder(workId))
