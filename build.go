@@ -450,6 +450,7 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 				} else if presentBefore {
 					// Nothing to do, old work will be kept as-is.
 					LogDebug("worker #%d: nothing to do for work %s", i, workID)
+					ctx.Status(workID, PhaseUnchanged)
 				} else {
 					LogDebug("worker #%d: Build skipped: not included by %s, not present in previous database file.", i, include)
 				}
