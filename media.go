@@ -453,7 +453,10 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 	thumbnailsStepStart := time.Now()
 	// Make thumbnail
 	if media.Thumbnailable() && ctx.Config.MakeThumbnails.Enabled {
-		media.Thumbnails = make(map[int]FilePathInsideMediaRoot)
+		if media.Thumbnails == nil {
+			LogDebug("%s: initializing thumbnails map since it's nil in the (previously built?) work", media.RelativeSource)
+			media.Thumbnails = make(map[int]FilePathInsideMediaRoot)
+		}
 		type result struct {
 			size    int
 			err     error
@@ -496,8 +499,8 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 			if result.err != nil {
 				return media, anchor, usedCache, result.err
 			}
+			media.Thumbnails[result.size] = ctx.ComputeOutputThumbnailFilename(media, blockID, workID, result.size, language)
 			if !result.skipped {
-				media.Thumbnails[result.size] = ctx.ComputeOutputThumbnailFilename(media, blockID, workID, result.size, language)
 				media.ThumbnailsBuiltAt = time.Now()
 			}
 			builtSizes++
