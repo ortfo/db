@@ -15,8 +15,7 @@ install:
 
 docs:
 	mkdir -p docs/commands manpages
-	./ortfodb makedocs
-	mv docs/*.md docs/commands/
+	./ortfodb makedocs docs/commands manpages
 	cp CHANGELOG.md docs/changelog.md
 
 render-demo-gif:

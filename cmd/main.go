@@ -32,16 +32,16 @@ func init() {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
-	if len(os.Args) == 2 && os.Args[1] == "makedocs" {
+	if len(os.Args) == 4 && os.Args[1] == "makedocs" {
 
-		GenMarkdownTree(rootCmd, "./docs")
+		GenMarkdownTree(rootCmd, os.Args[2])
 
 		cobradoc.GenManTree(rootCmd, &cobradoc.GenManHeader{
 			Title:   "ORTFODB",
 			Section: "1",
 			Source:  "https://ortfo.org/db",
 			Manual:  "ortfo/db Manual",
-		}, "./manpages")
+		},os.Args[3])
 		os.Exit(0)
 	}
 	err := rootCmd.Execute()
