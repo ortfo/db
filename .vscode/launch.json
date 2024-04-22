@@ -9,9 +9,9 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
-			"program": "${workspaceFolder}/cmd/ortfodb",
-			"args": ["in", "build","out/database.json", "--config", "conf/ortfodb.yaml", "--scattered"],
-			"cwd": "${workspaceFolder}/examples/1"
+			"program": "${workspaceFolder}/cmd",
+			"args": ["--scattered", "build", "database.json"],
+			"cwd": "${workspaceFolder}/portfolio"
 		}
 
 	]
