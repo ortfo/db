@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
+	"github.com/metal3d/go-slugify"
 	"gopkg.in/yaml.v2"
 )
 
@@ -46,6 +47,14 @@ type Tag struct {
 
 func (t Tag) String() string {
 	return t.Singular
+}
+
+func (t Tag) DisplayName() string {
+	return t.Plural
+}
+
+func (t Tag) URLFriendlyName() string {
+	return slugify.Marshal(t.Singular, true)
 }
 
 func (t Tag) Detect(ctx *RunContext, workId string, techs []Technology) (bool, error) {
@@ -88,6 +97,14 @@ type Technology struct {
 
 func (t Technology) String() string {
 	return t.Name
+}
+
+func (t Technology) DisplayName() string {
+	return t.Name
+}
+
+func (t Technology) URLFriendlyName() string {
+	return t.Slug
 }
 
 func (t Technology) Detect(ctx *RunContext, workId string) (bool, error) {
