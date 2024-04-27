@@ -28,7 +28,6 @@ import (
 
 	// goldmarkFrontmatter "github.com/abhinav/goldmark-frontmatter"
 	goldmarkD2 "github.com/FurqanSoftware/goldmark-d2"
-	goldmarkKaTeX "github.com/FurqanSoftware/goldmark-katex"
 )
 
 const (
@@ -51,7 +50,6 @@ var markdownParser = goldmark.New(
 		extension.Typographer,
 		extension.CJK,
 		goldmarkHighlight.NewHighlighting(),
-		&goldmarkKaTeX.Extender{},
 		&goldmarkD2.Extender{},
 	),
 	goldmark.WithRendererOptions(
