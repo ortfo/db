@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.0/schemas/tags.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/tags.schema.json",
   "$ref": "#/$defs/tags",
   "$defs": {
     "Tag": {

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ortfodb"
-version = "1.6.0"
+version = "1.6.1"
 description = "ortfodb client library"
 authors = ["Ewen Le Bihan <hey@ewen.works>"]
 license = "MIT"
