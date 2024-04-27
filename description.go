@@ -27,7 +27,6 @@ import (
 	"github.com/zyedidia/generic/mapset"
 
 	// goldmarkFrontmatter "github.com/abhinav/goldmark-frontmatter"
-	goldmarkD2 "github.com/FurqanSoftware/goldmark-d2"
 )
 
 const (
@@ -50,7 +49,6 @@ var markdownParser = goldmark.New(
 		extension.Typographer,
 		extension.CJK,
 		goldmarkHighlight.NewHighlighting(),
-		&goldmarkD2.Extender{},
 	),
 	goldmark.WithRendererOptions(
 		html.WithUnsafe(),

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- removed support for D2 diagrams in markdown content: the depndency made builds fail
+
 ## [1.6.0] - 2024-04-27
 
 ### Added
@@ -153,8 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/ortfo/db/compare/v1.5.0...HEAD
-[1.6.0]: https://github.com/ortfo/db/-/releases/tag/v1.6.0
+[Unreleased]: https://github.com/ortfo/db/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/ortfo/db/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ortfo/db/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/ortfo/db/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/ortfo/db/compare/v1.3.0...v1.4.0
@@ -168,5 +172,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
 [//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
-
-[unreleased]: https://github.com/ortfo/db/-/compare/v1.6.0...main
