@@ -28,7 +28,7 @@ func LoadDatabase(at string, skipValidation bool) (database Database, err error)
 }
 
 func (db Database) FindMedia(mediaEmbed Media, workID string) (found bool, media Media) {
-	w, ok := db[workID]
+	w, ok := db.FindWork(workID)
 
 	if !ok {
 		return false, Media{}
@@ -43,6 +43,20 @@ func (db Database) FindMedia(mediaEmbed Media, workID string) (found bool, media
 	}
 
 	return false, Media{}
+}
+
+func (db Database) FindWork(idOrAlias string) (work Work, found bool) {
+	work, found = db[idOrAlias]
+	if !found {
+		for _, w := range db {
+			for _, alias := range w.Metadata.Aliases {
+				if alias == idOrAlias {
+					return w, true
+				}
+			}
+		}
+	}
+	return
 }
 
 // FirstParagraph returns the first paragraph content block of the given work in the given language

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - errors when encountering duplicate block IDs, empty blocks and other edge cases in descriptions
 - support for `null` values in layouts. this gets rendered as a special layout cell "ghost" (see `ortfodb.EmptyLayoutCell` for the value). This is useful to add empty spaces in a grid of images, for example
 - lsp subcommand for LSP support
+- Database.FindWork to facilitate alias resolution when finding works in a database
 
 ### Changed
 
