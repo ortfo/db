@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Dict, TypeVar, Callable, Type, cast
+from typing import List, Any, Dict, Optional, TypeVar, Callable, Type, cast
 
 
 T = TypeVar("T")
@@ -24,6 +24,11 @@ def from_int(x: Any) -> int:
     return x
 
 
+def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
+    assert isinstance(x, dict)
+    return { k: f(v) for (k, v) in x.items() }
+
+
 def from_none(x: Any) -> Any:
     assert x is None
     return x
@@ -36,11 +41,6 @@ def from_union(fs, x):
         except:
             pass
     assert False
-
-
-def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
-    assert isinstance(x, dict)
-    return { k: f(v) for (k, v) in x.items() }
 
 
 def to_class(c: Type[T], x: Any) -> dict:
@@ -186,7 +186,6 @@ class TechnologiesConfiguration:
 class Configuration:
     """Configuration represents what the ortfodb.yaml configuration file describes."""
 
-    build_metadata_file: Optional[str]
     exporters: Optional[Dict[str, Dict[str, Any]]]
     """Exporter-specific configuration. Maps exporter names to their configuration."""
 
@@ -201,8 +200,7 @@ class Configuration:
     tags: Optional[TagsConfiguration]
     technologies: Optional[TechnologiesConfiguration]
 
-    def __init__(self, build_metadata_file: Optional[str], exporters: Optional[Dict[str, Dict[str, Any]]], extract_colors: Optional[ExtractColorsConfiguration], make_gifs: Optional[MakeGIFSConfiguration], make_thumbnails: Optional[MakeThumbnailsConfiguration], media: Optional[MediaConfiguration], projects_at: str, scattered_mode_folder: str, tags: Optional[TagsConfiguration], technologies: Optional[TechnologiesConfiguration]) -> None:
-        self.build_metadata_file = build_metadata_file
+    def __init__(self, exporters: Optional[Dict[str, Dict[str, Any]]], extract_colors: Optional[ExtractColorsConfiguration], make_gifs: Optional[MakeGIFSConfiguration], make_thumbnails: Optional[MakeThumbnailsConfiguration], media: Optional[MediaConfiguration], projects_at: str, scattered_mode_folder: str, tags: Optional[TagsConfiguration], technologies: Optional[TechnologiesConfiguration]) -> None:
         self.exporters = exporters
         self.extract_colors = extract_colors
         self.make_gifs = make_gifs
@@ -216,7 +214,6 @@ class Configuration:
     @staticmethod
     def from_dict(obj: Any) -> 'Configuration':
         assert isinstance(obj, dict)
-        build_metadata_file = from_union([from_str, from_none], obj.get("build metadata file"))
         exporters = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], obj.get("exporters"))
         extract_colors = from_union([ExtractColorsConfiguration.from_dict, from_none], obj.get("extract colors"))
         make_gifs = from_union([MakeGIFSConfiguration.from_dict, from_none], obj.get("make gifs"))
@@ -226,12 +223,10 @@ class Configuration:
         scattered_mode_folder = from_str(obj.get("scattered mode folder"))
         tags = from_union([TagsConfiguration.from_dict, from_none], obj.get("tags"))
         technologies = from_union([TechnologiesConfiguration.from_dict, from_none], obj.get("technologies"))
-        return Configuration(build_metadata_file, exporters, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
+        return Configuration(exporters, extract_colors, make_gifs, make_thumbnails, media, projects_at, scattered_mode_folder, tags, technologies)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        if self.build_metadata_file is not None:
-            result["build metadata file"] = from_union([from_str, from_none], self.build_metadata_file)
         if self.exporters is not None:
             result["exporters"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], self.exporters)
         if self.extract_colors is not None:

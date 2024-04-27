@@ -11,7 +11,6 @@
  * Configuration represents what the ortfodb.yaml configuration file describes.
  */
 export interface Configuration {
-    "build metadata file"?: string;
     /**
      * Exporter-specific configuration. Maps exporter names to their configuration.
      */
@@ -234,7 +233,6 @@ function r(name: string) {
 
 const typeMap: any = {
     "Configuration": o([
-        { json: "build metadata file", js: "build metadata file", typ: u(undefined, "") },
         { json: "exporters", js: "exporters", typ: u(undefined, m(m("any"))) },
         { json: "extract colors", js: "extract colors", typ: u(undefined, r("ExtractColorsConfiguration")) },
         { json: "make gifs", js: "make gifs", typ: u(undefined, r("MakeGIFSConfiguration")) },

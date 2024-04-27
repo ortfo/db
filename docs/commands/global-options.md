@@ -30,6 +30,7 @@ Manage your portfolio's database — See https://github.com/ortfo/db for more in
 * [ortfodb add](add.md)	 - Add a new project to your portfolio
 * [ortfodb build](build.md)	 - Build the database
 * [ortfodb exporters](exporters.md)	 - Commands related to ortfo/db exporters
+* [ortfodb lsp](lsp.md)	 - Start a Language Server Protocol server for ortfo
 * [ortfodb replicate](replicate.md)	 - Replicate a database directory from a built database file.
 * [ortfodb schemas](schemas.md)	 - Output JSON schemas for ortfodb's various resources
 

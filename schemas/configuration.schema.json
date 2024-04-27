@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/configuration.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.0/schemas/configuration.schema.json",
   "$ref": "#/$defs/Configuration",
   "$defs": {
     "Configuration": {
@@ -13,9 +13,6 @@
         },
         "make thumbnails": {
           "$ref": "#/$defs/MakeThumbnailsConfiguration"
-        },
-        "build metadata file": {
-          "type": "string"
         },
         "media": {
           "$ref": "#/$defs/MediaConfiguration"

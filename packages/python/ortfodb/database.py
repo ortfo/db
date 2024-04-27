@@ -1,4 +1,6 @@
-from typing import Any, List, Dict, TypeVar, Type, cast, Callable
+from typing import Any, Dict, List, TypeVar, Type, cast, Callable
+from datetime import datetime
+import dateutil.parser
 
 
 T = TypeVar("T")
@@ -29,19 +31,23 @@ def to_float(x: Any) -> float:
     return x
 
 
+def from_datetime(x: Any) -> datetime:
+    return dateutil.parser.parse(x)
+
+
 def to_class(c: Type[T], x: Any) -> dict:
     assert isinstance(x, c)
     return cast(Any, x).to_dict()
 
 
-def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
-    assert isinstance(x, list)
-    return [f(y) for y in x]
-
-
 def from_dict(f: Callable[[Any], T], x: Any) -> Dict[str, T]:
     assert isinstance(x, dict)
     return { k: f(v) for (k, v) in x.items() }
+
+
+def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+    assert isinstance(x, list)
+    return [f(y) for y in x]
 
 
 class MediaAttributes:
@@ -184,6 +190,11 @@ class ContentBlock:
     duration: float
     """in seconds"""
 
+    hash: str
+    """Hash of the media file, used for caching purposes. Could also serve as an integrity
+    check.
+    The value is the MD5 hash, base64-encoded.
+    """
     has_sound: bool
     id: str
     index: int
@@ -194,12 +205,12 @@ class ContentBlock:
 
     text: str
     thumbnails: ThumbnailsMap
-    thumbnails_built_at: str
+    thumbnails_built_at: datetime
     title: str
     type: str
     url: str
 
-    def __init__(self, alt: str, analyzed: bool, anchor: str, attributes: MediaAttributes, caption: str, colors: ColorPalette, content: str, content_type: str, dimensions: ImageDimensions, dist_source: str, duration: float, has_sound: bool, id: str, index: int, online: bool, relative_source: str, size: int, text: str, thumbnails: ThumbnailsMap, thumbnails_built_at: str, title: str, type: str, url: str) -> None:
+    def __init__(self, alt: str, analyzed: bool, anchor: str, attributes: MediaAttributes, caption: str, colors: ColorPalette, content: str, content_type: str, dimensions: ImageDimensions, dist_source: str, duration: float, hash: str, has_sound: bool, id: str, index: int, online: bool, relative_source: str, size: int, text: str, thumbnails: ThumbnailsMap, thumbnails_built_at: datetime, title: str, type: str, url: str) -> None:
         self.alt = alt
         self.analyzed = analyzed
         self.anchor = anchor
@@ -211,6 +222,7 @@ class ContentBlock:
         self.dimensions = dimensions
         self.dist_source = dist_source
         self.duration = duration
+        self.hash = hash
         self.has_sound = has_sound
         self.id = id
         self.index = index
@@ -238,6 +250,7 @@ class ContentBlock:
         dimensions = ImageDimensions.from_dict(obj.get("dimensions"))
         dist_source = from_str(obj.get("distSource"))
         duration = from_float(obj.get("duration"))
+        hash = from_str(obj.get("hash"))
         has_sound = from_bool(obj.get("hasSound"))
         id = from_str(obj.get("id"))
         index = from_int(obj.get("index"))
@@ -246,11 +259,11 @@ class ContentBlock:
         size = from_int(obj.get("size"))
         text = from_str(obj.get("text"))
         thumbnails = ThumbnailsMap.from_dict(obj.get("thumbnails"))
-        thumbnails_built_at = from_str(obj.get("thumbnailsBuiltAt"))
+        thumbnails_built_at = from_datetime(obj.get("thumbnailsBuiltAt"))
         title = from_str(obj.get("title"))
         type = from_str(obj.get("type"))
         url = from_str(obj.get("url"))
-        return ContentBlock(alt, analyzed, anchor, attributes, caption, colors, content, content_type, dimensions, dist_source, duration, has_sound, id, index, online, relative_source, size, text, thumbnails, thumbnails_built_at, title, type, url)
+        return ContentBlock(alt, analyzed, anchor, attributes, caption, colors, content, content_type, dimensions, dist_source, duration, hash, has_sound, id, index, online, relative_source, size, text, thumbnails, thumbnails_built_at, title, type, url)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -265,6 +278,7 @@ class ContentBlock:
         result["dimensions"] = to_class(ImageDimensions, self.dimensions)
         result["distSource"] = from_str(self.dist_source)
         result["duration"] = to_float(self.duration)
+        result["hash"] = from_str(self.hash)
         result["hasSound"] = from_bool(self.has_sound)
         result["id"] = from_str(self.id)
         result["index"] = from_int(self.index)
@@ -273,7 +287,7 @@ class ContentBlock:
         result["size"] = from_int(self.size)
         result["text"] = from_str(self.text)
         result["thumbnails"] = to_class(ThumbnailsMap, self.thumbnails)
-        result["thumbnailsBuiltAt"] = from_str(self.thumbnails_built_at)
+        result["thumbnailsBuiltAt"] = self.thumbnails_built_at.isoformat()
         result["title"] = from_str(self.title)
         result["type"] = from_str(self.type)
         result["url"] = from_str(self.url)
@@ -281,12 +295,14 @@ class ContentBlock:
 
 
 class LocalizedContent:
+    abbreviations: Dict[str, str]
     blocks: List[ContentBlock]
     footnotes: Dict[str, str]
     layout: List[List[str]]
     title: str
 
-    def __init__(self, blocks: List[ContentBlock], footnotes: Dict[str, str], layout: List[List[str]], title: str) -> None:
+    def __init__(self, abbreviations: Dict[str, str], blocks: List[ContentBlock], footnotes: Dict[str, str], layout: List[List[str]], title: str) -> None:
+        self.abbreviations = abbreviations
         self.blocks = blocks
         self.footnotes = footnotes
         self.layout = layout
@@ -295,14 +311,16 @@ class LocalizedContent:
     @staticmethod
     def from_dict(obj: Any) -> 'LocalizedContent':
         assert isinstance(obj, dict)
+        abbreviations = from_dict(from_str, obj.get("abbreviations"))
         blocks = from_list(ContentBlock.from_dict, obj.get("blocks"))
         footnotes = from_dict(from_str, obj.get("footnotes"))
         layout = from_list(lambda x: from_list(from_str, x), obj.get("layout"))
         title = from_str(obj.get("title"))
-        return LocalizedContent(blocks, footnotes, layout, title)
+        return LocalizedContent(abbreviations, blocks, footnotes, layout, title)
 
     def to_dict(self) -> dict:
         result: dict = {}
+        result["abbreviations"] = from_dict(from_str, self.abbreviations)
         result["blocks"] = from_list(lambda x: to_class(ContentBlock, x), self.blocks)
         result["footnotes"] = from_dict(from_str, self.footnotes)
         result["layout"] = from_list(lambda x: from_list(from_str, x), self.layout)
@@ -395,17 +413,17 @@ class WorkMetadata:
         return result
 
 
-class AnalyzedWork:
-    """AnalyzedWork represents a complete work, with analyzed mediae."""
+class Work:
+    """Work represents a given work in the database."""
 
-    built_at: str
+    built_at: datetime
     content: Dict[str, LocalizedContent]
     description_hash: str
     id: str
     metadata: WorkMetadata
     partial: bool
 
-    def __init__(self, built_at: str, content: Dict[str, LocalizedContent], description_hash: str, id: str, metadata: WorkMetadata, partial: bool) -> None:
+    def __init__(self, built_at: datetime, content: Dict[str, LocalizedContent], description_hash: str, id: str, metadata: WorkMetadata, partial: bool) -> None:
         self.built_at = built_at
         self.content = content
         self.description_hash = description_hash
@@ -414,19 +432,19 @@ class AnalyzedWork:
         self.partial = partial
 
     @staticmethod
-    def from_dict(obj: Any) -> 'AnalyzedWork':
+    def from_dict(obj: Any) -> 'Work':
         assert isinstance(obj, dict)
-        built_at = from_str(obj.get("builtAt"))
+        built_at = from_datetime(obj.get("builtAt"))
         content = from_dict(LocalizedContent.from_dict, obj.get("content"))
         description_hash = from_str(obj.get("descriptionHash"))
         id = from_str(obj.get("id"))
         metadata = WorkMetadata.from_dict(obj.get("metadata"))
         partial = from_bool(obj.get("Partial"))
-        return AnalyzedWork(built_at, content, description_hash, id, metadata, partial)
+        return Work(built_at, content, description_hash, id, metadata, partial)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["builtAt"] = from_str(self.built_at)
+        result["builtAt"] = self.built_at.isoformat()
         result["content"] = from_dict(lambda x: to_class(LocalizedContent, x), self.content)
         result["descriptionHash"] = from_str(self.description_hash)
         result["id"] = from_str(self.id)
@@ -435,9 +453,9 @@ class AnalyzedWork:
         return result
 
 
-def database_from_dict(s: Any) -> Dict[str, AnalyzedWork]:
-    return from_dict(AnalyzedWork.from_dict, s)
+def database_from_dict(s: Any) -> Dict[str, Work]:
+    return from_dict(Work.from_dict, s)
 
 
-def database_to_dict(x: Dict[str, AnalyzedWork]) -> Any:
-    return from_dict(lambda x: to_class(AnalyzedWork, x), x)
+def database_to_dict(x: Dict[str, Work]) -> Any:
+    return from_dict(lambda x: to_class(Work, x), x)

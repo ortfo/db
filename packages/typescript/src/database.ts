@@ -8,10 +8,10 @@
 // match the expected interface, even if the JSON is valid.
 
 /**
- * AnalyzedWork represents a complete work, with analyzed mediae.
+ * Work represents a given work in the database.
  */
 export interface Database {
-    builtAt:         string;
+    builtAt:         Date;
     content:         { [key: string]: LocalizedContent };
     descriptionHash: string;
     id:              string;
@@ -20,10 +20,11 @@ export interface Database {
 }
 
 export interface LocalizedContent {
-    blocks:    ContentBlock[];
-    footnotes: { [key: string]: string };
-    layout:    Array<string[]>;
-    title:     string;
+    abbreviations: { [key: string]: string };
+    blocks:        ContentBlock[];
+    footnotes:     { [key: string]: string };
+    layout:        Array<string[]>;
+    title:         string;
 }
 
 export interface ContentBlock {
@@ -46,7 +47,13 @@ export interface ContentBlock {
     /**
      * in seconds
      */
-    duration:       number;
+    duration: number;
+    /**
+     * Hash of the media file, used for caching purposes. Could also serve as an integrity
+     * check.
+     * The value is the MD5 hash, base64-encoded.
+     */
+    hash:           string;
     hasSound:       boolean;
     id:             string;
     index:          number;
@@ -58,7 +65,7 @@ export interface ContentBlock {
     size:              number;
     text:              string;
     thumbnails:        ThumbnailsMap;
-    thumbnailsBuiltAt: string;
+    thumbnailsBuiltAt: Date;
     title:             string;
     type:              string;
     url:               string;
@@ -309,7 +316,7 @@ function r(name: string) {
 
 const typeMap: any = {
     "Database": o([
-        { json: "builtAt", js: "builtAt", typ: "" },
+        { json: "builtAt", js: "builtAt", typ: Date },
         { json: "content", js: "content", typ: m(r("LocalizedContent")) },
         { json: "descriptionHash", js: "descriptionHash", typ: "" },
         { json: "id", js: "id", typ: "" },
@@ -317,6 +324,7 @@ const typeMap: any = {
         { json: "Partial", js: "Partial", typ: true },
     ], false),
     "LocalizedContent": o([
+        { json: "abbreviations", js: "abbreviations", typ: m("") },
         { json: "blocks", js: "blocks", typ: a(r("ContentBlock")) },
         { json: "footnotes", js: "footnotes", typ: m("") },
         { json: "layout", js: "layout", typ: a(a("")) },
@@ -334,6 +342,7 @@ const typeMap: any = {
         { json: "dimensions", js: "dimensions", typ: r("ImageDimensions") },
         { json: "distSource", js: "distSource", typ: "" },
         { json: "duration", js: "duration", typ: 3.14 },
+        { json: "hash", js: "hash", typ: "" },
         { json: "hasSound", js: "hasSound", typ: true },
         { json: "id", js: "id", typ: "" },
         { json: "index", js: "index", typ: 0 },
@@ -342,7 +351,7 @@ const typeMap: any = {
         { json: "size", js: "size", typ: 0 },
         { json: "text", js: "text", typ: "" },
         { json: "thumbnails", js: "thumbnails", typ: r("ThumbnailsMap") },
-        { json: "thumbnailsBuiltAt", js: "thumbnailsBuiltAt", typ: "" },
+        { json: "thumbnailsBuiltAt", js: "thumbnailsBuiltAt", typ: Date },
         { json: "title", js: "title", typ: "" },
         { json: "type", js: "type", typ: "" },
         { json: "url", js: "url", typ: "" },

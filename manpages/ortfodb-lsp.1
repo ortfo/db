@@ -3,23 +3,27 @@
 
 .SH NAME
 .PP
-ortfodb-exporters - Commands related to ortfo/db exporters
+ortfodb-lsp - Start a Language Server Protocol server for ortfo
 
 
 .SH SYNOPSIS
 .PP
-\fBortfodb exporters [flags]\fP
+\fBortfodb lsp [flags]\fP
 
 
 .SH DESCRIPTION
 .PP
-Commands related to ortfo/db exporters
+Start a Language Server Protocol server for ortfo
 
 
 .SH OPTIONS
 .PP
 \fB-h\fP, \fB--help\fP[=false]
-	help for exporters
+	help for lsp
+
+.PP
+\fB--stdio\fP[=false]
+	Used for compatibility with VSCode. Ignored (the server is always started in stdio mode)
 
 
 .SH OPTIONS INHERITED FROM PARENT COMMANDS
@@ -34,7 +38,7 @@ Commands related to ortfo/db exporters
 
 .SH SEE ALSO
 .PP
-\fBortfodb(1)\fP, \fBortfodb-exporters-doc(1)\fP, \fBortfodb-exporters-init(1)\fP, \fBortfodb-exporters-list(1)\fP
+\fBortfodb(1)\fP
 
 
 .SH HISTORY

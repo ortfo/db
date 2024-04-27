@@ -17,9 +17,6 @@ use std::collections::HashMap;
 /// Configuration represents what the ortfodb.yaml configuration file describes.
 #[derive(Serialize, Deserialize)]
 pub struct Configuration {
-    #[serde(rename = "build metadata file")]
-    pub build_metadata_file: Option<String>,
-
     /// Exporter-specific configuration. Maps exporter names to their configuration.
     pub exporters: Option<HashMap<String, HashMap<String, Option<serde_json::Value>>>>,
 

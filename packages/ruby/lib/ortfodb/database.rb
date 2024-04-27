@@ -184,6 +184,11 @@ module Ortfodb
     # in seconds
     attribute :duration, Types::Double
 
+    # Hash of the media file, used for caching purposes. Could also serve as an integrity
+    # check.
+    # The value is the MD5 hash, base64-encoded.
+    attribute :content_block_hash, Types::String
+
     attribute :has_sound,       Types::Bool
     attribute :id,              Types::String
     attribute :index,           Types::Integer
@@ -214,6 +219,7 @@ module Ortfodb
         dimensions:          ImageDimensions.from_dynamic!(d.fetch("dimensions")),
         dist_source:         d.fetch("distSource"),
         duration:            d.fetch("duration"),
+        content_block_hash:  d.fetch("hash"),
         has_sound:           d.fetch("hasSound"),
         id:                  d.fetch("id"),
         index:               d.fetch("index"),
@@ -246,6 +252,7 @@ module Ortfodb
         "dimensions"        => dimensions.to_dynamic,
         "distSource"        => dist_source,
         "duration"          => duration,
+        "hash"              => content_block_hash,
         "hasSound"          => has_sound,
         "id"                => id,
         "index"             => index,
@@ -267,18 +274,20 @@ module Ortfodb
   end
 
   class LocalizedContent < Dry::Struct
-    attribute :blocks,    Types.Array(ContentBlock)
-    attribute :footnotes, Types::Hash.meta(of: Types::String)
-    attribute :layout,    Types.Array(Types.Array(Types::String))
-    attribute :title,     Types::String
+    attribute :abbreviations, Types::Hash.meta(of: Types::String)
+    attribute :blocks,        Types.Array(ContentBlock)
+    attribute :footnotes,     Types::Hash.meta(of: Types::String)
+    attribute :layout,        Types.Array(Types.Array(Types::String))
+    attribute :title,         Types::String
 
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        blocks:    d.fetch("blocks").map { |x| ContentBlock.from_dynamic!(x) },
-        footnotes: Types::Hash[d.fetch("footnotes")].map { |k, v| [k, Types::String[v]] }.to_h,
-        layout:    d.fetch("layout"),
-        title:     d.fetch("title"),
+        abbreviations: Types::Hash[d.fetch("abbreviations")].map { |k, v| [k, Types::String[v]] }.to_h,
+        blocks:        d.fetch("blocks").map { |x| ContentBlock.from_dynamic!(x) },
+        footnotes:     Types::Hash[d.fetch("footnotes")].map { |k, v| [k, Types::String[v]] }.to_h,
+        layout:        d.fetch("layout"),
+        title:         d.fetch("title"),
       )
     end
 
@@ -288,10 +297,11 @@ module Ortfodb
 
     def to_dynamic
       {
-        "blocks"    => blocks.map { |x| x.to_dynamic },
-        "footnotes" => footnotes,
-        "layout"    => layout,
-        "title"     => title,
+        "abbreviations" => abbreviations,
+        "blocks"        => blocks.map { |x| x.to_dynamic },
+        "footnotes"     => footnotes,
+        "layout"        => layout,
+        "title"         => title,
       }
     end
 
@@ -388,8 +398,8 @@ module Ortfodb
     end
   end
 
-  # AnalyzedWork represents a complete work, with analyzed mediae.
-  class AnalyzedWork < Dry::Struct
+  # Work represents a given work in the database.
+  class Work < Dry::Struct
     attribute :built_at,         Types::String
     attribute :content,          Types::Hash.meta(of: LocalizedContent)
     attribute :description_hash, Types::String
@@ -432,7 +442,7 @@ module Ortfodb
   module Ortfodb
     class Database
       def self.from_json!(json)
-        Types::Hash[JSON.parse(json, quirks_mode: true)].map { |k, v| [k, AnalyzedWork.from_dynamic!(v)] }.to_h
+        Types::Hash[JSON.parse(json, quirks_mode: true)].map { |k, v| [k, Work.from_dynamic!(v)] }.to_h
       end
     end
   end

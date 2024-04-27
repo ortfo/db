@@ -198,7 +198,6 @@ module Ortfodb
 
   # Configuration represents what the ortfodb.yaml configuration file describes.
   class Configuration < Dry::Struct
-    attribute :build_metadata_file, Types::String.optional
 
     # Exporter-specific configuration. Maps exporter names to their configuration.
     attribute :exporters, Types::Hash.meta(of: Types::Hash.meta(of: Types::Any)).optional
@@ -218,7 +217,6 @@ module Ortfodb
     def self.from_dynamic!(d)
       d = Types::Hash[d]
       new(
-        build_metadata_file:   d["build metadata file"],
         exporters:             Types::Hash.optional[d["exporters"]]&.map { |k, v| [k, Types::Hash[v].map { |k, v| [k, Types::Any[v]] }.to_h] }&.to_h,
         extract_colors:        d["extract colors"] ? ExtractColorsConfiguration.from_dynamic!(d["extract colors"]) : nil,
         make_gifs:             d["make gifs"] ? MakeGIFSConfiguration.from_dynamic!(d["make gifs"]) : nil,
@@ -237,7 +235,6 @@ module Ortfodb
 
     def to_dynamic
       {
-        "build metadata file"   => build_metadata_file,
         "exporters"             => exporters,
         "extract colors"        => extract_colors&.to_dynamic,
         "make gifs"             => make_gifs&.to_dynamic,

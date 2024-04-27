@@ -2,10 +2,10 @@ require "json"
 
 module Ortfodb
 
-alias Database = Hash(String, AnalyzedWork)
+alias Database = Hash(String, Work)
 
-# AnalyzedWork represents a complete work, with analyzed mediae.
-class AnalyzedWork
+# Work represents a given work in the database.
+class Work
   include JSON::Serializable
 
   @[JSON::Field(key: "builtAt")]
@@ -26,6 +26,8 @@ end
 
 class LocalizedContent
   include JSON::Serializable
+
+  property abbreviations : Hash(String, String)
 
   property blocks : Array(ContentBlock)
 
@@ -65,6 +67,11 @@ class ContentBlock
 
   # in seconds
   property duration : Float64
+
+  # Hash of the media file, used for caching purposes. Could also serve as an integrity
+  # check.
+  # The value is the MD5 hash, base64-encoded.
+  property hash : String
 
   @[JSON::Field(key: "hasSound")]
   property has_sound : Bool

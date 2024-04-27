@@ -1,41 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.5.0/schemas/database.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.0/schemas/database.schema.json",
   "$ref": "#/$defs/Database",
   "$defs": {
-    "AnalyzedWork": {
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "builtAt": {
-          "type": "string"
-        },
-        "descriptionHash": {
-          "type": "string"
-        },
-        "metadata": {
-          "$ref": "#/$defs/WorkMetadata"
-        },
-        "content": {
-          "$ref": "#/$defs/LocalizableContent"
-        },
-        "Partial": {
-          "type": "boolean"
-        }
+    "Abbreviations": {
+      "additionalProperties": {
+        "type": "string"
       },
-      "additionalProperties": false,
       "type": "object",
-      "required": [
-        "id",
-        "builtAt",
-        "descriptionHash",
-        "metadata",
-        "content",
-        "Partial"
-      ],
-      "description": "AnalyzedWork represents a complete work, with analyzed mediae.",
-      "title": "AnalyzedWork"
+      "description": "Abbreviations represents the abbreviations declared in a description.md file.",
+      "title": "Abbreviations"
     },
     "ColorPalette": {
       "properties": {
@@ -112,7 +86,8 @@
           "$ref": "#/$defs/ThumbnailsMap"
         },
         "thumbnailsBuiltAt": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time"
         },
         "attributes": {
           "$ref": "#/$defs/MediaAttributes"
@@ -120,6 +95,10 @@
         "analyzed": {
           "type": "boolean",
           "description": "whether the media has been analyzed"
+        },
+        "hash": {
+          "type": "string",
+          "description": "Hash of the media file, used for caching purposes. Could also serve as an integrity check.\nThe value is the MD5 hash, base64-encoded."
         },
         "content": {
           "type": "string",
@@ -157,6 +136,7 @@
         "thumbnailsBuiltAt",
         "attributes",
         "analyzed",
+        "hash",
         "content",
         "text",
         "title",
@@ -166,7 +146,7 @@
     },
     "Database": {
       "additionalProperties": {
-        "$ref": "#/$defs/AnalyzedWork"
+        "$ref": "#/$defs/Work"
       },
       "type": "object",
       "title": "Database"
@@ -252,6 +232,9 @@
         },
         "footnotes": {
           "$ref": "#/$defs/Footnotes"
+        },
+        "abbreviations": {
+          "$ref": "#/$defs/Abbreviations"
         }
       },
       "additionalProperties": false,
@@ -260,7 +243,8 @@
         "layout",
         "blocks",
         "title",
-        "footnotes"
+        "footnotes",
+        "abbreviations"
       ],
       "title": "LocalizedContent"
     },
@@ -308,6 +292,41 @@
       "additionalProperties": false,
       "type": "object",
       "title": "ThumbnailsMap"
+    },
+    "Work": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "builtAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "descriptionHash": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/WorkMetadata"
+        },
+        "content": {
+          "$ref": "#/$defs/LocalizableContent"
+        },
+        "Partial": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "builtAt",
+        "descriptionHash",
+        "metadata",
+        "content",
+        "Partial"
+      ],
+      "description": "Work represents a given work in the database.",
+      "title": "Work"
     },
     "WorkMetadata": {
       "properties": {

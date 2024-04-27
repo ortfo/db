@@ -31,6 +31,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   exporters   Commands related to ortfo/db exporters
   help        Help about any command
+  lsp         Start a Language Server Protocol server for ortfo
   replicate   Replicate a database directory from a built database file.
   schemas     Output JSON schemas for ortfodb's various resources
 

@@ -6,9 +6,6 @@ module Ortfodb
 class Configuration
   include JSON::Serializable
 
-  @[JSON::Field(key: "build metadata file")]
-  property build_metadata_file : String?
-
   # Exporter-specific configuration. Maps exporter names to their configuration.
   property exporters : Hash(String, Hash(String, JSON::Any?))?
 

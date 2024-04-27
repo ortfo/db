@@ -15,9 +15,7 @@ ortfodb exporters doc <name> [flags]
 ```ansi
 $ ortfodb exporters help localize
 
-[1m[34mlocalize  [0m  Export separately the database as a single database for each language. The
-`content` field of each work is localized, meaning it's not an object mapping
-languages to localized content, but the content directly, in the language.
+[1m[34mlocalize  [0m  Export separately the database as a single database for each language. The `content` field of each work is localized, meaning it's not an object mapping languages to localized content, but the content directly, in the language.
 [0m            [1m[36mOptions[0m:
 [0m            [1m[2m•[0m [34mfilename_template[0m
 [0m

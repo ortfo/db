@@ -14,12 +14,12 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-pub type Database = HashMap<String, AnalyzedWork>;
+pub type Database = HashMap<String, Work>;
 
-/// AnalyzedWork represents a complete work, with analyzed mediae.
+/// Work represents a given work in the database.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AnalyzedWork {
+pub struct Work {
     pub built_at: String,
 
     pub content: HashMap<String, LocalizedContent>,
@@ -36,6 +36,8 @@ pub struct AnalyzedWork {
 
 #[derive(Serialize, Deserialize)]
 pub struct LocalizedContent {
+    pub abbreviations: HashMap<String, String>,
+
     pub blocks: Vec<ContentBlock>,
 
     pub footnotes: HashMap<String, String>,
@@ -72,6 +74,11 @@ pub struct ContentBlock {
 
     /// in seconds
     pub duration: f64,
+
+    /// Hash of the media file, used for caching purposes. Could also serve as an integrity
+    /// check.
+    /// The value is the MD5 hash, base64-encoded.
+    pub hash: String,
 
     pub has_sound: bool,
 
