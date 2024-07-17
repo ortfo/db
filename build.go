@@ -538,9 +538,15 @@ func (ctx *RunContext) ComputeProgressTotal() (workDirectories []fs.DirEntry, er
 		// TODO: setting to ignore/allow “dotfolders”
 
 		dirEntryAbsPath := path.Join(ctx.DatabaseDirectory, dirEntry.Name())
-		if !dirEntry.IsDir() {
+		// Using stat to follow symlinks
+		stat, err := os.Stat(dirEntryAbsPath)
+		if err != nil {
 			continue
 		}
+		if !stat.IsDir() {
+			continue
+		}
+
 		if dirEntry.Name() == "../" || dirEntry.Name() == "./" {
 			continue
 		}

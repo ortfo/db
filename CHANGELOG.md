@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - use `magick` instead of the deprecated `convert` magick binary when thumbnailing
 
+### Fixed
+
+- symlinks were not followed while collecting works to build in the project directory
+
 ## [1.6.1] - 2024-04-27
 
 ### Changed
@@ -163,8 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[Unreleased]: https://github.com/ortfo/db/compare/v1.6.0...HEAD
-[1.6.1]: https://github.com/ortfo/db/-/releases/tag/v1.6.1
+[Unreleased]: https://github.com/ortfo/db/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/ortfo/db/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/ortfo/db/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/ortfo/db/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/ortfo/db/compare/v1.4.0...v1.4.1
@@ -179,5 +183,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.0]: https://github.com/ortfo/db/releases/tag/v0.2.0
 
 [//]: # (C3-2-DKAC:GGH:Rortfo/db:Tv{t})
-
-[unreleased]: https://github.com/ortfo/db/-/compare/v1.6.1...main
