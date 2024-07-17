@@ -13,6 +13,12 @@ install:
 	cp ortfodb ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
+install-windows:
+	cd cmd; \
+	go mod tidy; \
+	go build; \
+	mv cmd.exe ~/go/bin/ortfodb.exe
+
 docs:
 	mkdir -p docs/commands manpages
 	./ortfodb makedocs docs/commands manpages

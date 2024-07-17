@@ -25,7 +25,6 @@ import (
 	_ "golang.org/x/image/webp"
 
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -426,7 +425,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 		LogDebug("Skipping media copy for %s because it already exists", absolutePathDestination)
 	}
 	if absolutePathDestination != absolutePathSource && !skipCopy {
-		err = os.MkdirAll(path.Dir(absolutePathDestination), 0o755)
+		err = os.MkdirAll(filepath.Dir(absolutePathDestination), 0o755)
 		if err != nil {
 			err = fmt.Errorf("could not create output directory for %s: %w", absolutePathSource, err)
 			return
