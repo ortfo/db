@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- use `magick` instead of the deprecated `convert` magick binary when thumbnailing
+
 ## [1.6.1] - 2024-04-27
 
 ### Changed

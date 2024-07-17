@@ -42,7 +42,7 @@ func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string)
 	}
 
 	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("convert", "-resize", fmt.Sprint(targetSize), media.DistSource.Absolute(ctx), saveTo)
+		return run("magick", media.DistSource.Absolute(ctx), "-resize", fmt.Sprint(targetSize), saveTo)
 	}
 
 	if strings.HasPrefix(media.ContentType, "video/") {
@@ -70,7 +70,7 @@ func (ctx *RunContext) makePdfThumbnail(media Media, targetSize int, saveTo stri
 	if err != nil {
 		return err
 	}
-	return run("convert", "-thumbnail", fmt.Sprint(targetSize), temporaryPng.Name(), saveTo)
+	return run("magick", temporaryPng.Name(), "-thumbnail", fmt.Sprint(targetSize), saveTo)
 }
 
 func (ctx *RunContext) makeGifThumbnail(media Media, targetSize int, saveTo string) error {
