@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
@@ -134,7 +135,7 @@ func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
 		return LoadExporter(name, rawManifest, ctx.Config.Exporters[name])
 	} else if isValidURL(ensureHttpPrefix(name)) {
 		url := ensureHttpPrefix(name)
-		LogDebug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
+		ll.Debug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
 		return DownloadExporter(name, url, ctx.Config.Exporters[name])
 	}
 	return nil, fmt.Errorf("no exporter named %s", name)
@@ -173,7 +174,7 @@ func LoadExporter(name string, manifestRaw []byte, config map[string]any) (*Cust
 
 // DownloadExporter loads an exporter from a URL.
 func DownloadExporter(name string, url string, config map[string]any) (*CustomExporter, error) {
-	LogCustom("Installing", "cyan", "exporter at %s", url)
+	ll.Log("Installing", "cyan", "exporter at %s", url)
 	manifestRaw, err := downloadFile(url)
 	if err != nil {
 		return &CustomExporter{}, fmt.Errorf("while downloading exporter manifest file: %w", err)

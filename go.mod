@@ -1,18 +1,17 @@
 module github.com/ortfo/db
 
-go 1.22.2
+go 1.23.2
 
 require (
 	github.com/EdlinOrg/prominentcolor v1.0.0
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
 	github.com/anaskhan96/soup v1.2.5
 	github.com/charmbracelet/huh v0.3.0
+	github.com/ewen-lbh/label-logger-go v0.1.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/gosuri/uiprogress v0.0.1
 	github.com/invopop/jsonschema v0.12.0
 	github.com/json-iterator/go v1.1.12
-	github.com/mattn/go-isatty v0.0.20
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
 	github.com/mitchellh/go-homedir v1.1.0
@@ -54,11 +53,13 @@ require (
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
+	github.com/gosuri/uiprogress v0.0.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect

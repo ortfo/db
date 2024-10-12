@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 	"github.com/metal3d/go-slugify"
 	"gopkg.in/yaml.v2"
@@ -135,10 +136,10 @@ func (t autodetectData) Detect(ctx *RunContext, workId string) (matched bool, er
 			contentDetectionConditions[path] = append(contentDetectionConditions[path], content)
 		}
 	}
-	LogDebug("Starting auto-detect for %s: contentDetection map is %v", t, contentDetectionConditions)
+	ll.Debug("Starting auto-detect for %s: contentDetection map is %v", t, contentDetectionConditions)
 	for _, f := range append(t.Files, contentDetectionFiles...) {
 		_, isContentDetection := contentDetectionConditions[f]
-		LogDebug("Auto-detecting %s in %s: %q: isContentDetection=%v", t, workId, f, isContentDetection)
+		ll.Debug("Auto-detecting %s in %s: %q: isContentDetection=%v", t, workId, f, isContentDetection)
 		pat := gitignore.ParsePattern(f, nil)
 		// Walk all files of the work folder (excl. hidden files unfortunately)
 		err = fs.WalkDir(os.DirFS(ctx.PathToWorkFolder(workId)), ".", func(path string, d fs.DirEntry, err error) error {
@@ -170,7 +171,7 @@ func (t autodetectData) Detect(ctx *RunContext, workId string) (matched bool, er
 
 				for _, contentCondition := range contentDetectionConditions[path] {
 					if strings.Contains(contents, contentCondition) {
-						LogDebug("Auto-detected %s in %s: condition %q in %q met", t, workId, contentCondition, path)
+						ll.Debug("Auto-detected %s in %s: condition %q in %q met", t, workId, contentCondition, path)
 						matched = true
 						return filepath.SkipAll
 					}
@@ -179,11 +180,11 @@ func (t autodetectData) Detect(ctx *RunContext, workId string) (matched bool, er
 			} else {
 				result := pat.Match(pathFragments, d.IsDir())
 				if result == gitignore.Exclude {
-					LogDebug("Auto-detected %s in %s: filepattern %q matches %q", t, workId, f, path)
+					ll.Debug("Auto-detected %s in %s: filepattern %q matches %q", t, workId, f, path)
 					matched = true
 					return filepath.SkipAll
 				} else if result == gitignore.Include {
-					LogDebug("Auto-detected %s in %s: filepattern %q matches %q", t, workId, f, path)
+					ll.Debug("Auto-detected %s in %s: filepattern %q matches %q", t, workId, f, path)
 					matched = false
 					return filepath.SkipAll
 				}
@@ -308,7 +309,7 @@ func (ctx *RunContext) LoadTagsRepository() ([]Tag, error) {
 
 	var tags []Tag
 	if ctx.Config.Tags.Repository == "" {
-		LogWarning("No tags repository specified in configuration at %s", ctx.Config.source)
+		ll.Warn("No tags repository specified in configuration at %s", ctx.Config.source)
 		return []Tag{}, nil
 	}
 	raw, err := readFileBytes(ctx.Config.Tags.Repository)
@@ -332,7 +333,7 @@ func (ctx *RunContext) LoadTechnologiesRepository() ([]Technology, error) {
 
 	var technologies []Technology
 	if ctx.Config.Technologies.Repository == "" {
-		LogWarning("No technologies repository specified in configuration at %s", ctx.Config.source)
+		ll.Warn("No technologies repository specified in configuration at %s", ctx.Config.source)
 		return []Technology{}, nil
 	}
 	raw, err := readFileBytes(ctx.Config.Technologies.Repository)

@@ -5,14 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/gosuri/uiprogress"
-	"github.com/mitchellh/colorstring"
+	ll "github.com/ewen-lbh/label-logger-go"
 )
 
-var progressbar *uiprogress.Bar
-var progressBars *uiprogress.Progress
 var currentlyBuildingWorkIDs []string
 var builtWorksCount int
 var worksToBuildCount int
@@ -27,98 +23,36 @@ const (
 	PhaseUnchanged     BuildPhase = "Reusing"
 )
 
+func (phase BuildPhase) String() string {
+	return string(phase)
+}
+
 func padPhaseVerb(phase BuildPhase) string {
 	// length of longest phase verb: "Thumbnailing", plus some padding
 	return fmt.Sprintf("%15s", phase)
 }
 
 func (ctx *RunContext) StartProgressBar(total int) {
-	if progressbar != nil {
-		panic("progress bar already started")
-	}
-
 	worksToBuildCount = total
-
-	if isInteractiveTerminal() || os.Getenv("FORCE_PROGRESS_BAR") == "1" {
-		LogDebug("terminal is interactive, starting progress bar")
-	} else {
-		LogDebug("not starting progress bar because not in an interactive terminal")
-		return
-	}
-
-	progressBars = uiprogress.New()
-	progressBars.SetRefreshInterval(1 * time.Millisecond)
-	progressbar = progressBars.AddBar(total)
-	progressbar.Empty = ' '
-	progressbar.Fill = '='
-	progressbar.Head = '>'
-	progressbar.Width = 30
-	progressbar.PrependFunc(func(b *uiprogress.Bar) string {
-		if ShowingColors() {
-			return colorstring.Color(
-				fmt.Sprintf(
-					`[magenta][bold]%15s[reset]`,
-					"Building",
-				),
-			)
-		}
-		return fmt.Sprintf("%15s", "Building")
-	})
-	progressbar.AppendFunc(func(b *uiprogress.Bar) string {
-		// truncatedCurrentlyBuildingWorkIDs := make([]string, 0, len(currentlyBuildingWorkIDs))
-		// for _, id := range currentlyBuildingWorkIDs {
-		// 	if len(id) > 5 {
-		// 		truncatedCurrentlyBuildingWorkIDs = append(truncatedCurrentlyBuildingWorkIDs, id[:5])
-		// 	} else {
-		// 		truncatedCurrentlyBuildingWorkIDs = append(truncatedCurrentlyBuildingWorkIDs, id)
-		// 	}
-		// }
-
-		return fmt.Sprintf("%d/%d", b.Current(), b.Total)
-	})
-	progressBars.Start()
+	ll.StartProgressBar(total, "Building", "magenta")
 }
 
 func (ctx *RunContext) IncrementProgress() {
 	builtWorksCount++
 
 	if BuildIsFinished() {
-		ctx.showFinishedMessage()
+		ll.Log("Finished", "green", "compiling to %s\n", ctx.OutputDatabaseFile)
 		os.Remove(ctx.ProgressInfoFile)
 	}
 
-	if progressbar != nil {
-		progressbar.Incr()
-		if BuildIsFinished() {
-			ctx.StopProgressBar()
-		}
+	ll.IncrementProgressBar()
+	if BuildIsFinished() {
+		ll.StopProgressBar()
 	}
 }
 
 func BuildIsFinished() bool {
-	if progressbar == nil {
-		return builtWorksCount >= worksToBuildCount
-	}
-	return progressbar.CompletedPercent() >= 100
-}
-
-func (ctx *RunContext) showFinishedMessage() {
-	if progressbar == nil {
-		LogCustom("Finished", "green", "compiling to %s\n", ctx.OutputDatabaseFile)
-	} else {
-		LogCustom("Finished", "green", "compiling to %s in %s\n", ctx.OutputDatabaseFile, progressbar.TimeElapsedString())
-	}
-}
-
-func (ctx *RunContext) StopProgressBar() {
-	if progressbar == nil {
-		return
-	}
-
-	progressBars.Bars = nil
-	progressBars.Stop()
-	// Clear progress bar empty line
-	fmt.Print("\r\033[K")
+	return ll.ProgressBarFinished() || builtWorksCount >= worksToBuildCount
 }
 
 // Status updates the current progress and writes the progress to a file if --write-progress is set.
@@ -136,17 +70,8 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	if len(details) > 0 {
 		formattedDetails = fmt.Sprintf(" [dim]%s[reset]", strings.Join(details, " "))
 	}
-	formattedMessage := colorstring.Color(fmt.Sprintf("[bold][%s]%s[reset] %s"+formattedDetails, color, padPhaseVerb(phase), workID))
 
-	if progressBars != nil {
-		writer := progressBars.Bypass()
-		if !ShowingColors() {
-			writer = noAnsiCodesWriter{out: writer}
-		}
-		fmt.Fprintln(writer, formattedMessage)
-	} else {
-		Println(formattedMessage)
-	}
+	ll.Log(phase.String(), color, "%s%s", workID, formattedDetails)
 
 	if phase == PhaseBuilt || phase == PhaseUnchanged {
 		for i, id := range currentlyBuildingWorkIDs {
@@ -161,7 +86,7 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	}
 
 	if err := ctx.appendToProgressFile(workID, phase, details...); err != nil {
-		DisplayWarning("could not append progress info to file", err)
+		ll.WarnDisplay("could not append progress info to file", err)
 	}
 }
 
@@ -178,7 +103,7 @@ type ProgressInfoEvent struct {
 
 func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, details ...string) error {
 	if ctx.ProgressInfoFile == "" {
-		LogDebug("not writing progress info to file because --write-progress is not set")
+		ll.Debug("not writing progress info to file because --write-progress is not set")
 		return nil
 	}
 	event := ProgressInfoEvent{
@@ -188,7 +113,7 @@ func (ctx *RunContext) appendToProgressFile(workID string, phase BuildPhase, det
 		Phase:      phase,
 		Details:    details,
 	}
-	LogDebug("Appending event %#v to progress file %s", event, ctx.ProgressInfoFile)
+	ll.Debug("Appending event %#v to progress file %s", event, ctx.ProgressInfoFile)
 	// append JSON marshalled event to file
 	file, err := os.OpenFile(ctx.ProgressInfoFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {

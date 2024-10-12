@@ -11,6 +11,7 @@ import (
 
 	"github.com/anaskhan96/soup"
 	"github.com/charmbracelet/huh"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -176,7 +177,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	if fileExists(readmePath) {
 		readmeTitle, readmeBody, err := fromReadme(readmePath)
 		if err != nil {
-			DisplayWarning("couldn't extract info from README.md", err)
+			ll.WarnDisplay("couldn't extract info from README.md", err)
 		} else {
 			if readmeTitle != "" {
 				defaultProjectTitle = readmeTitle
@@ -188,10 +189,10 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 	detectedStartDate, err := DetectStartDate(ctx.PathToWorkFolder(workId))
 	defaultStartedAt := ""
 	if err != nil {
-		DisplayWarning("while detecting start date of %s", err, workId)
+		ll.WarnDisplay("while detecting start date of %s", err, workId)
 	} else {
 		defaultStartedAt = detectedStartDate.Format("2006-01-02")
-		LogCustom("Detected", "cyan", "start date to be [bold][blue]%s[reset]", defaultStartedAt)
+		ll.Log("Detected", "cyan", "start date to be [bold][blue]%s[reset]", defaultStartedAt)
 	}
 
 	startedAtPlaceholder := "YYYY-MM-DD"
@@ -207,7 +208,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	autodetectedTechs, err := ctx.DetectTechnologies(workId)
 	if err != nil {
-		LogWarning(formatErrors(fmt.Errorf("while autodetecting technologies for %s: %w", workId, err)))
+		ll.Warn(ll.FormatErrors(fmt.Errorf("while autodetecting technologies for %s: %w", workId, err)))
 	} else {
 		displayTags := make([]string, 0, len(autodetectedTechs))
 		for _, tech := range autodetectedTechs {
@@ -215,19 +216,19 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 			displayTags = append(displayTags, tech.String())
 		}
 		if len(metadata.MadeWith) > 0 {
-			LogCustom("Detected", "cyan", "technologies to be %s", formatList(displayTags, "[bold][blue]%s[reset]", ", "))
+			ll.Log("Detected", "cyan", "technologies to be %s", ll.List(displayTags, "[bold][blue]%s[reset]", ", "))
 		}
 	}
 
 	autodetectedTags, err := ctx.DetectTags(workId, autodetectedTechs)
 	if err != nil {
-		DisplayWarning("while autodetecting tags for %s", err, workId)
+		ll.WarnDisplay("while autodetecting tags for %s", err, workId)
 	} else {
 		for _, tag := range autodetectedTags {
 			metadata.Tags = append(metadata.Tags, tag.String())
 		}
 		if len(metadata.Tags) > 0 {
-			LogCustom("Detected", "cyan", "tags to be %s", formatList(metadata.Tags, "[bold][blue]%s[reset]", ", "))
+			ll.Log("Detected", "cyan", "tags to be %s", ll.List(metadata.Tags, "[bold][blue]%s[reset]", ", "))
 		}
 	}
 
@@ -248,7 +249,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 				Value(&metadata.MadeWith).
 				Options(allTechsOptions...).
 				Validate(func(s []string) error {
-					LogDebug("Selected %v", s)
+					ll.Debug("Selected %v", s)
 					return nil
 				}).
 				Height(2+6),
@@ -276,7 +277,7 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 		defaultFinishedAt := time.Now().Format("2006-01-02")
 		if finishedAtFromGit, err := LastGitCommitDate(ctx.PathToWorkFolder(workId)); err == nil {
 			defaultFinishedAt = finishedAtFromGit.Format("2006-01-02")
-			LogCustom("Detected", "cyan", "finish date to be [bold][blue]%s[reset]", defaultFinishedAt)
+			ll.Log("Detected", "cyan", "finish date to be [bold][blue]%s[reset]", defaultFinishedAt)
 		}
 
 		err = huh.NewForm(
@@ -330,6 +331,6 @@ func (ctx *RunContext) CreateDescriptionFile(workId string, metadataItems []stri
 
 	os.MkdirAll(filepath.Dir(outputPath), 0o755)
 	os.WriteFile(outputPath, []byte(output), 0o644)
-	LogCustom("Created", "green", "description.md file at [bold]%s[reset]", outputPath)
+	ll.Log("Created", "green", "description.md file at [bold]%s[reset]", outputPath)
 	return outputPath, nil
 }

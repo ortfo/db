@@ -16,6 +16,7 @@ import (
 	"mvdan.cc/xurls/v2"
 
 	"github.com/anaskhan96/soup"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/k3a/html2text"
 	"github.com/metal3d/go-slugify"
 	"github.com/mitchellh/mapstructure"
@@ -25,7 +26,6 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/zyedidia/generic/mapset"
-
 	// goldmarkFrontmatter "github.com/abhinav/goldmark-frontmatter"
 )
 
@@ -97,11 +97,11 @@ func ParseYAMLHeader[Metadata interface{}](descriptionRaw string) (Metadata, str
 // Media content blocks are left unanalyzed.
 // BuiltAt and DescriptionHash are also not set.
 func ParseDescription(ctx *RunContext, markdownRaw string, workID string) (Work, error) {
-	defer TimeTrack(time.Now(), "ParseDescription", workID)
+	defer ll.TimeTrack(time.Now(), "ParseDescription", workID)
 	metadata, markdownRaw := ParseYAMLHeader[WorkMetadata](markdownRaw)
 	// notLocalizedRaw: raw markdown before the first language marker
 	notLocalizedRaw, localizedRawBlocks := SplitOnLanguageMarkers(markdownRaw)
-	LogDebug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
+	ll.Debug("split description into notLocalizedRaw: %#v and localizedRawBlocks: %#v", notLocalizedRaw, localizedRawBlocks)
 	localized := len(localizedRawBlocks) > 0
 	var allLanguages []string
 	if localized {
@@ -587,7 +587,7 @@ func (ctx *RunContext) ParseSingleLanguageDescription(markdownRaw string) (title
 		blocks[i].Paragraph = ReplaceAbbreviations(block.Paragraph, abbreviations)
 	}
 
-	LogDebug("Parsed description into blocks: %#v", blocks)
+	ll.Debug("Parsed description into blocks: %#v", blocks)
 	return
 }
 

@@ -31,6 +31,7 @@ import (
 
 	"github.com/gabriel-vasile/mimetype"
 	// "github.com/gen2brain/go-fitz" // FIXME requires cgo, which goreleaser has a hard time with
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
 	recurcopy "github.com/plus3it/gorecurcopy"
@@ -146,8 +147,8 @@ func (ctx *RunContext) PathToWorkFolder(workID string) string {
 // AnalyzeMediaFile analyzes the file at its absolute filepath filename and returns a Media struct, merging the analysis' results with information from the matching MediaEmbedDeclaration.
 // TODO prevent duplicate analysis of the same file in the current session even when file was never analyzed on previous runs of the command
 func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (usedCache bool, analyzedMedia Media, anchor string, err error) {
-	defer TimeTrack(time.Now(), "AnalyzeMediaFile", workID, embedDeclaration.RelativeSource)
-	LogDebug("Analyzing media %#v", embedDeclaration)
+	defer ll.TimeTrack(time.Now(), "AnalyzeMediaFile", workID, embedDeclaration.RelativeSource)
+	ll.Debug("Analyzing media %#v", embedDeclaration)
 
 	// Compute absolute filepath to media
 	var filename string
@@ -180,10 +181,10 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		}
 
 		if usedCache && cachedAnalysis.ContentType != "" {
-			LogDebug("Reusing cached analysis %#v", cachedAnalysis)
+			ll.Debug("Reusing cached analysis %#v", cachedAnalysis)
 			return true, cachedAnalysis, anchor, nil
 		} else if usedCache {
-			LogDebug("UseMediaCache tells me to use cache for %s, but the cached analysis has no content type. Will reanalyze.", filename)
+			ll.Debug("UseMediaCache tells me to use cache for %s, but the cached analysis has no content type. Will reanalyze.", filename)
 		}
 
 		ctx.Status(workID, PhaseMediaAnalysis, string(embedDeclaration.RelativeSource))
@@ -216,15 +217,15 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		}
 		if ctx.Config.ExtractColors.Enabled {
 			if canExtractColors(contentType) {
-				LogDebug("Extracting colors from %s", filename)
+				ll.Debug("Extracting colors from %s", filename)
 				colors, err = ExtractColors(filename, contentType)
 				if err != nil {
-					DisplayError("Could not extract colors from %s", err, filename)
+					ll.ErrorDisplay("Could not extract colors from %s", err, filename)
 					err = nil
 				}
-				LogDebug("Colors extracted from %s: %#v", filename, colors)
+				ll.Debug("Colors extracted from %s: %#v", filename, colors)
 			} else {
-				LogDebug("Not extracting colors from %s: unsupported content type", filename)
+				ll.Debug("Not extracting colors from %s: unsupported content type", filename)
 			}
 		}
 	}
@@ -234,17 +235,17 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		if err != nil {
 			return
 		}
-		LogDebug("Video analyzed: dimensions=%#v, duration=%v, hasSound=%v", dimensions, duration, hasSound)
+		ll.Debug("Video analyzed: dimensions=%#v, duration=%v, hasSound=%v", dimensions, duration, hasSound)
 	}
 
 	if isAudio {
 		duration = AnalyzeAudio(file)
 		hasSound = true
-		LogDebug("Audio analyzed: duration=%v", duration)
+		ll.Debug("Audio analyzed: duration=%v", duration)
 	}
 
 	if isPDF {
-		LogWarning("PDF analysis is disabled")
+		ll.Warn("PDF analysis is disabled")
 		// dimensions, duration, err = AnalyzePDF(filename)
 		// if err != nil {
 		// 	return
@@ -267,13 +268,13 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 		Analyzed:       true,
 		Hash:           contentHash,
 	}
-	LogDebug("Analyzed to %#v (no cache used)", analyzedMedia)
+	ll.Debug("Analyzed to %#v (no cache used)", analyzedMedia)
 	return
 }
 
 func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, workID string) (newHash string, used bool, media Media, err error) {
 	if ctx.Flags.NoCache {
-		LogDebug("--no-cache is set, eagerly computing hash")
+		ll.Debug("--no-cache is set, eagerly computing hash")
 		newHash, err = hashFile(filename)
 		if err != nil {
 			err = fmt.Errorf("while computing hash of media: %w", err)
@@ -282,7 +283,7 @@ func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, wo
 		return
 	}
 
-	LogDebug("checking mtime of %s before trying to compute hashes", filename)
+	ll.Debug("checking mtime of %s before trying to compute hashes", filename)
 	stat, err := os.Stat(filename)
 	if err != nil {
 		err = fmt.Errorf("could not check modification times of %s: %w", filename, err)
@@ -295,16 +296,16 @@ func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, wo
 
 	if oldMedia, oldWork, oldMediaFound = ctx.PreviouslyBuiltMedia(workID, embedDeclaration); oldMediaFound {
 		if embedDeclaration.Hash == "" {
-			LogDebug("media %s in old database has no hash stored, hash will be computed.", filename)
+			ll.Debug("media %s in old database has no hash stored, hash will be computed.", filename)
 		} else if oldWork.BuiltAt.After(stat.ModTime()) {
-			LogDebug("mtime cache strategy: not recomputing hash of %s because it was last modified before the previous build (file modified at %s, previous build at %s) , using cached analysis", filename, stat.ModTime(), oldWork.BuiltAt)
-			LogDebug("cache hit by modtime for %s: using cache from embed decl %#v", filename, embedDeclaration)
+			ll.Debug("mtime cache strategy: not recomputing hash of %s because it was last modified before the previous build (file modified at %s, previous build at %s) , using cached analysis", filename, stat.ModTime(), oldWork.BuiltAt)
+			ll.Debug("cache hit by modtime for %s: using cache from embed decl %#v", filename, embedDeclaration)
 			return embedDeclaration.Hash, true, oldMedia, nil
 		} else {
-			LogDebug("file mtime of %s is newer than previous build (file modified at %s, previous build at %s), computing hash", filename, stat.ModTime(), oldWork.BuiltAt)
+			ll.Debug("file mtime of %s is newer than previous build (file modified at %s, previous build at %s), computing hash", filename, stat.ModTime(), oldWork.BuiltAt)
 		}
 	} else {
-		LogDebug("mtime cache strategy: media %s of %s not found in previous database, will compute hash", filename, workID)
+		ll.Debug("mtime cache strategy: media %s of %s not found in previous database, will compute hash", filename, workID)
 	}
 
 	newHash, err = hashFile(filename)
@@ -315,14 +316,14 @@ func (ctx *RunContext) UseMediaCache(filename string, embedDeclaration Media, wo
 
 	if oldMediaFound {
 		if oldMedia.Hash == newHash {
-			LogDebug("cache hit by hash for %s: using cache from embed decl %#v", filename, embedDeclaration)
+			ll.Debug("cache hit by hash for %s: using cache from embed decl %#v", filename, embedDeclaration)
 			return newHash, true, oldMedia, nil
 		}
-		LogDebug("Cache miss for %s: old content hash %q is different from %q", filename, oldMedia.Hash, newHash)
+		ll.Debug("Cache miss for %s: old content hash %q is different from %q", filename, oldMedia.Hash, newHash)
 		return newHash, false, embedDeclaration, nil
 	}
 
-	LogDebug("Cache miss for %s: media not found in previous database build", filename)
+	ll.Debug("Cache miss for %s: media not found in previous database build", filename)
 	return
 
 }
@@ -403,7 +404,7 @@ func AnalyzeVideo(filename string) (dimensions ImageDimensions, duration uint, h
 }
 
 func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclaration Media, language string) (media Media, anchor string, usedCache bool, err error) {
-	defer TimeTrack(time.Now(), "HandleMedia", workID, embedDeclaration.RelativeSource)
+	defer ll.TimeTrack(time.Now(), "HandleMedia", workID, embedDeclaration.RelativeSource)
 	usedCache, media, anchor, err = ctx.AnalyzeMediaFile(workID, embedDeclaration)
 	if err != nil {
 		err = fmt.Errorf("while analyzing media: %w", err)
@@ -422,7 +423,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 	copyingStepStart := time.Now()
 	skipCopy := usedCache && fileExists(absolutePathDestination)
 	if skipCopy {
-		LogDebug("Skipping media copy for %s because it already exists", absolutePathDestination)
+		ll.Debug("Skipping media copy for %s because it already exists", absolutePathDestination)
 	}
 	if absolutePathDestination != absolutePathSource && !skipCopy {
 		err = os.MkdirAll(filepath.Dir(absolutePathDestination), 0o755)
@@ -447,13 +448,13 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 			return
 		}
 	}
-	TimeTrack(copyingStepStart, "HandleMedia > copy to dist", media.RelativeSource, media.DistSource)
+	ll.TimeTrack(copyingStepStart, "HandleMedia > copy to dist", media.RelativeSource, media.DistSource)
 
 	thumbnailsStepStart := time.Now()
 	// Make thumbnail
 	if media.Thumbnailable() && ctx.Config.MakeThumbnails.Enabled {
 		if media.Thumbnails == nil {
-			LogDebug("%s: initializing thumbnails map since it's nil in the (previously built?) work", media.RelativeSource)
+			ll.Debug("%s: initializing thumbnails map since it's nil in the (previously built?) work", media.RelativeSource)
 			media.Thumbnails = make(map[int]FilePathInsideMediaRoot)
 		}
 		type result struct {
@@ -468,11 +469,11 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 		for i, sizesToDo := range chunkSlice(ctx.Config.MakeThumbnails.Sizes, ctx.thumbnailersPerWork) {
 			go func(i int, sizesToDo []int, results chan result) {
 				for _, size := range sizesToDo {
-					LogDebug("Making thumbnail @%d for %s#%s", size, media.RelativeSource, blockID)
+					ll.Debug("Making thumbnail @%d for %s#%s", size, media.RelativeSource, blockID)
 					saveTo := ctx.ComputeOutputThumbnailFilename(media, blockID, workID, size, language)
 
 					if _, err := os.Stat(string(saveTo.Absolute(ctx))); err == nil && usedCache {
-						LogDebug("Skipping thumbnail creation @%d for %s#%s because it already exists", size, media.RelativeSource, blockID)
+						ll.Debug("Skipping thumbnail creation @%d for %s#%s because it already exists", size, media.RelativeSource, blockID)
 						results <- result{size: size, skipped: true}
 						continue
 					}
@@ -488,7 +489,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 						results <- result{err: fmt.Errorf("while making thumbnail @%d for %s: %w", size, workID, err)}
 						continue
 					}
-					LogDebug("Made thumbnail %s", saveTo)
+					ll.Debug("Made thumbnail %s", saveTo)
 					results <- result{size: size}
 				}
 			}(i, sizesToDo, results)
@@ -509,7 +510,7 @@ func (ctx *RunContext) HandleMedia(workID string, blockID string, embedDeclarati
 			}
 		}
 	}
-	TimeTrack(thumbnailsStepStart, "HandleMedia > thumbnails", media.RelativeSource)
+	ll.TimeTrack(thumbnailsStepStart, "HandleMedia > thumbnails", media.RelativeSource)
 
 	return
 }

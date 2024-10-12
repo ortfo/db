@@ -13,6 +13,7 @@ import (
 	ortfodb "github.com/ortfo/db"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	ll "github.com/ewen-lbh/label-logger-go"
 )
 
 var exportersCmd = &cobra.Command{
@@ -53,7 +54,7 @@ var exportersInitCmd = &cobra.Command{
 				"    "),
 			),
 			0644)
-		ortfodb.LogCustom("Created", "green", fmt.Sprintf("example exporter at [bold]%s.yaml[reset]", args[0]))
+		ll.Log("Created", "green", fmt.Sprintf("example exporter at [bold]%s.yaml[reset]", args[0]))
 	},
 }
 

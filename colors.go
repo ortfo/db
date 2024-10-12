@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/EdlinOrg/prominentcolor"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/zyedidia/generic/mapset"
 	_ "golang.org/x/image/webp"
@@ -49,7 +50,7 @@ func (colors *ColorPalette) SortBySaturation() {
 	secondary := colors.Secondary
 	tertiary := colors.Tertiary
 
-	LogDebug("sorting colors based on saturations: primary(%s) = %f, secondary(%s) = %f, tertiary(%s) = %f", primary, saturation(primary), secondary, saturation(secondary), tertiary, saturation(tertiary))
+	ll.Debug("sorting colors based on saturations: primary(%s) = %f, secondary(%s) = %f, tertiary(%s) = %f", primary, saturation(primary), secondary, saturation(secondary), tertiary, saturation(tertiary))
 
 	if saturation(primary) < saturation(secondary) {
 		primary, secondary = secondary, primary
@@ -75,7 +76,7 @@ func paletteFromMostSaturated(colors mapset.Set[color.Color]) ColorPalette {
 		bySaturation[hex] = saturation(hex)
 	})
 
-	LogDebug("paletteFromMostSaturated: bySaturation = %v", bySaturation)
+	ll.Debug("paletteFromMostSaturated: bySaturation = %v", bySaturation)
 
 	leastSaturatedSaturation := 0.0
 	mostSaturateds := make([]string, 3)
@@ -86,7 +87,7 @@ func paletteFromMostSaturated(colors mapset.Set[color.Color]) ColorPalette {
 		}
 	}
 
-	LogDebug("paletteFromMostSaturated: mostSaturateds = %v", mostSaturateds)
+	ll.Debug("paletteFromMostSaturated: mostSaturateds = %v", mostSaturateds)
 
 	return ColorPalette{
 		Primary:   mostSaturateds[0],
@@ -119,7 +120,7 @@ func canExtractColors(contentType string) bool {
 // ExtractColors extracts the 3 most proeminent colors from the given image-decodable file.
 // See https://pkg.go.dev/image#Decode for what formats are decodable.
 func ExtractColors(filename string, contentType string) (ColorPalette, error) {
-	defer TimeTrack(time.Now(), "ExtractColors", filename)
+	defer ll.TimeTrack(time.Now(), "ExtractColors", filename)
 	file, err := os.Open(filename)
 	if err != nil {
 		return ColorPalette{}, err
@@ -127,7 +128,7 @@ func ExtractColors(filename string, contentType string) (ColorPalette, error) {
 	defer file.Close()
 
 	if contentType == "image/gif" {
-		LogDebug("extract colors from %s: decoding gif", filename)
+		ll.Debug("extract colors from %s: decoding gif", filename)
 		var decodedGif *gif.GIF
 		decodedGif, err = gif.DecodeAll(file)
 		if err != nil {
@@ -154,7 +155,7 @@ func ExtractColors(filename string, contentType string) (ColorPalette, error) {
 			}
 		}
 
-		LogDebug("extract colors from %s: extracting most saturated colors from %d unique colors: %v", filename, gifColors.Size(), gifColorsWithAppearanceCount)
+		ll.Debug("extract colors from %s: extracting most saturated colors from %d unique colors: %v", filename, gifColors.Size(), gifColorsWithAppearanceCount)
 
 		return paletteFromMostSaturated(gifColors), nil
 

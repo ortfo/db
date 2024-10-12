@@ -2,6 +2,7 @@ package ortfodb
 
 import (
 	"fmt"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"strconv"
 )
 
@@ -35,7 +36,7 @@ func lcm(integers ...int) int {
 
 // Normalize returns a normalized layout where every row has the same number of cells.
 func (layout Layout) Normalize() (normalized Layout) {
-	LogDebug("normalizing layout %#v", layout)
+	ll.Debug("normalizing layout %#v", layout)
 	normalized = make(Layout, 0)
 
 	// Determine the common width
@@ -82,7 +83,7 @@ func (layout Layout) BlockIDs() (blockIDs []string) {
 
 // ResolveLayout returns a layout, given the parsed description.
 func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock) (Layout, error) {
-	LogDebug("Resolving layout from metadata %#v", metadata)
+	ll.Debug("Resolving layout from metadata %#v", metadata)
 	layout := make(Layout, 0)
 	userProvided := metadata.AdditionalMetadata["layout"]
 	// Handle case where the layout is explicitly specified.
@@ -91,7 +92,7 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 		if _, ok := userProvided.([]interface{}); ok {
 			for _, line := range userProvided.([]interface{}) {
 				layoutLine := make([]LayoutCell, 0)
-				LogDebug("processing layout line %#v", line)
+				ll.Debug("processing layout line %#v", line)
 				switch line := line.(type) {
 				case string:
 					cell, err := ResolveBlockID(blocks, language, line)
@@ -101,10 +102,10 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 
 					layoutLine = append(layoutLine, LayoutCell(cell))
 				case nil:
-					LogDebug("encountered nil value in layout single line, treating as empty cell")
+					ll.Debug("encountered nil value in layout single line, treating as empty cell")
 					layoutLine = append(layoutLine, LayoutCell(EmptyLayoutCell))
 				case []interface{}:
-					LogDebug("processing layout line %#v", line)
+					ll.Debug("processing layout line %#v", line)
 					for _, cell := range line {
 						if val, ok := cell.(string); ok {
 							cell, err := ResolveBlockID(blocks, language, val)
@@ -114,7 +115,7 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 
 							layoutLine = append(layoutLine, LayoutCell(cell))
 						} else if cell == nil {
-							LogDebug("encountered nil value in layout line, treating as empty cell")
+							ll.Debug("encountered nil value in layout line, treating as empty cell")
 							layoutLine = append(layoutLine, LayoutCell(EmptyLayoutCell))
 						}
 					}
@@ -128,7 +129,7 @@ func ResolveLayout(metadata WorkMetadata, language string, blocks []ContentBlock
 			layout = append(layout, []LayoutCell{LayoutCell(block.ID)})
 		}
 	}
-	LogDebug("Layout resolved to %#v", layout)
+	ll.Debug("Layout resolved to %#v", layout)
 	return layout.Normalize(), nil
 }
 

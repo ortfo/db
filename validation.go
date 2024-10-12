@@ -3,6 +3,7 @@ package ortfodb
 import (
 	"encoding/json"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -14,7 +15,7 @@ func ValidateAsJSONSchema(typ any, yaml bool, values any) []gojsonschema.ResultE
 	}
 	_, valiationErrors, err := validateWithJSONSchema(string(jsonOpts), schema)
 	if err != nil {
-		LogCustom("Error", "red", "could not validate as JSON schema: %s", err)
+		ll.Log("Error", "red", "could not validate as JSON schema: %s", err)
 		return []gojsonschema.ResultError{}
 	}
 	return valiationErrors

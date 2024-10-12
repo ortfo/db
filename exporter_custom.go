@@ -11,6 +11,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"gopkg.in/alessio/shellescape.v1"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -49,12 +50,12 @@ func (e *CustomExporter) OptionsType() any {
 }
 
 func (e *CustomExporter) Before(ctx *RunContext, opts ExporterOptions) error {
-	LogDebug("Running before commands for %s", e.name)
+	ll.Debug("Running before commands for %s", e.name)
 	err := e.VerifyRequiredPrograms()
 	if err != nil {
 		return err
 	}
-	LogDebug("Setting user-supplied data for exporter %s: %v", e.name, opts)
+	ll.Debug("Setting user-supplied data for exporter %s: %v", e.name, opts)
 	e.data = merge(e.Manifest.Data, opts)
 	if e.Manifest.Verbose {
 		ExporterLogCustom(e, "Debug", "magenta", ".Data for %s is %v", e.name, e.data)
@@ -92,7 +93,7 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 			}
 
 			proc := exec.Command("bash", "-c", commandline)
-			LogDebug("exec.Command = %v", commandline)
+			ll.Debug("exec.Command = %v", commandline)
 			proc.Dir = filepath.Dir(ctx.Config.source)
 			stderr, _ := proc.StderrPipe()
 			stdout, _ := proc.StdoutPipe()
@@ -147,7 +148,7 @@ func (e *CustomExporter) runCommands(ctx *RunContext, verbose bool, commands []E
 				// Hide output atfter it's done if there's no errors
 				for i := 0; i < 6 && i < linesPrintedCount; i++ {
 					if debugging {
-						LogDebug("would clear line %d", i)
+						ll.Debug("would clear line %d", i)
 					} else {
 						fmt.Print("\033[1A\033[K")
 					}
@@ -196,14 +197,14 @@ func (e *CustomExporter) renderCommandParts(ctx *RunContext, commands []string, 
 			}
 
 		}
-		LogDebugNoColor("rendering command part %q, data=%v; renderedData=%v", command, e.data, renderedData)
+		ll.DebugNoColor("rendering command part %q, data=%v; renderedData=%v", command, e.data, renderedData)
 		completeData := merge(additionalData, map[string]any{
 			"Data":    renderedData,
 			"Ctx":     ctx,
 			"Verbose": e.verbose,
 			"DryRun":  e.dryRun,
 		})
-		LogDebugNoColor("rendering (recursive=%v) part %q with data %v", recursive, command, completeData)
+		ll.DebugNoColor("rendering (recursive=%v) part %q with data %v", recursive, command, completeData)
 		err = tmpl.Execute(&buf, completeData)
 		if err != nil {
 			return []string{}, fmt.Errorf("custom exporter: while rendering template part %s: %w", neutralizeColostring(command), err)

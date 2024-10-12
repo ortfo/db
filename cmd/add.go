@@ -8,6 +8,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	ortfodb "github.com/ortfo/db"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/spf13/cobra"
 )
 
@@ -69,7 +70,7 @@ var addCmd = &cobra.Command{
 
 		editor := os.Getenv("EDITOR")
 		if editor != "" {
-			ortfodb.LogCustom("Opening", "cyan", "%s in %s", descriptionFilepath, editor)
+			ll.Log("Opening", "cyan", "%s in %s", descriptionFilepath, editor)
 			editorPath, err := exec.LookPath(editor)
 			if err != nil {
 				handleError(fmt.Errorf("while getting path to %s: %w", editor, err))

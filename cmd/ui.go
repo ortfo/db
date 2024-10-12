@@ -10,7 +10,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/mitchellh/colorstring"
-	ortfodb "github.com/ortfo/db"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
@@ -176,7 +176,7 @@ func customFlagsUsage(f *pflag.FlagSet) string {
 	}
 
 	s := buf.String()
-	if !ortfodb.ShowingColors() {
+	if !ll.ShowingColors() {
 		s = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`).ReplaceAllString(s, "")
 	}
 	return s

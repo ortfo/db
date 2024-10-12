@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
@@ -243,19 +244,6 @@ func ensureHttpPrefix(url string) string {
 	return url
 }
 
-// ShowingColors returns true if colors (ANSI escape codes) should be printed.
-// Environment variables can control this: NO_COLOR=1 disables colors, and FORCE_COLOR=1 forces colors.
-// Otherwise, heuristics (such as whether the output is an interactive terminal) are used.
-func ShowingColors() bool {
-	if os.Getenv("NO_COLOR") == "1" {
-		return false
-	}
-	if os.Getenv("FORCE_COLOR") == "1" {
-		return true
-	}
-	return isInteractiveTerminal()
-}
-
 func writeYAML(v any, filename string) error {
 	encoded, err := yaml.Marshal(v)
 	if err != nil {
@@ -302,14 +290,14 @@ func copyFile(src, dest string) error {
 }
 
 func hashFile(filename string) (string, error) {
-	LogDebug("reading %s for hash computation", filename)
+	ll.Debug("reading %s for hash computation", filename)
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return "", fmt.Errorf("while reading file %s for hashing: %w", filename, err)
 
 	}
 
-	LogDebug("computing hash of %s", filename)
+	ll.Debug("computing hash of %s", filename)
 	hash := md5.Sum(content)
 	return base64.StdEncoding.EncodeToString(hash[:]), nil
 }

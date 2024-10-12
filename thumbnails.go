@@ -3,6 +3,7 @@ package ortfodb
 import (
 	"bytes"
 	"fmt"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"io"
 	"io/ioutil"
 	"os"
@@ -36,7 +37,7 @@ func (m Media) Thumbnailable() bool {
 // It returns the path where the thumbnail has been written to.
 // saveTo should be relative to cwd.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string) error {
-	LogDebug("Making thumbnail for %s at size %d to %s", media.DistSource.Absolute(ctx), targetSize, saveTo)
+	ll.Debug("Making thumbnail for %s at size %d to %s", media.DistSource.Absolute(ctx), targetSize, saveTo)
 	if media.ContentType == "image/gif" {
 		return ctx.makeGifThumbnail(media, targetSize, saveTo)
 	}

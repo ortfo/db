@@ -9,6 +9,7 @@ import (
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/anaskhan96/soup"
+	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
@@ -73,7 +74,7 @@ func (ctx *RunContext) replicateLocalizedBlock(work Work, language string) (stri
 	// Then, for each block (ordered by the layout)
 	// spew.Dump(work)
 	for _, block := range content.Blocks {
-		LogDebug("replicating %s block #%s", block.Type, block.ID)
+		ll.Debug("replicating %s block #%s", block.Type, block.ID)
 		switch block.Type {
 		case "media":
 			result += ctx.replicateMediaEmbed(block.Media) + end

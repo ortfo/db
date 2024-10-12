@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	ll "github.com/ewen-lbh/label-logger-go"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mitchellh/go-homedir"
 	"github.com/xeipuuv/gojsonschema"
@@ -87,7 +88,7 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 	if err != nil {
 		return err
 	}
-	LogDebug("Loaded configuration from %s to %#v", filename, loadInto)
+	ll.Debug("Loaded configuration from %s to %#v", filename, loadInto)
 	return nil
 }
 
@@ -97,14 +98,14 @@ func LoadConfiguration(filename string, loadInto *Configuration) error {
 func NewConfiguration(filename string) (Configuration, error) {
 	if filename == DefaultConfigurationFilename {
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			LogCustom("Writing", "yellow", "default configuration file at %s", filename)
+			ll.Log("Writing", "yellow", "default configuration file at %s", filename)
 			defaultConfig := DefaultConfiguration()
 			err := writeYAML(defaultConfig, filename)
 			if err != nil {
 				return Configuration{}, fmt.Errorf("while writing default configuration: %w", err)
 			}
 
-			LogWarning("default configuration assumes that your projects live in %s. Change this with [bold]projects at[reset] in the generated configuration file", defaultConfig.ProjectsDirectory)
+			ll.Warn("default configuration assumes that your projects live in %s. Change this with [bold]projects at[reset] in the generated configuration file", defaultConfig.ProjectsDirectory)
 			return DefaultConfiguration(), nil
 		}
 	}
