@@ -42,6 +42,10 @@ func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string)
 		return ctx.makeGifThumbnail(media, targetSize, saveTo)
 	}
 
+	if media.ContentType == "image/svg+xml" {
+		return ctx.makeSvgThumbnail(media, targetSize, saveTo)
+	}
+
 	if strings.HasPrefix(media.ContentType, "image/") {
 		return run("magick", media.DistSource.Absolute(ctx), "-resize", fmt.Sprint(targetSize), saveTo)
 	}
@@ -56,6 +60,11 @@ func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string)
 
 	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.DistSource.Absolute(ctx), media.ContentType)
 
+}
+
+func (ctx *RunContext) makeSvgThumbnail(media Media, targetSize int, saveTo string) error {
+	// Use resvg instead of magick, because magick delegates to inkscape which is not reliable in parallel (see https://gitlab.com/inkscape/inkscape/-/issues/4716)
+	return run("resvg", "--width", fmt.Sprint(targetSize), "--height", fmt.Sprint(targetSize), media.DistSource.Absolute(ctx), saveTo)
 }
 
 func (ctx *RunContext) makePdfThumbnail(media Media, targetSize int, saveTo string) error {
