@@ -31,5 +31,8 @@
   "homepage": "https://github.com/ortfo/db#readme",
   "devDependencies": {
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
   }
 }

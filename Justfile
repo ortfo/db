@@ -132,7 +132,7 @@ build-typescript version:
 	#!/usr/bin/env bash
 	set -euxo pipefail
 	for schema in schemas/*.schema.json; do
-		quicktype --src-lang schema -l typescript $schema -o packages/typescript/src/$(basename $schema .schema.json).ts
+		quicktype --src-lang schema -l typescript-zod $schema -o packages/typescript/src/$(basename $schema .schema.json).ts
 	done
 	cd packages/typescript
 	jq '.version = "{{ version }}"' < package.json | sponge package.json
