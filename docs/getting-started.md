@@ -143,7 +143,7 @@ go install github.com/ortfo/db/cmd@latest
 
 #### Steps
 
-1. Clone the repository: `git clone https://github.com/ewen-lbh/portfoliodb`
+1. Clone the repository: `git clone https://github.com/gwennlbh/portfoliodb`
 2. `cd` into it: `cd portfoliodb`
 3. Compile & install in `~/.local/bin/` `just install`... or simply build a binary to your working directory: `just build`.
 

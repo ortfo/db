@@ -102,5 +102,5 @@ Wanna integrate ortfo/db with a static site generator?
 : See the [Static site generator exporters](/db/exporters/static-site-generators.md)
 
 Curious about how ortfo/db is used to actually make a portfolio site?
-: Check out [the repository](https://github.com/ewen-lbh/portfolio) for [my own portfolio](https://ewen.works), which is (of course) built with ortfo/db.
+: Check out [the repository](https://github.com/gwennlbh/portfolio) for [my own portfolio](https://ewen.works), which is (of course) built with ortfo/db.
 : You can also see how [net7](https://github.com/inp-net) uses ortfo/db to keep their [projects page](https://net7.dev/realisation.html) up to date: see [the repository](https://git.inpt.fr/net7/website/-/tree/master?ref_type=heads) (warning: french ahead)

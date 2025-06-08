@@ -13,7 +13,7 @@ import (
 	ortfodb "github.com/ortfo/db"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 )
 
 var exportersCmd = &cobra.Command{
