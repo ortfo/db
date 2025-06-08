@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mitchellh/go-homedir"
 	"github.com/xeipuuv/gojsonschema"

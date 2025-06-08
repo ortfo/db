@@ -19,7 +19,7 @@ import (
 
 	"path"
 
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -631,7 +631,7 @@ func (ctx *RunContext) DescriptionFilename(databaseDirectory string, workID stri
 }
 
 // Build builds a single work given the database & output folders, as wells as a work ID.
-// BuiltAt is set and DescriptionHash are set.
+// BuiltAt and DescriptionHash are set.
 func (ctx *RunContext) Build(descriptionRaw string, outputFilename string, workID string) (work Work, usedCache bool, err error) {
 	hash := md5.Sum([]byte(descriptionRaw))
 	newDescriptionHash := base64.StdEncoding.EncodeToString(hash[:])

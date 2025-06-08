@@ -15,6 +15,6 @@ ortfodb = buildGoModule rec {
 		description = "A readable, easy and enjoyable way to manage portfolio databases using directories and text files.";
 		homepage = "https://ortfo.org";
 		license = licenses.mit;
-		maintainers = with maintainers; [ ewen-lbh ];
+		maintainers = with maintainers; [ gwennlbh ];
 	}
 };

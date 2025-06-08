@@ -3,6 +3,7 @@ module github.com/ortfo/db
 go 1.23.2
 
 require (
+	al.essio.dev/pkg/shellescape v1.6.0
 	github.com/EdlinOrg/prominentcolor v1.0.0
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
 	github.com/anaskhan96/soup v1.2.5
@@ -10,6 +11,7 @@ require (
 	github.com/ewen-lbh/label-logger-go v0.1.1
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-git/go-git/v5 v5.12.0
+	github.com/gwennlbh/label-logger-go v0.1.5
 	github.com/invopop/jsonschema v0.12.0
 	github.com/json-iterator/go v1.1.12
 	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
@@ -37,7 +39,6 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
-	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
@@ -107,5 +108,4 @@ require (
 	golang.org/x/image v0.15.0
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/text v0.14.0
-	gopkg.in/alessio/shellescape.v1 v1.0.0-20170105083845-52074bc9df61
 )
