@@ -15,13 +15,21 @@ import (
 
 var ThumbnailableContentTypes = []string{"image/*", "video/*", "application/pdf"}
 
-func (m Media) Thumbnailable() bool {
+func (m Media) Thumbnailable(config *Configuration) bool {
 	// TODO
 	if m.Online {
 		return false
 	}
 
+	if m.ContentType == "application/pdf" && !config.MakeThumbnails.PDF {
+		return false
+	}
+
 	for _, contentTypePattern := range ThumbnailableContentTypes {
+		if contentTypePattern == "video/*" && !config.MakeThumbnails.Videos {
+			continue
+		}
+
 		match, err := filepath.Match(contentTypePattern, m.ContentType)
 		if err != nil {
 			panic(err)

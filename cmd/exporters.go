@@ -68,7 +68,7 @@ var exportersListCmd = &cobra.Command{
 	},
 }
 
-var exampleExporter = ortfodb.BuiltinNativeExporters[1]
+var exampleExporter = &ortfodb.LocalizeExporter{}
 
 var exporterDocCmd = &cobra.Command{
 	Use:     "doc <name>",
@@ -102,7 +102,7 @@ func init() {
 
 func exporterDetails(exporter ortfodb.Exporter) (name, description string, requires []string, config map[string]any) {
 	switch exporter := exporter.(type) {
-	case *ortfodb.CustomExporter:
+	case *ortfodb.CustomPlugin:
 		return exporter.Name(), exporter.Description(), exporter.Manifest.Requires, exporter.Manifest.Data
 	default:
 		options := make(map[string]any)

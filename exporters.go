@@ -1,33 +1,18 @@
 package ortfodb
 
 import (
-	"embed"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 
-	ll "github.com/ewen-lbh/label-logger-go"
-	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v2"
+	ll "github.com/gwennlbh/label-logger-go"
 )
-
-type ExporterOptions map[string]interface{}
 
 type Exporter interface {
 	Name() string
 	Description() string
-	Before(ctx *RunContext, opts ExporterOptions) error
-	Export(ctx *RunContext, opts ExporterOptions, work *Work) error
-	After(ctx *RunContext, opts ExporterOptions, built *Database) error
+	Before(ctx *RunContext, opts PluginOptions) error
+	Export(ctx *RunContext, opts PluginOptions, work *Work) error
+	After(ctx *RunContext, opts PluginOptions, built *Database) error
 	OptionsType() any
-}
-
-type ExporterCommand struct {
-	// Run a command in a shell
-	Run string `yaml:"run,omitempty"`
-	// Log a message. The first argument is the verb, the second is the color, the third is the message.
-	Log []string `yaml:"log,omitempty"`
 }
 
 type ExporterManifest struct {
@@ -38,13 +23,13 @@ type ExporterManifest struct {
 	Description string `yaml:"description"`
 
 	// Commands to run before the build starts. Go text template that receives .Data
-	Before []ExporterCommand `yaml:"before,omitempty"`
+	Before []PluginCommand `yaml:"before,omitempty"`
 
 	// Commands to run after the build finishes. Go text template that receives .Data and .Database, the built database.
-	After []ExporterCommand `yaml:"after,omitempty"`
+	After []PluginCommand `yaml:"after,omitempty"`
 
 	// Commands to run during the build, for each work. Go text template that receives .Data and .Work, the current work.
-	Work []ExporterCommand `yaml:"work,omitempty"`
+	Work []PluginCommand `yaml:"work,omitempty"`
 
 	// Initial data
 	Data map[string]any `yaml:"data,omitempty"`
@@ -57,9 +42,9 @@ type ExporterManifest struct {
 }
 
 // ExporterOptions validates then returns the configuration options for the given exporter.
-func (ctx *RunContext) ExporterOptions(exporter Exporter) (ExporterOptions, error) {
+func (ctx *RunContext) ExporterOptions(exporter Plugin) (PluginOptions, error) {
 	options := ctx.Config.Exporters[exporter.Name()]
-	err := ValidateExporterOptions(exporter, options)
+	err := ValidatePluginOptions(exporter, options)
 	if err != nil {
 		return nil, err
 	}
@@ -67,151 +52,34 @@ func (ctx *RunContext) ExporterOptions(exporter Exporter) (ExporterOptions, erro
 	return options, nil
 }
 
-func ValidateExporterOptions(exporter Exporter, opts ExporterOptions) error {
-	validationErrors := ValidateAsJSONSchema(exporter.OptionsType(), true, opts)
+func BuiltinExporters() (exporters []Exporter) {
+	plugins := BuiltinPlugins("exporters", &SqlExporter{}, &LocalizeExporter{})
 
-	if len(validationErrors) > 0 {
-		DisplayValidationErrors(validationErrors, "configuration", "exporters", exporter.Name())
-		return fmt.Errorf("the configuration file is invalid. See validation errors above")
-	}
-	return nil
-}
-
-var BuiltinNativeExporters = []Exporter{
-	&SqlExporter{},
-	&LocalizeExporter{},
-	&CustomExporter{},
-}
-
-//go:embed exporters/*.yaml
-var builtinYAMLExportersFiles embed.FS
-
-func BuiltinExporters() []Exporter {
-	exporters := make([]Exporter, 0)
-	exporterFiles, err := builtinYAMLExportersFiles.ReadDir("exporters")
-	if err != nil {
-		panic(fmt.Errorf("error while reading builtin yaml exporters directory (shouldn't happen, it should've been go:embed'd): %w", err))
-	}
-
-	exporters = append(exporters, BuiltinNativeExporters...)
-
-	for _, exporterFile := range exporterFiles {
-		file := filepath.Join("exporters", exporterFile.Name())
-		contents, err := builtinYAMLExportersFiles.ReadFile(file)
-		if err != nil {
-			panic(fmt.Errorf("error while reading builtin yaml exporter file %s (shouldn't happen, it should've been go:embed'd): %w", file, err))
+	for _, plugin := range plugins {
+		if exporter, ok := plugin.(Exporter); ok {
+			exporters = append(exporters, exporter)
+		} else {
+			ll.Warn("Plugin %s is not an exporter, skipping", plugin.Name())
 		}
-
-		exporter, err := LoadExporter(strings.TrimSuffix(exporterFile.Name(), ".yaml"), contents, map[string]any{})
-		if err != nil {
-			continue
-		}
-
-		exporters = append(exporters, exporter)
 	}
 
-	return exporters
+	return
 }
 
 func (ctx *RunContext) FindExporter(name string) (Exporter, error) {
+	builtins := make([]Plugin, 0)
 	for _, exporter := range BuiltinExporters() {
-		if exporter.Name() == name {
-			return exporter, nil
-		}
+		builtins = append(builtins, exporter)
 	}
 
-	if strings.HasPrefix(name, "./") || strings.HasPrefix(name, "/") {
-		var manifestPath string
-		if filepath.IsAbs(name) {
-			manifestPath = name
-		} else {
-			manifestPath = filepath.Join(filepath.Dir(ctx.Flags.Config), name)
-		}
-
-		rawManifest, err := os.ReadFile(manifestPath)
-		if err != nil {
-			return &CustomExporter{}, fmt.Errorf("while reading local manifest file at %s: %w", name, err)
-		}
-		return LoadExporter(name, rawManifest, ctx.Config.Exporters[name])
-	} else if isValidURL(ensureHttpPrefix(name)) {
-		url := ensureHttpPrefix(name)
-		ll.Debug("No builtin exporter named %s, attempting download since %s looks like an URL…", name, url)
-		return DownloadExporter(name, url, ctx.Config.Exporters[name])
-	}
-	return nil, fmt.Errorf("no exporter named %s", name)
-}
-
-// LoadExporter loads an exporter from a manifest YAML file's contents.
-func LoadExporter(name string, manifestRaw []byte, config map[string]any) (*CustomExporter, error) {
-	var manifest ExporterManifest
-	err := yaml.Unmarshal(manifestRaw, &manifest)
+	result, err := ctx.FindPlugin(name, builtins, ctx.Config.Exporters)
 	if err != nil {
-		return &CustomExporter{}, fmt.Errorf("while parsing exporter manifest file: %w", err)
+		return nil, err
 	}
 
-	verbose, _ := config["verbose"].(bool)
-	dryRun, ok := config["dry run"].(bool)
-	if !ok {
-		dryRun, ok = config["dry-run"].(bool)
-		if !ok {
-			dryRun, ok = config["dry_run"].(bool)
-			if !ok {
-				dryRun, _ = config["dryRun"].(bool)
-			}
-		}
+	if exporter, ok := result.(Exporter); ok {
+		return exporter, nil
+	} else {
+		return nil, fmt.Errorf("plugin %q is not an exporter", name)
 	}
-
-	exporter := CustomExporter{
-		data:     merge(manifest.Data, config),
-		name:     name,
-		Manifest: manifest,
-		verbose:  verbose,
-		dryRun:   dryRun,
-	}
-
-	return &exporter, nil
-}
-
-// DownloadExporter loads an exporter from a URL.
-func DownloadExporter(name string, url string, config map[string]any) (*CustomExporter, error) {
-	ll.Log("Installing", "cyan", "exporter at %s", url)
-	manifestRaw, err := downloadFile(url)
-	if err != nil {
-		return &CustomExporter{}, fmt.Errorf("while downloading exporter manifest file: %w", err)
-	}
-
-	exporter, err := LoadExporter(name, manifestRaw, config)
-	if err != nil {
-		return &CustomExporter{}, err
-	}
-
-	exporter.name = name
-	return exporter, nil
-}
-
-// GetExporterOptions returns the options for the given exporter.
-// Use it to get your options in a nice struct. The struct will be of the same type as the one returned by e.OptionsType().
-// Example:
-//
-//	type MyExporterOptions struct {
-//			// Some option
-//			Option string `yaml:"option"`
-//	}
-//
-//	func (e *MyExporter) OptionsType() any {
-//	 	return MyExporterOptions{}
-//	 }
-//
-//	func (e *MyExporter) After(ctx *ortfodb.RunContext, opts *ortfodb.ExporterOptions, db *ortfodb.Database) error {
-//		 options := GetExporterOptions[MyExporterOptions](e, opts)
-//		 // Now you can use options as a MyExporterOptions struct
-//		}
-func GetExporterOptions[ConcreteOptionsType any](e Exporter, opts ExporterOptions) ConcreteOptionsType {
-	options := e.OptionsType()
-	decoder, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  &options,
-		TagName: "yaml",
-	})
-	decoder.Decode(opts)
-	return options.(ConcreteOptionsType)
 }

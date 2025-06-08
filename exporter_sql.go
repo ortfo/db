@@ -27,7 +27,7 @@ func (e *SqlExporter) Description() string {
 	return "Export the database as SQL statements. Rudimentary for now."
 }
 
-func (e *SqlExporter) Before(ctx *RunContext, opts ExporterOptions) error {
+func (e *SqlExporter) Before(ctx *RunContext, opts PluginOptions) error {
 	e.result = ""
 	if !fileExists(e.outputFilename(ctx)) {
 		e.result += `CREATE TABLE works (
@@ -43,8 +43,8 @@ func (e *SqlExporter) Before(ctx *RunContext, opts ExporterOptions) error {
 	return nil
 }
 
-func (e *SqlExporter) Export(ctx *RunContext, opts ExporterOptions, work *Work) error {
-	options := GetExporterOptions[SqlExporterOptions](e, opts)
+func (e *SqlExporter) Export(ctx *RunContext, opts PluginOptions, work *Work) error {
+	options := GetPluginOptions[SqlExporterOptions](e, opts)
 
 	_, summary := work.FirstParagraph(options.Language)
 	e.result += fmt.Sprintf(
@@ -64,8 +64,8 @@ func (e *SqlExporter) outputFilename(ctx *RunContext) string {
 	return strings.Replace(ctx.OutputDatabaseFile, ".json", ".sql", 1)
 }
 
-func (e *SqlExporter) After(ctx *RunContext, opts ExporterOptions, built *Database) error {
+func (e *SqlExporter) After(ctx *RunContext, opts PluginOptions, built *Database) error {
 	os.WriteFile(e.outputFilename(ctx), []byte(e.result), 0o644)
-	ExporterLogCustom(e, "Exported", "green", "SQL file to %s", e.outputFilename(ctx))
+	PluginLogCustom(e, "Exported", "green", "SQL file to %s", e.outputFilename(ctx))
 	return nil
 }

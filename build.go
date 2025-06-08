@@ -180,6 +180,7 @@ type RunContext struct {
 	Flags                 Flags
 	ProgressInfoFile      string
 	Exporters             []Exporter
+	Importers             []Importer
 
 	// Number of concurrent goroutines to use to create thumbnails per work
 	thumbnailersPerWork int
@@ -197,6 +198,7 @@ type Flags struct {
 	WorkersCount     int
 	ProgressInfoFile string
 	ExportersToUse   []string
+	ImportersToUse   []string
 }
 
 // Project represents a project.
@@ -279,6 +281,20 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		ctx.Exporters = append(ctx.Exporters, exporter)
 	}
 
+	importersToUse := flags.ImportersToUse
+	if len(importersToUse) == 0 {
+		importersToUse = mapKeys(config.Importers)
+	}
+
+	for _, importerName := range importersToUse {
+		importer, err := ctx.FindImporter(importerName)
+		if err != nil {
+			return &ctx, fmt.Errorf("while finding importer %s: %w", importerName, err)
+		}
+
+		ctx.Importers = append(ctx.Importers, importer)
+	}
+
 	ll.Debug("Running with configuration %#v", &config)
 
 	previousBuiltDatabaseRaw, err := os.ReadFile(outputFilename)
@@ -317,6 +333,32 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		err = exporter.Before(&ctx, options)
 		if err != nil {
 			return &ctx, fmt.Errorf("while running exporter %s before hook: %w", exporter.Name(), err)
+		}
+	}
+
+	for _, importer := range ctx.Importers {
+		options, err := ctx.ImporterOptions(importer)
+		if err != nil {
+			return &ctx, err
+		}
+
+		ll.Log("Using", "magenta", "importer [bold]%s[reset]\n[dim]%s", importer.Name(), importer.Description())
+		toImport, err := importer.List(&ctx, options)
+		if err != nil {
+			return &ctx, fmt.Errorf("while listing works to import with importer %s: %w", importer.Name(), err)
+		}
+
+		ll.Log("Importing", "magenta", "%d works with %s", len(toImport), importer.Name())
+
+		for _, workId := range toImport {
+			if _, err := os.Stat(filepath.Join(ctx.DatabaseDirectory, workId)); os.IsNotExist(err) {
+				err = importer.Import(&ctx, options, workId)
+				if err != nil {
+					ll.WarnDisplay("could not import %q with %s", err, workId, importer.Name())
+				}
+			} else {
+				ll.Log("Skipping", "dim", "%s as it already exists", workId)
+			}
 		}
 	}
 
