@@ -1,11 +1,9 @@
 set dotenv-load := true
 
 build:
-	#!/usr/bin/env bash
-	set -euxo pipefail
-	cd cmd
-	go mod tidy
-	go build
+	cd cmd; \
+	go mod tidy; \
+	go build; \
 	mv cmd ../ortfodb
 
 install:

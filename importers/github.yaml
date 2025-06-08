@@ -1,0 +1,25 @@
+name: Github importer
+
+description: Imports public repositories with a certain topic from a Github profile.
+
+requires: [gh, jq]
+
+data:
+    # Github username
+    username:
+
+    # Topic to filter repositories by
+    topic: uses-ortfo
+
+list:
+    - log: [Listing, blue, "repositories for github user {{ .Data.username }}"]
+    - run: gh repo list --source --json description,name {{ .Data.username }} --topic {{ .Data.topic }} --jq '.[]|.name' > output
+
+import:
+    - log:
+          [
+              Importing,
+              blue,
+              "{{ .ID }} from https://github.com/{{ .Data.username }}/{{ .ID }}",
+          ]
+    - run: gh repo clone {{ .Data.username }}/{{ .ID }} . -- --depth 1

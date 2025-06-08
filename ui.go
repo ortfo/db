@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/mitchellh/colorstring"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -59,17 +59,17 @@ func indentSubsequent(size int, text string) string {
 	return strings.ReplaceAll(text, "\n", "\n"+indentation)
 }
 
-func ExporterLogCustom(exporter Exporter, verb string, color string, message string, fmtArgs ...interface{}) {
+func PluginLogCustom(plugin Plugin, verb string, color string, message string, fmtArgs ...interface{}) {
 	if debugging {
-		ll.Log(verb, color, fmt.Sprintf("[dim][bold](from exporter %s)[reset] %s", exporter.Name(), message), fmtArgs...)
+		ll.Log(verb, color, fmt.Sprintf("[dim][bold](from exporter %s)[reset] %s", plugin.Name(), message), fmtArgs...)
 	} else {
 		ll.Log(verb, color, message, fmtArgs...)
 	}
 }
 
-func ExporterLogCustomNoFormatting(exporter Exporter, verb string, color string, message string) {
+func PluginLogCustomNoFormatting(plugin Plugin, verb string, color string, message string) {
 	if debugging {
-		ll.LogNoFormatting(verb, color, colorstring.Color("[dim][bold](from exporter "+exporter.Name()+")[reset] ")+message)
+		ll.LogNoFormatting(verb, color, colorstring.Color("[dim][bold](from exporter "+plugin.Name()+")[reset] ")+message)
 	} else {
 		ll.LogNoFormatting(verb, color, message)
 	}

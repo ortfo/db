@@ -29,6 +29,8 @@ type MakeGIFsConfiguration struct {
 
 type MakeThumbnailsConfiguration struct {
 	Enabled          bool
+	PDF              bool `yaml:"pdf"`
+	Videos           bool `yaml:"videos"`
 	Sizes            []int
 	InputFile        string `yaml:"input file"`
 	FileNameTemplate string `yaml:"file name template"`
@@ -72,7 +74,10 @@ type Configuration struct {
 	ProjectsDirectory string `yaml:"projects at"`
 
 	// Exporter-specific configuration. Maps exporter names to their configuration.
-	Exporters map[string]map[string]interface{} `yaml:"exporters,omitempty"`
+	Exporters map[string]map[string]any `yaml:"exporters,omitempty"`
+
+	// Importer-specific configuration. Maps importer names to their configuration.
+	Importers map[string]map[string]any `yaml:"importers,omitempty"`
 
 	// Where was the configuration loaded from
 	source string

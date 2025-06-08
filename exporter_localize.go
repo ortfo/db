@@ -29,16 +29,16 @@ func (e *LocalizeExporter) Description() string {
 	return "Export separately the database as a single database for each language. The `content` field of each work is localized, meaning it's not an object mapping languages to localized content, but the content directly, in the language."
 }
 
-func (e *LocalizeExporter) Before(ctx *RunContext, opts ExporterOptions) error {
+func (e *LocalizeExporter) Before(ctx *RunContext, opts PluginOptions) error {
 	return nil
 }
 
-func (e *LocalizeExporter) Export(ctx *RunContext, opts ExporterOptions, work *Work) error {
+func (e *LocalizeExporter) Export(ctx *RunContext, opts PluginOptions, work *Work) error {
 	return nil
 }
 
-func (e *LocalizeExporter) After(ctx *RunContext, opts ExporterOptions, db *Database) error {
-	options := GetExporterOptions[LocalizeExporterOptions](e, opts)
+func (e *LocalizeExporter) After(ctx *RunContext, opts PluginOptions, db *Database) error {
+	options := GetPluginOptions[LocalizeExporterOptions](e, opts)
 	outputFilenameTemplate, err := template.New("filename").Parse(options.FilenameTemplate)
 	if err != nil {
 		return fmt.Errorf("while parsing output filename template %q: %w", options.FilenameTemplate, err)
@@ -57,7 +57,7 @@ func (e *LocalizeExporter) After(ctx *RunContext, opts ExporterOptions, db *Data
 		if err != nil {
 			return fmt.Errorf("while computing output database filename template for language %q: %w", lang, err)
 		} else if outputFilename.Len() == 0 {
-			ExporterLogCustom(e, "Warning", "yellow", "output database filename for language %q is empty, skipping", lang)
+			PluginLogCustom(e, "Warning", "yellow", "output database filename for language %q is empty, skipping", lang)
 			continue
 		}
 
@@ -67,7 +67,7 @@ func (e *LocalizeExporter) After(ctx *RunContext, opts ExporterOptions, db *Data
 		}
 
 		os.WriteFile(outputFilename.String(), jsonDatabase, 0644)
-		ExporterLogCustom(e, "Localized", "green", "database in %s to %s", lang, outputFilename.String())
+		PluginLogCustom(e, "Localized", "green", "database in %s to %s", lang, outputFilename.String())
 	}
 	return nil
 }
