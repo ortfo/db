@@ -1,0 +1,20 @@
+name: Cloud services importer
+
+description: Supports importing from various cloud services, using rclone. See https://rclone.org/ for more information.
+
+requires: [rclone]
+
+data:
+    # Name of the rclone remote to use
+    remote:
+
+    # Path to the directory to import from
+    folder:
+
+list:
+    - log: [Listing, blue, "files in remote {{ .Data.remote }} at {{ .Data.folder }}"]
+    - run: rclone lsjson --dirs-only {{ .Data.remote }}:{{ .Data.folder }} | jq -r '.[].Path' > output
+
+import:
+    - log: [Importing, blue, "{{ .ID }} from {{ .Data.remote }}:{{ .Data.folder }}/{{ .ID }}"]
+    - run: rclone copy {{ .Data.remote }}:{{ .Data.folder }}/{{ .ID }} . --progress --create-empty-src-dirs

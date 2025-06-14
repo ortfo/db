@@ -11,15 +11,36 @@ data:
     # Topic to filter repositories by
     topic: uses-ortfo
 
+    # List of additional owner/repo pairs to import. the repo part must be different from any repo names that are already imported with username/ and the topic.
+    additional: []
+
 list:
     - log: [Listing, blue, "repositories for github user {{ .Data.username }}"]
     - run: gh repo list --source --json description,name {{ .Data.username }} --topic {{ .Data.topic }} --jq '.[]|.name' > output
+    - log: [Listing, blue, "additional repositories to import"]
+    - run: >
+          {{ range $i, $v := .Data.additional }}
+            echo {{ $v | replaceMatching "^.+/" "" }} >> output
+          {{ end }}
 
 import:
     - log:
-          [
-              Importing,
-              blue,
-              "{{ .ID }} from https://github.com/{{ .Data.username }}/{{ .ID }}",
-          ]
-    - run: gh repo clone {{ .Data.username }}/{{ .ID }} . -- --depth 1
+          - Importing
+          - blue
+          - >
+            {{ .ID }} from https://github.com/
+            {{ if .Data.additional | hasMatch ( cat ".+/" .ID )  }}
+                {{ .Data.additional | findMatch (cat ".+/" .ID) }}
+            {{ else }}
+                {{ .Data.username }}/{{ .ID }}
+            {{ end}}
+
+
+    - run: >
+        gh repo clone
+        {{ if .Data.additional | hasMatch (cat ".+/" .ID) }}
+            {{ .Data.additional | findMatch (cat ".+/" .ID) }}
+        {{ else }}
+            {{ .Data.username }}/{{ .ID }}
+        {{ end }}
+        . -- --depth 1

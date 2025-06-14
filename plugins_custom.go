@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"text/template"
@@ -103,7 +104,6 @@ func (e *CustomPlugin) runCommands(ctx *RunContext, verbose bool, cwd string, co
 
 			if filepath.IsAbs(cwd) {
 				proc.Dir = filepath.Clean(cwd)
-			// } else if cwd == "." {
 			} else {
 				proc.Dir = filepath.Clean(filepath.Join(filepath.Dir(ctx.Config.source), cwd))
 			}
@@ -199,6 +199,28 @@ var funcmap = template.FuncMap{
 	},
 	"escape": func(data string) string {
 		return shellescape.Quote(data)
+	},
+	"hasMatch": func(pattern string, data []string) bool {
+		pat := regexp.MustCompile(pattern)
+		for _, item := range data {
+			if pat.MatchString(item) {
+				return true
+			}
+		}
+		return false
+	},
+	"findMatch": func(pattern string, data []string) string {
+		pat := regexp.MustCompile(pattern)
+		for _, item := range data {
+			if pat.MatchString(item) {
+				return item
+			}
+		}
+		return ""
+	},
+	"replaceMatching": func(pattern, replacement string, data string) string {
+		pat := regexp.MustCompile(pattern)
+		return pat.ReplaceAllString(data, replacement)
 	},
 }
 
