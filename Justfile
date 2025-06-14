@@ -1,19 +1,18 @@
 set dotenv-load := true
-version := `git tag --points-at HEAD | sed 's/v//'`
+version := `git describe --tags --abbrev=0 || echo commit:$(git rev-parse --short HEAD)`
 
 build:
-	cd cmd; \
-	go mod tidy; \
-	go build --ldflags="-X 'ortfodb.Version={{ version }}'"
+	go mod tidy
+	go build --ldflags="-X 'ortfodb.Version={{ version }}'" -o ortfodb
 
 install:
 	just build
-	mv cmd/cmd ~/.local/bin/ortfodb
+	cp ortfodb ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
 install-windows:
 	just build
-	mv cmd/cmd.exe ~/go/bin/ortfodb.exe
+	mv ortfodb.exe ~/go/bin/ortfodb.exe
 
 docs:
 	mkdir -p docs/commands manpages

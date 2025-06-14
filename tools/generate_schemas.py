@@ -2,8 +2,11 @@
 import json
 from pathlib import Path
 from subprocess import run as _run
+from sys import argv
 
 root = Path(__file__).parent.parent
+
+executable = argv[1] if len(argv) > 1 else "./ortfodb"
 
 
 def run(cmd) -> str:
@@ -26,10 +29,10 @@ def add_titles(schema: dict) -> dict:
     }
 
 
-for thing in run("./ortfodb schemas").splitlines():
+for thing in run(f"{executable} schemas").splitlines():
     if not thing:
         continue
-    raw_schema = run(f"./ortfodb schemas {thing.strip()}")
+    raw_schema = run(f"{executable} schemas {thing.strip()}")
     try:
         schema = json.loads(raw_schema)
     except:
