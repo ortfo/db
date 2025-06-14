@@ -239,9 +239,11 @@ func (ctx *RunContext) AnalyzeMediaFile(workID string, embedDeclaration Media) (
 	}
 
 	if isAudio {
-		duration = AnalyzeAudio(file)
+		if ctx.Config.Media.AudioAnalysis {
+			duration = AnalyzeAudio(file)
+			ll.Debug("Audio analyzed: duration=%v", duration)
+		}
 		hasSound = true
-		ll.Debug("Audio analyzed: duration=%v", duration)
 	}
 
 	if isPDF {

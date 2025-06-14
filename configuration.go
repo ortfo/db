@@ -55,6 +55,9 @@ type TechnologiesConfiguration struct {
 type MediaConfiguration struct {
 	// Path to the media directory.
 	At string
+
+	// Skip analysis of audio files if not used, as it can speed up builds significantly.
+	AudioAnalysis bool `yaml:"audio analysis,omitempty"`
 }
 
 // Configuration represents what the ortfodb.yaml configuration file describes.
