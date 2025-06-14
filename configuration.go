@@ -30,6 +30,7 @@ type MakeGIFsConfiguration struct {
 type MakeThumbnailsConfiguration struct {
 	Enabled          bool
 	PDF              bool `yaml:"pdf"`
+	GIFs             bool `yaml:"gifs"`
 	Videos           bool `yaml:"videos"`
 	Sizes            []int
 	InputFile        string `yaml:"input file"`

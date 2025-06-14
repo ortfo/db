@@ -25,6 +25,10 @@ func (m Media) Thumbnailable(config *Configuration) bool {
 		return false
 	}
 
+	if m.ContentType == "image/gif" && !config.MakeThumbnails.GIFs {
+		return false
+	}
+
 	for _, contentTypePattern := range ThumbnailableContentTypes {
 		if contentTypePattern == "video/*" && !config.MakeThumbnails.Videos {
 			continue
