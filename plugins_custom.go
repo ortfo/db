@@ -200,20 +200,20 @@ var funcmap = template.FuncMap{
 	"escape": func(data string) string {
 		return shellescape.Quote(data)
 	},
-	"hasMatch": func(pattern string, data []string) bool {
+	"hasMatch": func(pattern string, data []any) bool {
 		pat := regexp.MustCompile(pattern)
 		for _, item := range data {
-			if pat.MatchString(item) {
+			if pat.MatchString(item.(string)) {
 				return true
 			}
 		}
 		return false
 	},
-	"findMatch": func(pattern string, data []string) string {
+	"findMatch": func(pattern string, data []any) string {
 		pat := regexp.MustCompile(pattern)
 		for _, item := range data {
-			if pat.MatchString(item) {
-				return item
+			if pat.MatchString(item.(string)) {
+				return item.(string)
 			}
 		}
 		return ""
