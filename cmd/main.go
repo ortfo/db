@@ -41,7 +41,7 @@ func main() {
 			Section: "1",
 			Source:  "https://ortfo.org/db",
 			Manual:  "ortfo/db Manual",
-		},os.Args[3])
+		}, os.Args[3])
 		os.Exit(0)
 	}
 	err := rootCmd.Execute()
