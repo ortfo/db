@@ -11,9 +11,28 @@ data:
     # Path to the directory to import from
     folder:
 
+    # List of directories to import -- useful if you have a lot of directories and listing them takes a really long time
+    works: []
+
 list:
     - log: [Listing, blue, "files in remote {{ .Data.remote }} at {{ .Data.folder }}"]
-    - run: rclone lsjson --dirs-only {{ .Data.remote }}:{{ .Data.folder }} | jq -r '.[].Path' > output
+    - run: |
+        {{ if gt (.Data.works | len) 0 }}
+        {{ range .Data.works }}
+        echo {{ . }} >> output
+        {{ end }}
+        {{ else }}
+        dirs=$(rclone lsjson --dirs-only {{ .Data.remote }}:{{ .Data.folder }} | jq -r '.[].Path')
+        remaining=$(echo "$dirs" | wc -l)
+        echo filtering from $remaining directories
+        for dir in $dirs; do
+            echo "Checking directory: $dir. $remaining to go"
+            if rclone lsjson --dirs-only {{ .Data.remote }}:{{ .Data.folder }}/$dir | grep -q '.ortfo'; then
+                echo $dir >> output
+            fi
+            ((remaining--))
+        done
+        {{ end }}
 
 import:
     - log: [Importing, blue, "{{ .ID }} from {{ .Data.remote }}:{{ .Data.folder }}/{{ .ID }}"]
