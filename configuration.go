@@ -221,9 +221,12 @@ func DefaultConfiguration() Configuration {
 			Enabled:          true,
 			Sizes:            []int{100, 400, 600, 1200},
 			FileNameTemplate: "<work id>/<block id>@<size>.webp",
+			PDF:              true,
+			Videos:           true,
 		},
-		Media: struct{ At string }{
-			At: "media/",
+		Media: MediaConfiguration{
+			At:            "media/",
+			AudioAnalysis: true,
 		},
 		ScatteredModeFolder: DefaultScatteredModeFolder,
 		IsDefault:           true,
