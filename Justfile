@@ -1,21 +1,19 @@
 set dotenv-load := true
+version := `git tag --points-at HEAD | sed 's/v//'`
 
 build:
 	cd cmd; \
 	go mod tidy; \
-	go build; \
-	mv cmd ../ortfodb
+	go build --ldflags="-X 'ortfodb.Version={{ version }}'"
 
 install:
 	just build
-	cp ortfodb ~/.local/bin/ortfodb
+	mv cmd/cmd ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
 install-windows:
-	cd cmd; \
-	go mod tidy; \
-	go build; \
-	mv cmd.exe ~/go/bin/ortfodb.exe
+	just build
+	mv cmd/cmd.exe ~/go/bin/ortfodb.exe
 
 docs:
 	mkdir -p docs/commands manpages
