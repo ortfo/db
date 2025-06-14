@@ -20,7 +20,7 @@ func handleControlC(outputFilepath string, context *ortfodb.RunContext) {
 	signal.Notify(sig, os.Interrupt)
 	go func() {
 		for range sig {
-			ll.Log("Cancelled", "yellow", "Partial database written to [bold]./%s[reset]", context.OutputDatabaseFile)
+			ll.Log("Cancelling", "yellow", "and writing partial database to [bold]./%s[reset]", context.OutputDatabaseFile)
 			buildLockFilepath := ortfodb.BuildLockFilepath(outputFilepath)
 			if _, err := os.Stat(buildLockFilepath); err == nil {
 				os.Remove(buildLockFilepath)
