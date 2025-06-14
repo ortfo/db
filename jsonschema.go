@@ -7,7 +7,7 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
-var AvailableJSONSchemas = []string{"configuration", "database", "tags", "technologies", "exporter"}
+var AvailableJSONSchemas = []string{"configuration", "database", "tags", "technologies", "exporter", "importer"}
 
 var yamlReflector = jsonschema.Reflector{
 	FieldNameTag: "yaml",
@@ -54,5 +54,11 @@ func TechnologiesRepositoryJSONSchema() *jsonschema.Schema {
 func ExporterManifestJSONSchema() *jsonschema.Schema {
 	schema := makeJSONSchema(&ExporterManifest{}, true)
 	setSchemaId(schema, "exporter")
+	return schema
+}
+
+func ImporterManifestJSONSchema() *jsonschema.Schema {
+	schema := makeJSONSchema(&ImporterManifest{}, true)
+	setSchemaId(schema, "importer")
 	return schema
 }

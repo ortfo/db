@@ -36,6 +36,13 @@
           },
           "type": "object",
           "description": "Exporter-specific configuration. Maps exporter names to their configuration."
+        },
+        "importers": {
+          "additionalProperties": {
+            "type": "object"
+          },
+          "type": "object",
+          "description": "Importer-specific configuration. Maps importer names to their configuration."
         }
       },
       "additionalProperties": false,
@@ -96,6 +103,12 @@
         "enabled": {
           "type": "boolean"
         },
+        "pdf": {
+          "type": "boolean"
+        },
+        "videos": {
+          "type": "boolean"
+        },
         "sizes": {
           "items": {
             "type": "integer"
@@ -113,6 +126,8 @@
       "type": "object",
       "required": [
         "enabled",
+        "pdf",
+        "videos",
         "sizes",
         "input file",
         "file name template"

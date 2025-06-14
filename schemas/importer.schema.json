@@ -1,38 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/exporter.schema.json",
-  "$ref": "#/$defs/ExporterManifest",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/importer.schema.json",
+  "$ref": "#/$defs/ImporterManifest",
   "$defs": {
-    "ExporterManifest": {
+    "ImporterManifest": {
       "properties": {
         "name": {
           "type": "string",
-          "description": "The name of the exporter"
+          "description": "The name of the importer"
         },
         "description": {
           "type": "string",
-          "description": "Some documentation about the exporter"
+          "description": "Some documentation about the importer"
         },
-        "before": {
+        "list": {
           "items": {
             "$ref": "#/$defs/PluginCommand"
           },
           "type": "array",
-          "description": "Commands to run before the build starts. Go text template that receives .Data"
+          "description": "Commands to run to list work IDs to import. Go text template that receives .Data."
         },
-        "after": {
+        "import": {
           "items": {
             "$ref": "#/$defs/PluginCommand"
           },
           "type": "array",
-          "description": "Commands to run after the build finishes. Go text template that receives .Data and .Database, the built database."
-        },
-        "work": {
-          "items": {
-            "$ref": "#/$defs/PluginCommand"
-          },
-          "type": "array",
-          "description": "Commands to run during the build, for each work. Go text template that receives .Data and .Work, the current work."
+          "description": "Commands to run to import a work. Go text template that receives .Data and .ID, the current work ID."
         },
         "data": {
           "type": "object",
@@ -47,7 +40,7 @@
             "type": "string"
           },
           "type": "array",
-          "description": "List of programs that are required to be available in the PATH for the exporter to run."
+          "description": "List of programs that are required to be available in the PATH for the importer to run."
         }
       },
       "additionalProperties": false,
@@ -56,7 +49,7 @@
         "name",
         "description"
       ],
-      "title": "ExporterManifest"
+      "title": "ImporterManifest"
     },
     "PluginCommand": {
       "properties": {

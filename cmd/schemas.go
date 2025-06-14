@@ -42,6 +42,8 @@ var schemasCmd = &cobra.Command{
 			printSchema(ortfodb.TechnologiesRepositoryJSONSchema())
 		case "exporter":
 			printSchema(ortfodb.ExporterManifestJSONSchema())
+		case "importer":
+			printSchema(ortfodb.ImporterManifestJSONSchema())
 		}
 	},
 }
