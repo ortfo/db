@@ -13,18 +13,35 @@ data:
     # set to true to enable rsync
     rsync: true
     # please set this to user@host:/path/to/database.json
-    ssh:
+    database:
+    # set this to where the media files should be uploaded (a directory)
+    media:
 after:
     - log:
           - Uploading
           - blue
-          - '{{ .Ctx.OutputDatabaseFile }} to [bold]{{ .Data.ssh }} [dim]using{{ if .Data.rsync }} rsync {{ else }} scp {{ end }} [reset]'
+          - "{{ .Ctx.OutputDatabaseFile }} to [bold]{{ .Data.database }} [dim]using{{ if .Data.rsync }} rsync {{ else }} scp {{ end }} [reset]"
     - run: >-
           {{ $from := .Ctx.OutputDatabaseFile }}
-          {{ $to := .Data.ssh }}
+          {{ $to := .Data.database }}
           {{ if .DryRun }} echo {{end}}
           {{ if .Data.rsync }}
               rsync -r --info=progress {{$from}} {{$to}}
           {{ else }}
               scp {{$from}} {{$to}}
+          {{ end }}
+
+    - log:
+          - Uploading
+          - blue
+          - "{{ .Ctx.Config.Media.At }} to [bold]{{ .Data.media }} [dim]using{{ if .Data.rsync }} rsync {{ else }} scp {{ end }} [reset]"
+
+    - run: >-
+          {{ $from := .Ctx.Config.Media.At }}
+          {{ $to := .Data.media }}
+          {{ if .DryRun }} echo {{end}}
+          {{ if .Data.rsync }}
+              rsync -r --info=progress {{$from}} {{$to}}
+          {{ else }}
+              scp -r {{$from}} {{$to}}
           {{ end }}

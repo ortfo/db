@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/MakeNowJust/heredoc"
+	ll "github.com/gwennlbh/label-logger-go"
 	ortfodb "github.com/ortfo/db"
-	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/spf13/cobra"
 )
 

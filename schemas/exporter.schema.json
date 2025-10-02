@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/exporter.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/main/schemas/exporter.schema.json",
   "$ref": "#/$defs/ExporterManifest",
   "$defs": {
     "ExporterManifest": {

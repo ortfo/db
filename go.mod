@@ -8,7 +8,6 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
 	github.com/anaskhan96/soup v1.2.5
 	github.com/charmbracelet/huh v0.3.0
-	github.com/ewen-lbh/label-logger-go v0.1.1
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gwennlbh/label-logger-go v0.1.5

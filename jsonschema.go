@@ -15,7 +15,7 @@ var yamlReflector = jsonschema.Reflector{
 }
 
 func setSchemaId(schema *jsonschema.Schema, name string) {
-	schema.ID = jsonschema.ID(fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/v%s/schemas/%s.schema.json", Version, name))
+	schema.ID = jsonschema.ID(fmt.Sprintf("https://raw.githubusercontent.com/ortfo/db/main/schemas/%s.schema.json", name))
 }
 
 func makeJSONSchema(t any, yaml bool) *jsonschema.Schema {

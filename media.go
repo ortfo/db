@@ -31,7 +31,7 @@ import (
 
 	"github.com/gabriel-vasile/mimetype"
 	// "github.com/gen2brain/go-fitz" // FIXME requires cgo, which goreleaser has a hard time with
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/lafriks/go-svg"
 	"github.com/metal3d/go-slugify"
 	recurcopy "github.com/plus3it/gorecurcopy"

@@ -44,10 +44,10 @@ type ExporterManifest struct {
 // ExporterOptions validates then returns the configuration options for the given exporter.
 func (ctx *RunContext) ExporterOptions(exporter Plugin) (PluginOptions, error) {
 	options := ctx.Config.Exporters[exporter.Name()]
-	err := ValidatePluginOptions(exporter, options)
-	if err != nil {
-		return nil, err
-	}
+	// err := ValidatePluginOptions(exporter, options)
+	// if err != nil {
+		// return nil, err
+	// }
 
 	return options, nil
 }

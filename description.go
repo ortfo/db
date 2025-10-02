@@ -16,7 +16,7 @@ import (
 	"mvdan.cc/xurls/v2"
 
 	"github.com/anaskhan96/soup"
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/k3a/html2text"
 	"github.com/metal3d/go-slugify"
 	"github.com/mitchellh/mapstructure"
@@ -161,12 +161,19 @@ type Link struct {
 
 // Work represents a given work in the database. It may or not have analyzed media.
 type Work struct {
-	ID              string             `json:"id"`
-	BuiltAt         time.Time          `json:"builtAt"`
-	DescriptionHash string             `json:"descriptionHash"`
-	Metadata        WorkMetadata       `json:"metadata"`
-	Content         LocalizableContent `json:"content"`
-	Partial         bool               `json:"Partial"`
+	ID      string    `json:"id"`
+	BuiltAt time.Time `json:"builtAt"`
+
+	// Absolute path to the description.md file that describes this work.
+	Source string `json:"source"`
+	// Hash of the description.md file.
+	DescriptionHash string `json:"descriptionHash"`
+	// Metadata about the work.
+	Metadata WorkMetadata `json:"metadata"`
+	// Content (possibly localized): content blocks and layout.
+	Content LocalizableContent `json:"content"`
+	// Was this work built and analyzed completely without errors?
+	Partial bool `json:"Partial"`
 }
 
 func (w Work) ThumbnailBlock(language string) Media {

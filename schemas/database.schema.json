@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/database.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/main/schemas/database.schema.json",
   "$ref": "#/$defs/Database",
   "$defs": {
     "Abbreviations": {
@@ -302,17 +302,25 @@
           "type": "string",
           "format": "date-time"
         },
+        "source": {
+          "type": "string",
+          "description": "Absolute path to the description.md file that describes this work."
+        },
         "descriptionHash": {
-          "type": "string"
+          "type": "string",
+          "description": "Hash of the description.md file."
         },
         "metadata": {
-          "$ref": "#/$defs/WorkMetadata"
+          "$ref": "#/$defs/WorkMetadata",
+          "description": "Metadata about the work."
         },
         "content": {
-          "$ref": "#/$defs/LocalizableContent"
+          "$ref": "#/$defs/LocalizableContent",
+          "description": "Content (possibly localized): content blocks and layout."
         },
         "Partial": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Was this work built and analyzed completely without errors?"
         }
       },
       "additionalProperties": false,
@@ -320,6 +328,7 @@
       "required": [
         "id",
         "builtAt",
+        "source",
         "descriptionHash",
         "metadata",
         "content",

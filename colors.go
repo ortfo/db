@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/EdlinOrg/prominentcolor"
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/zyedidia/generic/mapset"
 	_ "golang.org/x/image/webp"

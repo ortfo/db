@@ -119,17 +119,19 @@ func NewConfiguration(filename string) (Configuration, error) {
 		}
 	}
 
-	validated, validationErrors, err := ValidateConfiguration(filename)
-	if err != nil {
-		return Configuration{}, fmt.Errorf("while validating configuration %s: %v", filename, err.Error())
-	}
-	if !validated {
-		DisplayValidationErrors(validationErrors, filename)
-		return Configuration{}, fmt.Errorf("the configuration file is invalid. See validation errors above")
+	if os.Getenv("ORTFAST") != "1" {
+		validated, validationErrors, err := ValidateConfiguration(filename)
+		if err != nil {
+			return Configuration{}, fmt.Errorf("while validating configuration %s: %v", filename, err.Error())
+		}
+		if !validated {
+			DisplayValidationErrors(validationErrors, filename)
+			return Configuration{}, fmt.Errorf("the configuration file is invalid. See validation errors above")
+		}
 	}
 
 	config := Configuration{source: filename}
-	err = LoadConfiguration(filename, &config)
+	err := LoadConfiguration(filename, &config)
 	if err != nil {
 		return Configuration{}, fmt.Errorf("while loading configuration file at %s: %w", filename, err)
 	}
@@ -193,6 +195,7 @@ func checkProjectsDirectory(config Configuration) error {
 // ValidateConfiguration uses the JSON configuration schema ConfigurationJSONSchema to validate the configuration file at configFilepath.
 // The third return value (of type error) is not nil when the validation process itself fails, not if the validation ran succesfully with a result of "not validated".
 func ValidateConfiguration(configFilepath string) (valid bool, validationErrors []gojsonschema.ResultError, err error) {
+	ll.Log("Validating", "blue", "configuration file [bold]%s[reset]", configFilepath)
 	// read file → unmarshal YAML → marshal JSON
 	var configuration interface{}
 	configContent, err := readFileBytes(configFilepath)

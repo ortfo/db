@@ -1,18 +1,26 @@
 set dotenv-load := true
-version := `git describe --tags --abbrev=0 || echo commit:$(git rev-parse --short HEAD)`
+version := `git describe --tags --abbrev=0 | sed s/v// || echo commit:$(git rev-parse --short HEAD)`
 
 build:
 	go mod tidy
-	go build --ldflags="-X 'ortfodb.Version={{ version }}'" -o ortfodb
+	cd cmd; go build --ldflags="-X 'meta.Version={{ version }}'"
 
+jsonschemas executable="./ortfodb":
+	#!/usr/bin/env bash
+	for schema in $({{executable}} schemas); do
+		{{executable}} schemas $schema > schemas/$schema.schema.json
+	done
+
+[unix]
 install:
 	just build
-	cp ortfodb ~/.local/bin/ortfodb
+	cp cmd/cmd ~/.local/bin/ortfodb
 	chmod +x ~/.local/bin/ortfodb
 
-install-windows:
+[windows]
+install:
 	just build
-	mv ortfodb.exe ~/go/bin/ortfodb.exe
+	mv cmd/cmd.exe ~/go/bin/ortfodb.exe
 
 docs:
 	mkdir -p docs/commands manpages

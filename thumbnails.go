@@ -3,14 +3,15 @@ package ortfodb
 import (
 	"bytes"
 	"fmt"
-	ll "github.com/ewen-lbh/label-logger-go"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
+
+	ll "github.com/gwennlbh/label-logger-go"
 )
 
 var ThumbnailableContentTypes = []string{"image/*", "video/*", "application/pdf"}
@@ -50,27 +51,51 @@ func (m Media) Thumbnailable(config *Configuration) bool {
 // saveTo should be relative to cwd.
 func (ctx *RunContext) MakeThumbnail(media Media, targetSize int, saveTo string) error {
 	ll.Debug("Making thumbnail for %s at size %d to %s", media.DistSource.Absolute(ctx), targetSize, saveTo)
-	if media.ContentType == "image/gif" {
-		return ctx.makeGifThumbnail(media, targetSize, saveTo)
+
+	maxComputeTime, err := time.ParseDuration("2m")
+	if err != nil {
+		panic(err)
 	}
 
-	if media.ContentType == "image/svg+xml" {
-		return ctx.makeSvgThumbnail(media, targetSize, saveTo)
-	}
+	timeout := make(chan error, 1)
 
-	if strings.HasPrefix(media.ContentType, "image/") {
-		return run("magick", media.DistSource.Absolute(ctx), "-resize", fmt.Sprint(targetSize), saveTo)
-	}
+	go func() {
+		time.Sleep(maxComputeTime)
+		timeout <- fmt.Errorf("thumbnail generation timed out after %s", maxComputeTime)
+	}()
 
-	if strings.HasPrefix(media.ContentType, "video/") {
-		return run("ffmpegthumbnailer", "-i"+media.DistSource.Absolute(ctx), "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
-	}
+	result := make(chan error, 1)
 
-	if media.ContentType == "application/pdf" {
-		return ctx.makePdfThumbnail(media, targetSize, saveTo)
-	}
+	go func() {
+		if media.ContentType == "image/gif" {
+			result <- ctx.makeGifThumbnail(media, targetSize, saveTo)
+		}
 
-	return fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.DistSource.Absolute(ctx), media.ContentType)
+		if media.ContentType == "image/svg+xml" {
+			result <- ctx.makeSvgThumbnail(media, targetSize, saveTo)
+		}
+
+		if strings.HasPrefix(media.ContentType, "image/") {
+			result <- run("magick", media.DistSource.Absolute(ctx), "-resize", fmt.Sprint(targetSize), saveTo)
+		}
+
+		if strings.HasPrefix(media.ContentType, "video/") {
+			result <- run("ffmpegthumbnailer", "-i"+media.DistSource.Absolute(ctx), "-o"+saveTo, fmt.Sprintf("-s%d", targetSize))
+		}
+
+		if media.ContentType == "application/pdf" {
+			result <- ctx.makePdfThumbnail(media, targetSize, saveTo)
+		}
+
+		result <- fmt.Errorf("cannot make a thumbnail for %s: unsupported content type %s", media.DistSource.Absolute(ctx), media.ContentType)
+	}()
+
+	select {
+	case err := <-timeout:
+		return err
+	case err := <-result:
+		return err
+	}
 
 }
 
@@ -81,7 +106,7 @@ func (ctx *RunContext) makeSvgThumbnail(media Media, targetSize int, saveTo stri
 
 func (ctx *RunContext) makePdfThumbnail(media Media, targetSize int, saveTo string) error {
 	// If the target extension was not supported, convert from png to the actual target extension
-	temporaryPng, err := ioutil.TempFile("", "*.png")
+	temporaryPng, err := os.CreateTemp("", "*.png")
 	defer os.Remove(temporaryPng.Name())
 	if err != nil {
 		return err
@@ -108,7 +133,7 @@ func (ctx *RunContext) makeGifThumbnail(media Media, targetSize int, saveTo stri
 	}
 	defer source.Close()
 
-	tempGif, err := ioutil.TempFile("", "*.gif")
+	tempGif, err := os.CreateTemp("", "*.gif")
 	if err != nil {
 		return fmt.Errorf("while creating temporary processed GIF file: %w", err)
 	}

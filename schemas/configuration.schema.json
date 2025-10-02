@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ortfo/db/v1.6.1/schemas/configuration.schema.json",
+  "$id": "https://raw.githubusercontent.com/ortfo/db/main/schemas/configuration.schema.json",
   "$ref": "#/$defs/Configuration",
   "$defs": {
     "Configuration": {
@@ -106,6 +106,9 @@
         "pdf": {
           "type": "boolean"
         },
+        "gifs": {
+          "type": "boolean"
+        },
         "videos": {
           "type": "boolean"
         },
@@ -127,6 +130,7 @@
       "required": [
         "enabled",
         "pdf",
+        "gifs",
         "videos",
         "sizes",
         "input file",
@@ -139,6 +143,10 @@
         "at": {
           "type": "string",
           "description": "Path to the media directory."
+        },
+        "audio analysis": {
+          "type": "boolean",
+          "description": "Skip analysis of audio files if not used, as it can speed up builds significantly."
         }
       },
       "additionalProperties": false,

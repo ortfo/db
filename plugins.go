@@ -128,7 +128,7 @@ func BuiltinPlugins(directory string, natives ...Plugin) []Plugin {
 
 	for _, exporterFile := range pluginFiles {
 		// forces forward slashes for go:embed FS, even when running on Windows
-		file := strings.Join([]string{"importers", exporterFile.Name()}, "/")
+		file := strings.Join([]string{directory, exporterFile.Name()}, "/")
 		contents, err := builtinYamlPlugins.ReadFile(file)
 		if err != nil {
 			panic(fmt.Errorf("error while reading builtin yaml exporter file %s (shouldn't happen, it should've been go:embed'd): %w", file, err))

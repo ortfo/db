@@ -11,7 +11,7 @@ import (
 
 	"github.com/anaskhan96/soup"
 	"github.com/charmbracelet/huh"
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 

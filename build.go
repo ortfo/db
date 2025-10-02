@@ -323,6 +323,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		return &ctx, fmt.Errorf("another ortfo build is in progress (could not acquire build lock): %w", err)
 	}
 
+	ll.Debug("handling exporters")
 	for _, exporter := range ctx.Exporters {
 		options, err := ctx.ExporterOptions(exporter)
 		if err != nil {
@@ -336,6 +337,7 @@ func PrepareBuild(databaseDirectory string, outputFilename string, flags Flags, 
 		}
 	}
 
+	ll.Debug("handling importers")
 	for _, importer := range ctx.Importers {
 		options, err := ctx.ImporterOptions(importer)
 		if err != nil {
@@ -472,6 +474,11 @@ func (ctx *RunContext) BuildSome(include string, databaseDirectory string, outpu
 
 					ctx.Status(workID, PhaseBuilding)
 					newWork, usedCache, err := ctx.Build(string(descriptionRaw), outputFilename, workID)
+
+					if absoluteSource, err := filepath.Abs(descriptionFilename); err == nil {
+						newWork.Source = filepath.Clean(absoluteSource)
+					}
+
 					if err != nil {
 						ll.ErrorDisplay("while building %s", err, workID)
 						builtChannel <- builtItem{err: fmt.Errorf("while building %s (%s): %w", workID, ctx.DescriptionFilename(databaseDirectory, workID), err)}

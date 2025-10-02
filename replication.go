@@ -9,7 +9,7 @@ import (
 
 	html2md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/anaskhan96/soup"
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )

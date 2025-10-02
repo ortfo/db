@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	ll "github.com/ewen-lbh/label-logger-go"
+	ll "github.com/gwennlbh/label-logger-go"
 )
 
 var currentlyBuildingWorkIDs []string
@@ -68,7 +68,7 @@ func (ctx *RunContext) Status(workID string, phase BuildPhase, details ...string
 	}
 	formattedDetails := ""
 	if len(details) > 0 {
-		formattedDetails = fmt.Sprintf(" [dim]%s[reset]", strings.Join(details, " "))
+		formattedDetails = strings.Join(details, " ")
 	}
 
 	ll.Log(phase.String(), color, "%s%s", workID, formattedDetails)

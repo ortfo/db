@@ -9,8 +9,8 @@ import (
 	"unicode"
 
 	"github.com/MakeNowJust/heredoc"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/mitchellh/colorstring"
-	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"

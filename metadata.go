@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	ll "github.com/ewen-lbh/label-logger-go"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
+	ll "github.com/gwennlbh/label-logger-go"
 	"github.com/metal3d/go-slugify"
 	"gopkg.in/yaml.v2"
 )
